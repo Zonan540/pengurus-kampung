@@ -444,6 +444,9 @@ nav.rail .supbtn{color:var(--hot);border:1px solid rgba(255,201,71,.4);margin-to
 .onboard{border-color:var(--accent);background:linear-gradient(0deg,var(--panel),var(--panel))}
 .mis{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;cursor:pointer}.mis input{margin-top:3px;width:18px;height:18px}
 .toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,24px);opacity:0;visibility:hidden;pointer-events:none;cursor:pointer;background:var(--board);border:1px solid var(--loss);color:var(--fg);padding:10px 16px;border-radius:8px;z-index:90;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.45);transition:transform .25s ease,opacity .25s ease,visibility 0s linear .25s}
+#savewarn{position:fixed;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top,0px));z-index:95;display:none;background:var(--board);border:1px solid var(--loss);color:var(--fg);padding:10px 12px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.45);font-size:.9rem;line-height:1.4}
+#savewarn.on{display:block}
+#savewarn .row{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
 .toast.on{transform:translate(-50%,0);opacity:1;visibility:visible;pointer-events:auto;transition:transform .25s ease,opacity .25s ease,visibility 0s}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
 .iback{display:none}
@@ -2014,7 +2017,7 @@ function mSupport(seasonEnd){openModal(`<header><div><span class="lbl">${seasonE
    <div class="row" style="justify-content:center"><button class="btn primary" data-act="close">${seasonEnd?'Teruskan':'Tutup'}</button></div>`)}
 
 // ===== UI v3 =====
-const VERSION='Versi 1.4.3.3';const BUILD='b1463';
+const VERSION='Versi 1.4.3.4';const BUILD='b1464';
 // Isi pautan Google Form maklum balas di sini sebelum diedarkan kepada penguji beta.
 const FEEDBACK_URL='https://docs.google.com/forms/d/e/1FAIpQLSeSK_f1284zoTj_ddw86tJ3he_76DmihIzg4OTLNXhEgkTokA/viewform';
 const LEGACY_KEY='pengurus-kampung-v3';
@@ -2034,21 +2037,61 @@ function errHistory(){try{return JSON.parse(localStorage.getItem('pk3-errors')||
 function skey(s){return 'pk3-slot-'+s}
 function getMeta(){try{return JSON.parse(localStorage.getItem('pk3-meta')||'{}')||{}}catch(e){return{}}}
 function setMeta(m){try{localStorage.setItem('pk3-meta',JSON.stringify(m))}catch(e){}}
-function packS(b64){const j=JSON.stringify(S);if(!window.LZString)return j;return b64?'B'+LZString.compressToBase64(j):'Z'+LZString.compressToUTF16(j)}
-function unpack(t){if(!t)return null;t=String(t).trim();
-  if(t[0]==='Z'){if(!window.LZString)return null;t=LZString.decompressFromUTF16(t.slice(1))}else if(t[0]==='B'){if(!window.LZString)return null;t=LZString.decompressFromBase64(t.slice(1))}
-  if(!t)return null;const s=JSON.parse(t);return s&&s.v===3&&s.clubs?s:null}
+// Skema simpanan: naikkan SCHEMA hanya bila struktur data berubah sehingga build lama tidak selamat membukanya.
+// Simpanan tanpa `sv` datang dari build 1.x sebelum 1.4.6.4 dan masih dibuka seperti biasa.
+const SCHEMA=1;
+const MAX_IMPORT_BYTES=20*1024*1024;
+function packS(b64){S.sv=SCHEMA;S.bld=VERSION+' '+BUILD;const j=JSON.stringify(S);if(!window.LZString)return j;return b64?'B'+LZString.compressToBase64(j):'Z'+LZString.compressToUTF16(j)}
+function isObj(o){return !!o&&typeof o==='object'&&!Array.isArray(o)}
+function checkSave(s){
+  if(!isObj(s))return 'Isi fail ini bukan simpanan Pengurus Kampung.';
+  if(s.v!==3)return 'Format simpanan tidak dikenali atau terlalu lama.';
+  if(s.sv!=null&&(!Number.isInteger(s.sv)||s.sv>SCHEMA))return 'Simpanan ini dibuat oleh versi game yang lebih baharu. Muat semula halaman untuk dapatkan versi terkini, kemudian cuba lagi.';
+  if(!isObj(s.clubs)||!Object.keys(s.clubs).length)return 'Simpanan rosak: data kelab tiada.';
+  if(!isObj(s.players)||!isObj(s.fixtures)||!isObj(s.lg))return 'Simpanan rosak: data pemain, perlawanan atau liga tiada.';
+  if(!Array.isArray(s.tl)||!s.tl.length||!isObj(s.tl[0])||!Array.isArray(s.inbox))return 'Simpanan rosak: garis masa atau inbox tiada.';
+  if(typeof s.t!=='number'||typeof s.season!=='number'||typeof s.seasonNo!=='number')return 'Simpanan rosak: tarikh musim tidak sah.';
+  const c=isObj(s.clubs)&&s.user!=null?s.clubs[s.user]:null;
+  if(!isObj(c)||typeof c.name!=='string'||!Array.isArray(c.kit)||!Array.isArray(c.players))return 'Simpanan rosak: kelab pengurus tidak dijumpai.';
+  return null}
+// Pulangkan {s} bila sah, atau {err} dengan sebab dalam Bahasa Melayu.
+function parseSave(t){
+  if(t==null||!String(t).trim())return{err:'Fail atau kod simpanan kosong.'};
+  t=String(t).trim();
+  try{
+    if(t[0]==='Z'||t[0]==='B'){
+      if(!window.LZString)return{err:'Pustaka pemampat belum dimuat. Muat semula halaman dan cuba lagi.'};
+      t=t[0]==='Z'?LZString.decompressFromUTF16(t.slice(1)):LZString.decompressFromBase64(t.slice(1));
+      if(!t)return{err:'Simpanan rosak: data termampat tidak dapat dibuka. Fail mungkin terpotong atau diubah.'}
+    }else if(t[0]!=='{')return{err:'Ini bukan fail simpanan Pengurus Kampung.'};
+    let s;try{s=JSON.parse(t)}catch(e){return{err:'Simpanan rosak: data tidak lengkap. Fail mungkin terpotong.'}}
+    const err=checkSave(s);return err?{err}:{s}
+  }catch(e){return{err:'Simpanan tidak dapat dibaca.'}}}
+function unpack(t){return parseSave(t).s||null}
+// Semak fail sebelum dibaca. Pulangkan mesej ralat, atau null jika fail boleh diteruskan.
+function checkFile(f){
+  if(!f.size)return 'Fail kosong.';
+  if(f.size>MAX_IMPORT_BYTES)return `Fail terlalu besar (${(f.size/1048576).toFixed(1)} MB). Fail simpanan biasa kurang daripada 5 MB.`;
+  if(!/\.(pksave|txt)$/i.test(f.name||''))return 'Jenis fail tidak disokong. Pilih fail .pksave atau .txt yang dieksport daripada game ini.';
+  return null}
 function metaOf(){const c=S.clubs[S.user];return{club:c.name,kit:c.kit,mgr:S.manager,lg:c.tier,season:S.season,no:S.seasonNo,d:curDate(),ts:Date.now(),ver:VERSION+' '+BUILD}}
 function saveSlot(slot){if(!S||!S.user)return 'Tiada permainan untuk disimpan.';
-  try{localStorage.setItem(skey(slot),packS())}catch(e){try{pruneForSave();localStorage.setItem(skey(slot),packS())}catch(e2){return 'Storan pelayar penuh. Padam satu slot atau eksport simpanan ke fail.'}}
+  try{localStorage.setItem(skey(slot),packS())}catch(e){try{pruneForSave();localStorage.setItem(skey(slot),packS())}catch(e2){return (e2&&(e2.name==='QuotaExceededError'||e2.name==='NS_ERROR_DOM_QUOTA_REACHED'||e2.code===22||e2.code===1014))?'Storan pelayar penuh. Padam satu slot atau eksport simpanan ke fail.':'Pelayar tidak membenarkan simpanan (storan disekat atau mod peribadi). Eksport simpanan ke fail.'}}
   const m=getMeta();m[slot]=metaOf();setMeta(m);return null}
-function save(){saveSlot('auto')}
+// Bar amaran autosave: kekal di skrin sehingga satu simpanan berjaya. Ditutup pengguna, ia diam 2 minit.
+const SAVEWARN={mute:0};
+function saveWarn(msg){if(Date.now()<SAVEWARN.mute)return;
+  let el=document.getElementById('savewarn');if(!el){el=document.createElement('div');el.id='savewarn';el.setAttribute('role','alert');document.body.appendChild(el)}
+  el.innerHTML=`<b>Autosave gagal.</b> Kemajuan terbaru belum disimpan. ${esc(msg)}<div class="row"><button class="btn sm primary" data-act="savewarnopen">Buka Save / Load</button><button class="btn sm" data-act="savewarnx">Tutup</button></div>`;el.className='on'}
+function saveWarnClear(){SAVEWARN.mute=0;const el=document.getElementById('savewarn');if(el)el.className=''}
+function save(){const err=saveSlot('auto');if(!S||!S.user)return;if(err)saveWarn(err);else saveWarnClear()}
 function loadSlot(slot){try{return unpack(localStorage.getItem(skey(slot)))}catch(e){return null}}
+function loadSlotR(slot){try{return parseSave(localStorage.getItem(skey(slot)))}catch(e){return{err:'Simpanan tidak dapat dibaca.'}}}
 function delSlot(slot){try{localStorage.removeItem(skey(slot))}catch(e){}const m=getMeta();delete m[slot];setMeta(m)}
 function migrateLegacy(){try{const t=localStorage.getItem(LEGACY_KEY);if(t&&!localStorage.getItem(skey('auto'))){const s=unpack(t);if(s){localStorage.setItem(skey('auto'),t);const c=s.clubs[s.user];const m=getMeta();m.auto={club:c.name,kit:c.kit,mgr:s.manager,lg:c.tier,season:s.season,no:s.seasonNo,d:s.tl[Math.min(s.t,s.tl.length-1)].d,ts:Date.now(),ver:'Beta 0.3'};setMeta(m)}}if(t)localStorage.removeItem(LEGACY_KEY)}catch(e){}}
 function storageKB(){let n=0;try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('pk3-'))n+=(localStorage.getItem(k)||'').length*2}}catch(e){}return Math.round(n/1024)}
 function pruneForSave(){Object.values(S.fixtures).forEach(f=>{if(f.played&&f.h!==S.user&&f.a!==S.user&&f.t<S.t-6){delete f.st;f.rt=f.rt&&f.rt.map(side=>side.filter(x=>x[1]>=7||x[3]))}});S.inbox=S.inbox.slice(0,120);S.tlog=S.tlog.slice(0,100)}
-function loadState(s){S=s;ensureState();LIVE=null;UI.hist=[];UI.lastKey=null;UI.calOff=0;UI.screen='game';UI.view='home';UI.inboxSel=null;UI.clubView=null;UI.lgView=null;UI.delAsk=null;closeModal();render();window.scrollTo(0,0)}
+function loadState(s){const prev=S;try{S=s;ensureState()}catch(e){S=prev;throw e}LIVE=null;UI.hist=[];UI.lastKey=null;UI.calOff=0;UI.screen='game';UI.view='home';UI.inboxSel=null;UI.clubView=null;UI.lgView=null;UI.delAsk=null;closeModal();render();window.scrollTo(0,0)}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function kitSt(cid){const c=S.clubs[cid];return c?`--k1:${c.kit[0]};--k2:${c.kit[1]}`:''}
 function kit(cid,lg){return cid&&S.clubs[cid]?`<span class="kit${lg?' lg':''}" style="${kitSt(cid)}"></span>`:''}
@@ -3239,7 +3282,10 @@ const ACT={
   newfromtitle:()=>{UI.hist=[];UI.lastKey=null;newWorld();UI.selClub=null;UI.screen='game';UI.saveMsg=null;render()},
   totitle:()=>{UI.screen='title';UI.saveMsg=null;render()},
   saveslot:a=>{const err=saveSlot(a);UI.saveMsg=err?{ok:false,msg:err}:{ok:true,msg:`Berjaya save ke ${SLOT_NAME[a]}.`};render()},
-  loadslot:a=>{const s=loadSlot(a);if(!s){UI.saveMsg={ok:false,msg:'Simpanan tidak dapat dibaca. Fail mungkin rosak atau dari versi lama.'};render();return}UI.saveMsg=null;loadState(s);if(a!=='auto')save()},
+  loadslot:a=>{const r=loadSlotR(a);if(!r.s){UI.saveMsg={ok:false,msg:r.err||'Simpanan tidak dapat dibaca. Fail mungkin rosak atau dari versi lama.'};render();return}UI.saveMsg=null;
+    try{loadState(r.s)}catch(e){logErr((e&&e.message)||e,'loadslot');UI.saveMsg={ok:false,msg:'Simpanan gagal dimuatkan kerana data tidak serasi. Permainan semasa tidak diubah.'};render();return}if(a!=='auto')save()},
+  savewarnopen:()=>{saveWarnClear();try{if(S&&S.user){UI.screen='game';ACT.nav('saves')}else ACT.totitle()}catch(e){}},
+  savewarnx:()=>{const el=document.getElementById('savewarn');if(el)el.className='';SAVEWARN.mute=Date.now()+120000},
   delask:a=>{UI.delAsk=a;render()},delno:()=>{UI.delAsk=null;render()},delok:a=>{delSlot(a);UI.delAsk=null;UI.saveMsg={ok:true,msg:`${SLOT_NAME[a]} dipadam.`};render()},
   exportfile:()=>{try{const txt=packS(true);const c=S.clubs[S.user];const blob=new Blob([txt],{type:'text/plain'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
     a.download=`pengurus-kampung-${c.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}-musim${S.seasonNo}.pksave`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);
@@ -3298,10 +3344,14 @@ const ACT={
   shortdel:a=>{if(S.short)delete S.short[a];save();render();if(document.querySelector('#modal .modal'))mPlayer(a)},navshort:()=>{UI.tf.tab='pendek';ACT.nav('transfer')},
   sumclose:()=>closeSummary(),sumfull:a=>mReport(a,1),sumnav:a=>{closeSummary();ACT.nav(a)},sumtf:()=>{closeSummary();UI.tf.tab='sejarah';ACT.nav('transfer')}
 };
-function importText(t){let s=null;try{s=unpack(t)}catch(e){s=null}
-  if(!s){UI.saveMsg={ok:false,msg:'Kod atau fail simpanan tidak sah.'};render();return}UI.saveMsg={ok:true,msg:'Simpanan diimport.'};loadState(s);save()}
+function importText(t){const r=parseSave(t);
+  if(!r.s){UI.saveMsg={ok:false,msg:r.err||'Kod atau fail simpanan tidak sah.'};render();return}
+  UI.saveMsg={ok:true,msg:'Simpanan diimport.'};
+  try{loadState(r.s)}catch(e){logErr((e&&e.message)||e,'import');UI.saveMsg={ok:false,msg:'Simpanan gagal dimuatkan kerana data tidak serasi. Permainan semasa tidak diubah.'};render();return}
+  save()}
 const CHG={kitc:(a,el)=>{const v=String(el.value||'').toLowerCase();if(!/^#[0-9a-f]{6}$/.test(v)||!UI.crestDraft)return;UI.crestDraft.kit[+a]=v;const t=document.getElementById('cresttxt');if(t)UI.crestDraft.txt=t.value.toUpperCase();renderCrestModal()},sqf:(a,el)=>{UI.sqf=UI.sqf||{};UI.sqf[a]=el.value;render()},jersey:(a,el)=>{setJersey(a,+el.value);save();render();mPlayer(a)},sqrole:(a,el)=>{setSqRole(a,el.value);save();render();if(el.id==='sqr')mPlayer(a)},shortadd:(a,el)=>{shortAdd(a,el.value);save();render();mPlayer(a)},tacname:(a,el)=>{const t=S.tac.list[+a];t.name=el.value.trim().slice(0,28)||t.name;save();render()},cresttxt:(a,el)=>{UI.crestDraft.txt=el.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,3);const pv=document.getElementById('crestprev');if(pv)pv.innerHTML=crestSVG(S.user,120,UI.crestDraft)},mission:(a,el)=>{let d=getMis();const i=+a;d=el.checked?[...new Set([...d,i])]:d.filter(x=>x!==i);try{localStorage.setItem('pk3-missions',JSON.stringify(d))}catch(e){}render()},
-  impfile:(a,el)=>{const f=el.files&&el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>importText(r.result);r.onerror=()=>{UI.saveMsg={ok:false,msg:'Fail tidak dapat dibaca.'};render()};r.readAsText(f)},
+  impfile:(a,el)=>{const f=el.files&&el.files[0];if(!f)return;const bad=checkFile(f);if(bad){el.value='';UI.saveMsg={ok:false,msg:bad};render();return}
+    const r=new FileReader();r.onload=()=>{el.value='';importText(r.result)};r.onerror=()=>{UI.saveMsg={ok:false,msg:'Fail tidak dapat dibaca.'};render()};r.readAsText(f)},
   place:(a,el)=>{const err=setPlace(a,el.value);save();render();if(err)alertMsg(err)},form:(a,el)=>{remapXI(el.value);curTac().form=el.value;save();render()},
   lground:(a,el)=>{UI.lgRound=el.value;render()},tf:(a,el)=>{UI.tf[a]=el.value;render()},awround:(a,el)=>{UI.awRound=el.value;render()},
 };
