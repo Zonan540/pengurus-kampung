@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nota Versi · Pengurus Kampung</title>
+<meta name="theme-color" content="#0f2a1d">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#0f1a14;--card:#16241c;--line:#24382c;--ink:#e8efe9;--mute:#9db3a4;--acc:#4cc27a;--warn:#e8b14a;--bad:#e3675b;--info:#6fa8e8}
+@media (prefers-color-scheme:light){:root{--bg:#f3f6f3;--card:#fff;--line:#dbe4dd;--ink:#14231a;--mute:#56685c;--acc:#1f8a4c;--warn:#a86d00;--bad:#b83a2e;--info:#2c6bb3}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+h1{font-size:22px;margin:0}
+.back{color:var(--acc);text-decoration:none;font-weight:600;white-space:nowrap}
+.sub{color:var(--mute);margin:0 0 20px}
+nav{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+nav a{padding:6px 12px;border:1px solid var(--line);border-radius:99px;color:var(--ink);text-decoration:none;font-size:14px}
+nav a:hover{border-color:var(--acc)}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+h2{font-size:17px;margin:0 0 4px}
+.date{color:var(--mute);font-size:13px;margin-bottom:10px}
+h3{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:14px 0 6px}
+ul{margin:0;padding-left:20px}
+li{margin:4px 0}
+.bug{border-top:1px solid var(--line);padding:12px 0}
+.bug:first-of-type{border-top:0;padding-top:4px}
+.bug b{display:block}
+.bug p{margin:4px 0 0;color:var(--mute)}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:99px;margin-right:6px;border:1px solid currentColor;vertical-align:1px}
+.t-plan{color:var(--warn)}.t-watch{color:var(--info)}.t-design{color:var(--mute)}.t-fixed{color:var(--acc)}
+.tip{border-left:3px solid var(--acc);padding:8px 12px;margin:0 0 16px;background:var(--card);border-radius:0 8px 8px 0}
+.tip p{margin:0}
+footer{color:var(--mute);font-size:13px;text-align:center;margin-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Nota Versi</h1>
+  <a class="back" href="./">← Kembali ke game</a>
+</header>
+<p class="sub">Pengurus Kampung · beta tertutup TBPM</p>
+
+<nav>
+  <a href="#isu">Isu diketahui</a>
+  <a href="#v1432">Versi 1.4.3.2</a>
+  <a href="#v1431">Versi 1.4.3.1</a>
+  <a href="#v143">Versi 1.4.3</a>
+  <a href="#v142">Versi 1.4.2</a>
+  <a href="#v141">Versi 1.4.1</a>
+  <a href="#lama">Versi terdahulu</a>
+</nav>
+
+<div class="tip"><p><b>Sebelum hantar laporan bug,</b> semak senarai isu di bawah dulu. Kalau masalah kau sudah tersenarai, tak perlu lapor lagi. Kalau kau ada maklumat baharu (langkah untuk ulang, tangkapan skrin, fail <code>.pksave</code>), hantar melalui butang <b>Maklum balas</b> dalam game.</p></div>
+
+<section id="isu">
+  <h2>Isu diketahui</h2>
+  <div class="date">Dikemas kini 27 Oktober 2026</div>
+
+        <div class="bug">
+    <b><span class="tag t-design">Cara ia berfungsi</span>Versi baharu tidak muncul selepas kemas kini</b>
+    <p>Game akan terima versi baharu bila dibuka semasa dalam talian. Kadangkala kau perlu tutup game sepenuhnya dan buka semula dua kali. Versi semasa dipaparkan dalam menu, pada pautan <b>Apa baharu</b>.</p>
+  </div>
+
+  <div class="bug">
+    <b><span class="tag t-design">Cara ia berfungsi</span>Simpanan hilang selepas padam data pelayar</b>
+    <p>Simpanan disimpan dalam pelayar peranti itu sahaja. Jika kau padam sejarah atau data laman, simpanan turut hilang. Eksport fail <code>.pksave</code> dari halaman <b>Simpan / Muat</b> sebagai sandaran, terutamanya sebelum tukar telefon atau pelayar.</p>
+  </div>
+
+  <div class="bug">
+    <b><span class="tag t-design">Cara ia berfungsi</span>Simpanan dari build Piala Asia tidak boleh dimuat</b>
+    <p>Versi 1.x tidak ada Piala Asia. Simpanan dari build lama itu dibersihkan secara automatik semasa dimuat. Sila mulakan kerjaya baharu.</p>
+  </div>
+</section>
+
+<section id="v1432">
+  <h2>Versi 1.4.3.2</h2>
+  <div class="date">27 Oktober 2026 · versi beta semasa</div>
+  <h3>Dibaiki</h3>
+  <ul>
+    <li>Notis kecil di bawah skrin (contohnya selepas Director of Football menyambung kontrak) tidak hilang sepenuhnya pada sesetengah telefon Android. Kini ia hilang sendiri selepas beberapa saat, dan boleh ditutup dengan mengetiknya.</li>
+  </ul>
+</section>
+
+<section id="v1431">
+  <h2>Versi 1.4.3.1</h2>
+  <div class="date">27 Oktober 2026</div>
+  <h3>Dibaiki</h3>
+  <ul>
+    <li><b>Jadual liga</b> kini mengagihkan perlawanan laman sendiri dan tempat lawan dengan seimbang. Sebelum ini ada kelab yang bermain di tempat lawan berminggu-minggu berturut-turut. Kini maksimum dua berturut-turut dalam kebanyakan kes. Berkuat kuasa mulai musim baharu; jadual musim semasa dalam simpanan sedia ada tidak berubah.</li>
+    <li><b>Kelab AI dan ejen bebas:</b> kelab AI kini hanya menandatangani ejen bebas yang setaraf dengan tahap kelab mereka, dan kau mendapat dua minggu pertama untuk ejen bebas yang baru dilepaskan sebelum kelab AI boleh mendekati mereka.</li>
+    <li><b>Mesej "memantau"</b> dikurangkan. Inbox hanya memaklumkan minat terhadap enam pemain terbaik kau, paling kerap sekali dalam dua bulan. Pemain lain yang diminati masih ditanda WAN dalam senarai skuad.</li>
+  </ul>
+</section>
+
+<section id="v143">
+  <h2>Versi 1.4.3</h2>
+  <div class="date">27 Oktober 2026</div>
+  <h3>Perlawanan</h3>
+  <ul>
+    <li><b>Team talk</b> sebelum sepak mula, pada separuh masa dan selepas perlawanan. Nada yang sesuai dengan situasi menaikkan moral dan prestasi pasukan untuk separuh masa itu. Penolong pengurus boleh beri nasihat atau bercakap bagi pihak kau.</li>
+    <li><b>Sidang media</b> sebelum dan selepas perlawanan, lima soalan setiap satu. Jawapan mempengaruhi moral pemain, kepercayaan lembaga dan mood penyokong. Pilihan.</li>
+    <li><b>Derbi</b> antara kelab dari negeri yang sama: kehadiran lebih tinggi, lebih banyak kad, ulasan khas, dan kesan lebih besar kepada moral, penyokong dan lembaga.</li>
+    <li><b>Bunyi stadium</b>: suasana penonton, sorakan gol, wisel dan rentak gendang, serta laungan penyokong dalam ulasan. Butang <b>Bunyi</b> di bawah skrin perlawanan untuk mematikannya.</li>
+    <li><b>Mood penyokong</b> di Utama. Penyokong yang bersemangat menambah kehadiran di laman sendiri.</li>
+    <li><b>Laporan scout</b> lawan seterusnya: kesebelasan jangkaan, perbandingan barisan, pemain berbahaya dan saranan taktikal. Menu <b>Scout</b>.</li>
+    <li>Bola bercorak yang berputar di padang.</li>
+  </ul>
+  <h3>Skuad</h3>
+  <ul>
+    <li><b>Seret dan lepas</b> pemain di padang Skuad untuk menukar posisi, dari simpanan ke padang, atau ke zon merah untuk keluarkan dari barisan.</li>
+    <li><b>Penapis</b> posisi, umur, CA dan gaji di halaman Skuad.</li>
+    <li><b>Hierarki skuad dan moral</b>: pemain utama, pilihan pertama, rotasi, simpanan dan prospek muda. Pemain yang kurang bermain berbanding jangkaan hilang moral.</li>
+    <li><b>Atribut terkuat dan paling lemah</b> ikut posisi dalam profil setiap pemain.</li>
+    <li><b>Nombor jersi</b> boleh ditukar dari profil pemain.</li>
+    <li><b>Tinggi dan berat</b> pemain.</li>
+    <li><b>Warna jersi custom</b>: Kad kelab, kemudian <b>Tukar lencana & jersi</b>.</li>
+  </ul>
+  <h3>Perpindahan dan kontrak</h3>
+  <ul>
+    <li><b>Ejen bebas boleh ditandatangani bila-bila masa</b>, walaupun jendela pindahan ditutup.</li>
+    <li><b>Laraskan bajet</b>: tukar bajet pindahan kepada had gaji (RM1 gaji sebulan = RM12 bajet pindahan), atau sebaliknya. Butang di halaman Perpindahan dan Kewangan.</li>
+    <li>Had gaji kini dikira ikut baki bank pada awal musim dan bila jendela Januari dibuka. Kelab yang kaya dapat ruang gaji lebih besar.</li>
+    <li>Permintaan naik had gaji kepada lembaga boleh dibuat dua kali semusim, dengan jumlah lebih besar bagi kelab yang kaya.</li>
+    <li><b>Penapis dan susunan</b> di pasaran perpindahan: umur, CA, gaji, dan susun ikut mana-mana atribut.</li>
+    <li><b>Amaran kontrak</b>: tag <b>KTR</b>, e-mel berkumpulan untuk kontrak berbaki setahun, notis setiap pemain bila tinggal enam bulan, dan amaran untuk pemain dalam senarai pendek.</li>
+    <li><b>Director of Football</b>: jawatan staf baharu yang memberi saranan kontrak dan boleh menyambung kontrak bagi pihak kau.</li>
+  </ul>
+  <h3>Lain-lain</h3>
+  <ul>
+    <li>Team of the Week dipaparkan atas papan taktikal.</li>
+    <li>Menu baharu: <b>Perpindahan</b>, <b>Scout</b>, <b>Ahli Lembaga Pengarah</b>. Butang kalendar mingguan kini <b>Kalendar penuh</b>.</li>
+  </ul>
+  <h3>Dibaiki</h3>
+  <ul>
+    <li>Tawaran gaji ditolak walaupun sama dengan permintaan pemain. Jumlah dahulu dibundarkan (contohnya RM4k untuk RM4,300). Kini jumlah penuh dan tawaran minimum dipaparkan.</li>
+    <li>Mesej had gaji kini menunjukkan ruang gaji sebenar dan cara menambahnya.</li>
+  </ul>
+</section>
+
+<section id="v142">
+  <h2>Versi 1.4.2</h2>
+  <div class="date">26 Oktober 2026</div>
+  <h3>Baharu</h3>
+  <ul>
+    <li>Panel <b>Detik perlawanan</b> dan graf <b>Momentum</b> dipaparkan semasa perlawanan langsung, di sebelah padang (atau di bawahnya pada telefon).</li>
+    <li>Pasukan bertukar sisi padang pada separuh masa kedua. Anak panah di penjuru kanan atas padang menunjukkan arah serangan setiap pasukan.</li>
+    <li>Butang <b>Kembali</b> di sebelah logo kelab, untuk kembali ke paparan sebelum.</li>
+    <li>Undian setiap pusingan Piala FA dan Piala TBPM, termasuk nombor undian, tarikh undian dan pot kumpulan Piala TBPM. Inbox memberitahu bila undian dibuat.</li>
+    <li>Kalendar mingguan kini memaparkan tujuh hari sebenar, Isnin hingga Ahad, dengan butang ke minggu sebelum dan seterusnya.</li>
+    <li>Pemain yang menerima kad merah boleh didenda separuh minggu gaji. Keputusan dibuat melalui mesej dalam inbox.</li>
+    <li>Halaman nota versi ini.</li>
+  </ul>
+  <h3>Dibaiki</h3>
+  <ul>
+    <li>Sepakan penalti dipaparkan dengan betul: pengambil di titik penalti, pemain lain di luar kotak, dan penalti yang gagal kini direkod dalam detik perlawanan.</li>
+    <li>Penentuan sepakan penalti kini berlangsung sepakan demi sepakan, dengan papan markah setiap sepakan di padang dan dalam ringkasan perlawanan.</li>
+    <li>Pilihan kapten dan pengambil set piece tidak lagi memilih pemain yang cedera atau digantung. Senarai pilihan menyusun pemain kesebelasan utama dahulu.</li>
+  </ul>
+</section>
+
+<section id="v141">
+  <h2>Versi 1.4.1</h2>
+  <div class="date">26 Oktober 2026</div>
+  <h3>Baharu</h3>
+  <ul>
+    <li>Pintu "Sertai beta" dengan had 100 penguji dan kod jemputan pilihan.</li>
+    <li>Statistik penggunaan tanpa nama (pemasangan, aktif, peristiwa kerjaya seperti dipecat, juara dan naik divisyen) untuk bantu kami faham cara game dimainkan.</li>
+    <li>Ikon aplikasi baharu berasaskan logo TBPM.</li>
+  </ul>
+  <h3>Imbangan kesukaran (dari Versi 1.4)</h3>
+  <ul>
+    <li>Kecederaan semasa latihan jauh berkurang, terutamanya pada intensiti Biasa dan Berat.</li>
+    <li>Kelab AI kini membeli paling banyak seorang pemain bagi setiap jendela pindahan.</li>
+    <li>Objektif lembaga lebih adil dan ikut kedudukan sebenar kelab kau pada awal musim.</li>
+    <li>Juara Liga Kebangsaan boleh dicapai, termasuk oleh kelab yang bukan pilihan utama.</li>
+  </ul>
+</section>
+
+<section id="lama">
+  <h2>Versi terdahulu</h2>
+  <h3>Versi 1.3</h3>
+  <ul>
+    <li>Senarai pendek pemain, dengan tempoh "Hingga hujung musim" atau "Tanpa had masa".</li>
+    <li>Halaman butiran kelab: kewangan, kemudahan, pemain utama dan wonderkid.</li>
+    <li>Halaman "Musim ini": kedudukan liga, jangkaan lembaga, status piala dan statistik pasukan.</li>
+  </ul>
+  <h3>Versi 1.2</h3>
+  <ul>
+    <li>Tag status pemain: INJ, SPD, BID, WAN, LON, TRF, LOA.</li>
+    <li>Kelab lain kini boleh menunjukkan minat terhadap pemain kau.</li>
+    <li>Butang "Kosongkan line-up".</li>
+  </ul>
+  <h3>Versi 1.1</h3>
+  <ul>
+    <li>Penarafan bintang pemain 1 hingga 5.</li>
+    <li>Perlawanan persahabatan pra-musim.</li>
+    <li>Kalendar mingguan di Skuad dan statistik pasukan di Utama.</li>
+  </ul>
+  <h3>Versi 1.0</h3>
+  <ul>
+    <li>Kapten, set piece, taktik A/B/C, pertukaran ketik-untuk-tukar dan butang Pause semasa perlawanan.</li>
+    <li>Latihan dan staf, lembaga dan kerjaya (dipecat, tawaran kerja).</li>
+    <li>Profil pengurus, kad kelab PNG dengan kod QR, dan Simpan / Muat.</li>
+  </ul>
+</section>
+
+<footer>Pengurus Kampung oleh The Blue Podcast Malaysia</footer>
+</div>
+</body>
+</html>
