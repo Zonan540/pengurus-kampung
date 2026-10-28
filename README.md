@@ -30,6 +30,7 @@ Tambah juga entri dalam `site/nota.html`.
 | 1.4.6.2 | Versi 1.4.3.2 |
 | 1.4.6.3 | Versi 1.4.3.3 |
 | 1.4.6.4 | Versi 1.4.3.4 |
+| 1.4.6.5 | Versi 1.4.3.5 |
 
 ## Deploy
 

@@ -64,7 +64,8 @@ with sync_playwright() as p:
     pg, errs = boot(ctx, 'http://localhost:8812/index.html')
 
     ver = pg.evaluate("()=>[VERSION,BUILD,SCHEMA]")
-    check('label versi 1.4.3.4 / b1464 / SCHEMA 1', ver == ['Versi 1.4.3.4', 'b1464', 1], ver)
+    import re
+    check('label versi 1.4.3.x / b146x / SCHEMA 1', bool(re.fullmatch(r'Versi 1\.4\.3\.\d+', ver[0])) and bool(re.fullmatch(r'b146\d', ver[1])) and ver[2] == 1, ver)
 
     # ---- 3. Simpanan lama (tanpa sv) boleh dibuka
     r = pg.evaluate("""([z,bb])=>{const a=parseSave(z),c=parseSave(bb);return {z:!!a.s,zerr:a.err||null,b:!!c.s,berr:c.err||null,zsv:a.s&&a.s.sv,zseason:a.s&&a.s.seasonNo,zt:a.s&&a.s.t}}""", [old_z, old_b])
@@ -80,7 +81,7 @@ with sync_playwright() as p:
     # main satu langkah, lepas itu simpan mesti ada sv
     pg.evaluate("()=>{if(S.fr&&!S.fr.done){frAuto();frConfirm()}S.job.conf=Math.max(S.job.conf,80);doAdvance();closeSummary();closeModal()}")
     stored = pg.evaluate("()=>{const r=parseSave(localStorage.getItem('pk3-slot-auto'));return {ok:!!r.s,sv:r.s&&r.s.sv,bld:r.s&&r.s.bld,meta:getMeta().auto.ver}}")
-    check('autosave baharu membawa sv=1 dan bld', stored['ok'] and stored['sv'] == 1 and stored['bld'] == 'Versi 1.4.3.4 b1464' and 'b1464' in stored['meta'], stored)
+    check('autosave baharu membawa sv=1 dan bld', stored['ok'] and stored['sv'] == 1 and stored['bld'] == ver[0] + ' ' + ver[1] and ver[1] in stored['meta'], stored)
     check('simpanan lama boleh dimainkan terus selepas dimuat', not errs, errs)
 
     # ---- 4. Putaran balik pack/unpack
