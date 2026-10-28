@@ -446,6 +446,7 @@ nav.rail .supbtn{color:var(--hot);border:1px solid rgba(255,201,71,.4);margin-to
 .toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,24px);opacity:0;visibility:hidden;pointer-events:none;cursor:pointer;background:var(--board);border:1px solid var(--loss);color:var(--fg);padding:10px 16px;border-radius:8px;z-index:90;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.45);transition:transform .25s ease,opacity .25s ease,visibility 0s linear .25s}
 .toast.on{transform:translate(-50%,0);opacity:1;visibility:visible;pointer-events:auto;transition:transform .25s ease,opacity .25s ease,visibility 0s}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+.iback{display:none}
 .inboxwrap{display:grid;grid-template-columns:minmax(260px,380px) minmax(0,1fr);gap:16px;align-items:start}
 .ilist{display:flex;flex-direction:column;max-height:70vh;overflow-y:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
 .ilist button{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 12px;cursor:pointer}
@@ -474,7 +475,7 @@ tr.zup td:first-child{box-shadow:inset 3px 0 0 var(--win)} tr.zdown td:first-chi
 .negstep{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.86rem}
 .negstep span{padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mute)} .negstep span.on{border-color:var(--accent);color:var(--fg)} .negstep span.done{border-color:var(--win);color:var(--win)}
 .career{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-@media (max-width:860px){.inboxwrap{grid-template-columns:1fr}.ilist{max-height:40vh}}
+@media (max-width:860px){.inboxwrap{grid-template-columns:1fr}.ilist{max-height:none}.idetail{display:none}.idetail.open{display:flex;flex-direction:column;position:fixed;inset:0;z-index:48;margin:0;border:0;border-radius:0;overflow-y:auto;overscroll-behavior:contain;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px))}.iback{display:block;position:sticky;top:calc(-12px - env(safe-area-inset-top,0px));margin:-12px -16px 4px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);z-index:1}.ilist{max-height:40vh}}
 @media (max-width:860px){
   .shell{grid-template-columns:1fr}
   nav.rail{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px max(10px,env(safe-area-inset-left,0px));gap:4px}
@@ -2013,7 +2014,7 @@ function mSupport(seasonEnd){openModal(`<header><div><span class="lbl">${seasonE
    <div class="row" style="justify-content:center"><button class="btn primary" data-act="close">${seasonEnd?'Teruskan':'Tutup'}</button></div>`)}
 
 // ===== UI v3 =====
-const VERSION='Versi 1.4.3.2';const BUILD='b1462';
+const VERSION='Versi 1.4.3.3';const BUILD='b1463';
 // Isi pautan Google Form maklum balas di sini sebelum diedarkan kepada penguji beta.
 const FEEDBACK_URL='https://docs.google.com/forms/d/e/1FAIpQLSeSK_f1284zoTj_ddw86tJ3he_76DmihIzg4OTLNXhEgkTokA/viewform';
 const LEGACY_KEY='pengurus-kampung-v3';
@@ -2436,12 +2437,12 @@ function ctrBox(m){const c=curClub();const d=c&&c.staff&&c.staff.dof;const L=m.c
   return `<div class="box"><span class="lbl">${d?`Saranan ${esc(d.name)} · Director of Football (${d.r}/20)`:'Pemain terlibat'} · gaji sekarang → permintaan sebulan</span><div class="ctrlist">${rows}</div>
    ${d?(pend.length>1?`<div class="row"><button class="btn good" data-act="dofall" data-arg="${m.id}">Biar DoF sambung ${pend.length} pemain yang disyorkan</button></div>`:''):`<div class="row"><span class="mute" style="font-size:.85rem">Lantik Director of Football untuk saranan dan rundingan bagi pihak kau.</span><button class="btn sm" data-act="nav" data-arg="staff">Ke halaman Staf</button></div>`}</div>`}
 function vInbox(){let list=S.inbox;if(UI.inboxCat)list=list.filter(m=>m.cat===UI.inboxCat);
-  const sel=S.inbox.find(m=>m.id===UI.inboxSel)||list[0];if(sel&&!sel.read){sel.read=true}
+  const sel=S.inbox.find(m=>m.id===UI.inboxSel)||list[0];const narrow=window.matchMedia&&matchMedia('(max-width:860px)').matches;if(sel&&!sel.read&&(!narrow||UI.inboxOpen)){sel.read=true}
   const o=sel&&sel.oid?S.offers.find(x=>x.id===sel.oid):null;
   return `<div class="view"><div class="row sp"><h2>Inbox</h2><div class="row"><button class="btn sm" data-act="readall">Tandakan semua dibaca</button></div></div>
    <div class="tabs"><button class="${!UI.inboxCat?'on':''}" data-act="icat" data-arg="">Semua</button>${Object.entries(CAT).map(([k,v])=>`<button class="${UI.inboxCat===k?'on':''}" data-act="icat" data-arg="${k}">${v}</button>`).join('')}</div>
    <div class="inboxwrap"><div class="ilist">${list.map(inboxRow).join('')||'<p class="mute" style="padding:12px">Tiada mesej dalam kategori ini.</p>'}</div>
-    <section class="panel idetail">${sel?`<span class="lbl">${CAT[sel.cat]||''} · ${fmtDate(sel.d,'long')}</span><h2>${esc(sel.t)}</h2><p>${esc(sel.b)}</p>
+    <section class="panel idetail${UI.inboxOpen&&sel?' open':''}" ${UI.inboxOpen&&sel?'role="dialog" aria-modal="true"':''}>${sel?`<div class="iback"><button class="btn sm" data-act="iclose">← Kembali ke Inbox</button></div><span class="lbl">${CAT[sel.cat]||''} · ${fmtDate(sel.d,'long')}</span><h2>${esc(sel.t)}</h2><p>${esc(sel.b)}</p>
      ${o?offerActions(o):sel.oid?'<p class="mute">Tawaran ini sudah tamat atau diselesaikan.</p>':''}${sel.ctrl?ctrBox(sel):''}${sel.pl&&S.players[sel.pl]?`<div><button class="btn sm" data-act="player" data-arg="${sel.pl}">Buka profil pemain</button></div>`:''}${sel.jo?jobBox(sel.jo):''}${sel.fine?fineBox(sel):''}${sel.draw?`<div><button class="btn sm" data-act="drawopen" data-arg="${sel.draw}">Lihat undian penuh</button></div>`:''}${sel.fx&&S.fixtures[sel.fx]?`<div><button class="btn sm" data-act="report" data-arg="${sel.fx}">Laporan perlawanan</button></div>`:''}${sel.links?`<div class="row">${sel.links.map(([k,l])=>`<button class="btn sm" data-act="${k[0]==='@'?k.slice(1):'nav'}" data-arg="${k}">${esc(l)}</button>`).join('')}</div>`:''}`:'<p class="mute">Pilih mesej.</p>'}</section></div></div>`}
 
 // ---------- squad
@@ -3201,7 +3202,7 @@ function go(){if(LIVE||S.over)return;if(!S.user){doAdvance();return}frEnsure();i
 function val(id){const el=document.getElementById(id);return el?el.value:''}
 function rerenderModalPlayer(pid,r){save();render();mPlayer(pid,r)}
 const ACT={
-  nav:a=>{UI.view=a;closeModal();render();window.scrollTo(0,0)},
+  nav:a=>{UI.view=a;UI.inboxOpen=false;closeModal();render();window.scrollTo(0,0)},
   selclub:a=>{const v=document.getElementById('mgr');if(v)S.manager=v.value.trim();UI.nAge=+val('mgr_age')||35;UI.nForm=val('mgr_form')||'4-4-2';UI.selClub=a;renderStart()},
   regen:()=>{const n=val('mgr').trim();newWorld();S.manager=n;UI.selClub=null;renderStart()},
   startgame:()=>{if(!UI.selClub)return;S.manager=val('mgr').trim()||'Pengurus';S.user=UI.selClub;const c=S.clubs[S.user];c.mgr=S.manager;S.prof={born:S.season-clamp(+val('mgr_age')||35,25,80),origin:'',form:val('mgr_form')||'4-4-2'};S.tac=null;setUserAuto(S.prof.form);spAutoFill();S.job=null;ensureState();
@@ -3215,8 +3216,8 @@ const ACT={
   sqmode:a=>{UI.squadMode=a;render()},autopick:()=>{setUserAuto(S.lu.form);save();render()},clearlu:()=>{S.lu.xi=S.lu.xi.map(()=>null);S.lu.bench=[];save();render()},ment:a=>{S.lu.ment=a;curTac().ment=a;save();render()},
   slot:a=>{if(LIVE)return;mSlot(+a)},pickslot:a=>{const[pid,i]=a.split('|');setPlace(pid,'x'+i);save();closeModal();render()},clearslot:a=>{S.lu.xi[+a]=null;save();closeModal();render()},
   statcomp:a=>{UI.statComp=a;render()},statlg:a=>{UI.statLg=+a;render()},lgview:a=>{UI.lgView=+a;UI.lgRound=null;render()},awlg:a=>{UI.awLg=+a;UI.awRound=null;render()},faround:a=>{UI.faRound=a;render()},
-  imsg:a=>{UI.inboxSel=a;if(UI.view!=='inbox'){UI.view='inbox'}const m=S.inbox.find(x=>x.id===a);if(m)m.read=true;save();render()},
-  icat:a=>{UI.inboxCat=a;UI.inboxSel=null;render()},readall:()=>{S.inbox.forEach(m=>m.read=true);save();render()},
+  imsg:a=>{UI.inboxSel=a;UI.inboxOpen=true;if(UI.view!=='inbox'){UI.view='inbox'}const m=S.inbox.find(x=>x.id===a);if(m)m.read=true;save();render()},
+  icat:a=>{UI.inboxCat=a;UI.inboxSel=null;UI.inboxOpen=false;render()},iclose:()=>{UI.inboxOpen=false;render()},readall:()=>{S.inbox.forEach(m=>m.read=true);save();render()},
   tftab:a=>{UI.tf.tab=a;UI.view='transfer';closeModal();render()},
   acc:a=>{const err=acceptOffer(a);save();render();if(err)alertMsg(err)},rej:a=>{rejectOffer(a);save();render()},
   cntr:a=>{const r=counterOffer(a,Math.max(0,+val('ctr_'+a)||0));save();render();alertMsg(r.msg,r.ok)},
@@ -3321,7 +3322,7 @@ document.addEventListener('pointerup',e=>{const s=DND.s;if(!s)return;const t=s.o
 document.addEventListener('pointercancel',()=>dndEnd());
 window.addEventListener('click',e=>{if(DND.block>Date.now()){e.stopPropagation();e.preventDefault();DND.block=0}},true);
 document.addEventListener('change',e=>{const t=e.target.closest('[data-chg]');if(!t)return;const f=CHG[t.dataset.chg];if(f)f(t.dataset.arg,t)});
-document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(document.getElementById('modal').innerHTML)closeModal();else if(document.getElementById('summ').innerHTML)closeSummary()});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(document.getElementById('modal').innerHTML)closeModal();else if(UI.inboxOpen&&UI.view==='inbox'){UI.inboxOpen=false;render()}else if(document.getElementById('summ').innerHTML)closeSummary()});
 function runSplash(){const el=document.getElementById('splash');if(!el)return;const bar=document.getElementById('spbar'),pct=document.getElementById('sppct'),msg=document.getElementById('spmsg');
   const dur=3000+Math.random()*2000;const steps=[[0,'Menyediakan padang...'],[22,'Memanggil pemain ke latihan...'],[48,'Menyusun jadual liga...'],[74,'Menghidupkan lampu stadium...'],[94,'Sedia untuk sepak mula!']];
   const v=document.querySelector('.splash .sp-v');if(v)v.textContent='Pengurus Kampung · '+VERSION;
