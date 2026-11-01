@@ -8,13 +8,13 @@ def safe(f,*a):
     try: return f(*a)
     except Exception as e: return 'ERR '+str(e)[:200]
 
-VIEWS = ['home','inbox','squad','tactic','train','staff','transfer','finance','board','profile','scout','season','fixtures','league','fa','tb','awards','stats','clubs','saves','help','feedback','jobs','medical']
+VIEWS = ['home','inbox','squad','tactic','train','staff','transfer','finance','board','profile','scout','season','fixtures','league','fa','tb','awards','stats','clubs','saves','help','feedback','jobs','medical','asia']
 
 INV = r"""()=>{const out=[];const owner={};
   for(const [cid,c] of Object.entries(S.clubs)){for(const id of [...c.players,...(c.res||[])]){const p=S.players[id];if(!p){out.push('missing player '+id+' in '+cid);continue}
      if(owner[id])out.push('player in two clubs '+id);owner[id]=cid;if(p.club!==cid&&!(p.loan))out.push('club mismatch '+id+' '+p.club+'!='+cid)}
     for(const k of ['bal','tb']){if(c.tier&&!Number.isFinite(c[k]))out.push('NaN '+k+' '+cid)}
-    if(c.players.length<14)out.push('small squad '+cid+' '+c.players.length)}
+    if(c.players.length<14&&!c.foreign)out.push('small squad '+cid+' '+c.players.length)}
   for(const [id,p] of Object.entries(S.players)){if(p.club&&!S.clubs[p.club])out.push('ghost club '+id);if(p.club&&!owner[id]&&!p.loan)out.push('orphan '+id+' club '+p.club);
     if(Object.values(p.a||{}).some(v=>!Number.isFinite(v)))out.push('NaN attr '+id);if(!Number.isFinite(p.wage))out.push('NaN wage '+id)}
   const fa=new Set(S.fa||[]);for(const id of fa){const p=S.players[id];if(!p)out.push('fa missing '+id);else if(p.club)out.push('fa has club '+id)}

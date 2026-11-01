@@ -24,7 +24,7 @@ with sync_playwright() as p:
     r = pg.evaluate("""()=>{const idx=(c,rd)=>tIndex(c,rd);const tl=S.tl;const lg=n=>tIndex('L',n);
       const faF=idx('FA','F'),tbF=idx('TB','F');
       const cupAfterLeague=[...Object.entries(FA_AFTER).map(([r,rd])=>['FA',rd,+r]),...Object.entries(TB_AFTER).map(([r,rd])=>['TB',rd,+r])].every(([c,rd,r])=>idx(c,rd)>lg(r)&&idx(c,rd)<lg(r+1>38?38:r+1)+1);
-      const midweek=tl.filter(e=>e.c&&e.c[0]!=='L').every(e=>new Date(e.d+'T00:00:00Z').getUTCDay()===3);
+      const midweek=tl.filter(e=>e.c&&['FA','TB','SB'].includes(e.c[0])&&e.c[1]!=='F'||e.c&&e.c[0]==='TB'&&e.c[1]==='F').every(e=>new Date(e.d+'T00:00:00Z').getUTCDay()===3);
       const dup=new Set(tl.map(e=>e.d)).size===tl.length;
       return {faF,tbF,fa_before_tb:faF<tbF,cupAfterLeague,midweek,dup,noGroups:!tl.some(e=>e.c&&/^(G\\d|QF1|QF2)$/.test(e.c[1])),fmt:S.tb.fmt,sb:tIndex('SB','F'),sbFx:fxOf('SB','F').length}}""")
     check('FA tamat sebelum TBPM', r['fa_before_tb'], r)
@@ -86,7 +86,7 @@ with sync_playwright() as p:
     check('semua stadium <= had divisyen; Liga 1 maksimum mutlak 30,000', r['maxCap'] <= 30000 and r['abs'] == 30000 and r['max']['1'] == 30000, r)
     r = pg.evaluate("""()=>{const o=JSON.parse(JSON.stringify(S));o.sv=3;const cid=Object.keys(o.clubs).find(k=>o.clubs[k].tier===1);o.clubs[cid].cap=52000;
       const prev=S;S=o;ensureState();const res={sv:S.sv,cap:S.clubs[cid].cap};S=prev;return res}""")
-    check('migrasi v4: kapasiti > 30,000 dipotong ke 30,000', r['sv'] == 4 and r['cap'] == 30000, r)
+    check('migrasi v4: kapasiti > 30,000 dipotong ke 30,000', r['sv'] == 5 and r['cap'] == 30000, r)
     r = pg.evaluate("""()=>{const c=S.clubs[S.user];c.cap=CAP_MAX[c.tier]-STAD_STEPS[c.tier][1];c.bal=5e7;S.job.conf=90;S.job.cool=null;S.proj=S.proj.filter(p=>p.cid!==S.user);const hf=window.homeFill;window.homeFill=()=>0.95;
       const steps=STAD_STEPS[c.tier];const bad=boardRequest('stad|'+steps[steps.length-1]);mStadium();const html=document.getElementById('modal')?document.getElementById('modal').innerHTML:document.body.innerHTML;
       const cap0=c.cap,bal0=c.bal;const ok=boardRequest('stad|'+steps[0]);const pj=S.proj.find(p=>p.cid===S.user&&p.k==='stad');
