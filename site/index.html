@@ -456,6 +456,18 @@ nav.rail .supbtn{color:var(--hot);border:1px solid rgba(255,201,71,.4);margin-to
 .onboard{border-color:var(--accent);background:linear-gradient(0deg,var(--panel),var(--panel))}
 .mis{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;cursor:pointer}.mis input{margin-top:3px;width:18px;height:18px}
 .toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,24px);opacity:0;visibility:hidden;pointer-events:none;cursor:pointer;background:var(--board);border:1px solid var(--loss);color:var(--fg);padding:10px 16px;border-radius:8px;z-index:90;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.45);transition:transform .25s ease,opacity .25s ease,visibility 0s linear .25s}
+
+.cel{text-align:center;padding:22px 14px;border-top:6px solid var(--cel);background:linear-gradient(180deg,color-mix(in srgb,var(--cel) 18%,transparent),transparent 60%)}
+.cel .celi{font-size:3rem;line-height:1}.cel h2{margin:.3rem 0;color:var(--cel)}.cel p{max-width:34ch;margin:.4rem auto 1rem}
+#proc{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(2,6,18,.55);backdrop-filter:blur(2px)}#proc.on{display:flex}
+.procb{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--board);border:1px solid var(--line);padding:18px 26px;border-radius:12px}
+.spin{width:28px;height:28px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--hot);animation:pkspin .8s linear infinite}@keyframes pkspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:2.4s}}
+.achgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}.ach{display:flex;gap:10px;padding:10px;border:1px solid var(--line);border-radius:10px;opacity:.6}.ach.on{opacity:1;border-color:var(--hot)}.aic{font-size:1.8rem;width:2.2rem;text-align:center}
+.mgrcard .mgrtop{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.mgrid{width:56px;height:56px;border-radius:12px;background:var(--hot);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.3rem}
+.replv{margin-left:auto;display:flex;flex-direction:column;gap:2px}.replvn{font-size:1.2rem;color:var(--hot)}.mgrstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin:10px 0}.mgrstats div{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;padding:6px 8px}.mgrstats b{font-size:1.2rem}.mgrstats span{font-size:.74rem;color:var(--mute)}
+.honl{margin:4px 0;padding-left:1.1rem;font-size:.88rem}
+.mpyr{display:flex;flex-direction:column;gap:8px}.morrow{border:1px solid var(--line);border-radius:10px;padding:8px 10px}.morrow.m0{border-color:var(--hot)}.morh{display:flex;justify-content:space-between;gap:8px}.morc{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.mchip{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:3px 9px;font-size:.84rem;cursor:pointer}
 #savewarn{position:fixed;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top,0px));z-index:95;display:none;background:var(--board);border:1px solid var(--loss);color:var(--fg);padding:10px 12px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.45);font-size:.9rem;line-height:1.4}
 #savewarn.on{display:block}
 #savewarn .row{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
@@ -1240,7 +1252,7 @@ function finishMatch(m){
       if(e.pos==='GK')r+=e.sv*.28-e.ga*.35+(e.ga===0?.6:0);else if(DEFP.includes(e.pos))r+=-e.ga*.18+(e.ga===0?.4:0);else if(e.pos==='DM')r+=-e.ga*.08+(e.ga===0?.2:0);
       r+=(roleRating(p,e.pos)-12)*.06;if(e.red)r-=1.5;const end=e.out!=null?e.out:(m.et?120:90);if(end-e.in<20)r=6+(r-6.3)*.5;
       r=Math.round(clamp(r,3.5,10)*10)/10;e.rt=r;rts[s].push([e.id,r,e.pos,e.g,e.as,e.in]);if(r>mv){mv=r;motm=e.id}
-      if(fx.comp!=='FR'&&fx.comp!=='SB'){const st=p.st[fx.comp]||(p.st[fx.comp]={ap:0,g:0,as:0,rt:0});st.ap++;st.g+=e.g;st.as+=e.as;st.rt+=r;p.car.ap++;p.car.g+=e.g;stintAdd(p,e,r)}p.cond=Math.round(e.cond);
+      if(fx.comp!=='FR'&&fx.comp!=='SB'){const st=p.st[fx.comp]||(p.st[fx.comp]={ap:0,g:0,as:0,rt:0});st.ap++;st.g+=e.g;st.as+=e.as;st.rt+=r;if(e.ga===0&&(e.pos==='GK'||DEFP.includes(e.pos)||e.pos==='DM'))st.cs=(st.cs||0)+1;p.car.ap++;p.car.g+=e.g;stintAdd(p,e,r)}p.cond=Math.round(e.cond);
       if(e.inj){createInjury(p,'match');if(p.club===S.user)inbox('inj',`${p.name} cedera: ${injLabel(p)}`,`${INJ_SEV[p.injx.sv]}. Dijangka berehat ${p.inj} hari, kembali sekitar ${fmtDate(p.injx.ret)}. Kecederaan berlaku dalam perlawanan menentang ${S.clubs[fx.h===S.user?fx.a:fx.h].name}.`,{links:[['medical','Buka Medical']]})}
       if(fx.comp==='FR'){}else if(e.red){p.ban+=1;if(p.club===S.user){const amt=redFine(p);inbox('inj',`${p.name} digantung satu perlawanan`,`Akibat kad merah ketika menentang ${S.clubs[fx.h===S.user?fx.a:fx.h].name}. Kau boleh mengenakan denda separuh minggu gaji (${fmtRM(amt,1)}) atau memberi amaran sahaja.`,{fine:{pid:p.id,amt,st:0},fx:fx.id})}}
       else if(e.yel){p.yel++;if(p.yel>=5){p.yel=0;p.ban+=1;if(p.club===S.user)inbox('inj',`${p.name} digantung`,'Mengumpul lima kad kuning. Dia akan terlepas perlawanan seterusnya.')}}
@@ -1283,7 +1295,7 @@ function matchFanEffects(fx){const me=S.user;const o=fx.h===me?fx.a:fx.h;const r
   if(fx.derby){f*=3;S.job.conf=clamp(S.job.conf+(r>0?3:r<0?-3:0),0,100);if(!S.h2h)S.h2h={};const k=h2hKey(me,o);const h=S.h2h[k]||(S.h2h[k]=[0,0,0]);h[r>0?0:r===0?1:2]++}
   if(fx.promise){if(r>0)f+=2;else{f-=4;S.job.conf=clamp(S.job.conf-3,0,100);inbox('board','Janji kemenangan tidak ditepati',`Kau menjanjikan kemenangan menentang ${S.clubs[o].name} dalam sidang media. Penyokong dan lembaga mengingati kata-kata itu.`)}}
   S.fans=clamp((S.fans==null?60:S.fans)+f,0,100)}
-function userResultNews(fx){const me=S.user,opp=fx.h===me?fx.a:fx.h,gf=fx.h===me?fx.hg:fx.ag,ga=fx.h===me?fx.ag:fx.hg;const on=S.clubs[opp].name;
+function userResultNews(fx){try{achMatch(fx)}catch(x){logErr(x&&x.message||x,'ach')}const me=S.user,opp=fx.h===me?fx.a:fx.h,gf=fx.h===me?fx.hg:fx.ag,ga=fx.h===me?fx.ag:fx.hg;const on=S.clubs[opp].name;
   let t;if(fx.win&&isKO(fx))t=fx.win===me?`Mara! ${S.clubs[me].name} singkirkan ${on}`:`Tersingkir di tangan ${on}`;
   else t=gf>ga?`Menang ${gf}-${ga} menentang ${on}`:gf<ga?`Tewas ${gf}-${ga} kepada ${on}`:`Seri ${gf}-${ga} dengan ${on}`;
   if(fx.derby)t=derbyName(fx)+': '+t;const mo=fx.motm?S.players[fx.motm]:null;
@@ -1419,11 +1431,11 @@ function seasonEnd(){
   if(S.user){const ul=S.clubs[S.user].tier;rec.user={l:ul,pos:rec.tables[ul].indexOf(S.user)+1,cid:S.user};
   if(rec.ch[ul]===S.user)S.trophies.push({s:S.season,c:S.user,t:`Juara ${LG_NAME[ul]}`});
   if(rec.up.some(x=>x[0]===S.user))S.trophies.push({s:S.season,c:S.user,t:`Naik ke ${LG_NAME[ul-1]}`})}
-  seasonAwards();S.honours.unshift(rec);S.pendingMoves={up:rec.up,down:rec.down};S.over=true;
+  seasonAwards();abkRun(rec);S.honours.unshift(rec);S.pendingMoves={up:rec.up,down:rec.down};S.over=true;
   if(S.user){const ul=rec.user.l;const up=rec.up.find(x=>x[0]===S.user),dn=rec.down.find(x=>x[0]===S.user);
   inbox('league',`Musim ${seasonLabel(S.season)} tamat`,`Kelab kau menamatkan ${LG_NAME[ul]} di tempat ke-${rec.user.pos}${up?` dan NAIK ke ${LG_NAME[up[2]]}!`:dn?` dan tersingkir ke ${LG_NAME[dn[2]]}.`:'.'} Hadiah liga ${fmtRM(prizeFor(ul,rec.user.pos-1))}.`)}
   else inbox('league',`Musim ${seasonLabel(S.season)} tamat`,`Juara: ${[1,2,3].map(l=>`${LG_SHORT[l]} ${S.clubs[rec.ch[l]].name}`).join(', ')}.`);
-  jobSeasonEnd(rec);
+  jobSeasonEnd(rec);seasonCelebrations(rec);
   if(S.seasonNo>=MAX_SEASONS&&!S.ended){S.ended=true;S.job.dead=true;inbox('board','Kerjaya tamat',`Kau sudah melengkapkan ${MAX_SEASONS} musim. Lihat ringkasan kerjaya di Utama.`)}}
 function develop(p){p.age++;const ab=ability(p);const apps=p.st.L.ap+p.st.FA.ap+p.st.TB.ap;
   let g=p.age<=20?1.1:p.age<=23?.6:p.age<=28?.15:p.age<=31?-.35:-.9;if(p.age<=23&&apps>=15)g+=.35;if(g>0&&ab>=p.pot)g=Math.min(g,.05);
@@ -1503,7 +1515,7 @@ function doTransfer(pid,toCid,fee,wage,years){
   mvAdd(p,from,toCid,fee,0);p.club=toCid;p.res=false;p.wage=wage;p.ctr=S.season+years-1;p.mor=75;p.moved=S.season;delete S.listed[pid];delete S.loanList[pid];delete S.negs[pid];assignNo(toCid,p);
   if(from===S.user&&S.lu){S.lu.xi=S.lu.xi.map(x=>x===pid?null:x);S.lu.bench=S.lu.bench.filter(x=>x!==pid)}
   S.offers=S.offers.filter(o=>o.pid!==pid);if(S.dec)S.dec=S.dec.filter(x=>x.pid!==pid);
-  S.tlog.unshift({d:curDate(),pid,name:p.name,pos:p.pos,from:from||null,to:toCid,fee});if(S.tlog.length>250)S.tlog.length=250;
+  S.tlog.unshift({d:curDate(),pid,name:p.name,pos:p.pos,from:from||null,to:toCid,fee});if(toCid===S.user)achSigning(fee,pid);if(S.tlog.length>250)S.tlog.length=250;
   if(toCid!==S.user&&to.players.length>28){const worst=to.players.map(id=>S.players[id]).filter(q=>q.id!==pid&&!q.loan).sort((a,b)=>valueOf(a)-valueOf(b))[0];if(worst)releaseToFA(worst.id)}}
 function doLoan(pid,toCid,months,share){const p=S.players[pid];const from=p.club;const fc=S.clubs[from];fc.players=fc.players.filter(x=>x!==pid);fc.res=(fc.res||[]).filter(x=>x!==pid);
   if(from===S.user&&S.lu){S.lu.xi=S.lu.xi.map(x=>x===pid?null:x);S.lu.bench=S.lu.bench.filter(x=>x!==pid)}
@@ -1647,7 +1659,6 @@ const GK_A=['ref','han','psn','cmp'];
 
 function clubP(c){return c&&c.tier?(4-c.tier)*20+rep(c)*4:0}
 function repReq(c){return clubP(c)-20}
-function repLabel(r){return r>=80?'Bertaraf negara':r>=60?'Terkenal di Liga Kebangsaan':r>=40?'Dihormati di Liga Negeri':r>=22?'Dikenali di peringkat negeri':'Pengurus kampung'}
 function confLabel(c){return c>=75?'Sangat yakin':c>=55?'Yakin':c>=40?'Neutral':c>=25?'Bimbang':'Kritikal'}
 function defaultFac(c){const b=c.tier===1?3:c.tier===2?2:1;return{train:clamp(b+(rep(c)>=4?1:0),1,5),youth:clamp(b+(rep(c)>=4?1:0),1,5),med:clamp(b,1,5)}}
 function curClub(){return S&&S.user?S.clubs[S.user]:null}
@@ -2029,6 +2040,105 @@ function vScouting(){scEnsure();const run=S.scT.filter(t=>t.st==='run'),done=S.s
     <p class="mute" style="font-size:.84rem">Untuk menilai pemain tertentu, buka profilnya dan tekan Hantar scout.</p></section>
    <section class="panel"><h3>Tugasan berjalan (${run.length})</h3>${run.length?`<div class="tbl"><table><tbody>${run.map(t=>`<tr><td>${esc((S.scouts.find(s=>s.id===t.sid)||{}).name||'')}</td><td>${nm(t)}</td><td class="r num">${t.n}/${t.need} perlawanan</td></tr>`).join('')}</tbody></table></div>`:'<p class="mute">Tiada.</p>'}</section>
    <section class="panel"><h3>Laporan siap (${done.length})</h3>${done.map(t=>t.k==='p'?repHTML(t):`<div class="box"><b>Bakat ditemui</b> <span class="mute">${fmtDate(t.rep.d)}${t.pos?' · '+t.pos:''} · ≤${t.maxAge} thn</span><div class="tbl"><table><tbody>${t.rep.list.map(id=>{const p=S.players[id];return p?`<tr><td class="nm">${plink(id)}</td><td>${posHTML(p)}</td><td class="r num">${ageOf(p)}</td><td>${starsHTML(p,'c')}</td><td class="mute">${esc(cname(p.club)||'Ejen bebas')}</td><td><button class="btn sm" data-act="scshort" data-arg="${id}">Senarai pendek</button></td></tr>`:''}).join('')}</tbody></table></div></div>`).join('')||'<p class="mute">Belum ada laporan.</p>'}</section></div>`}
+// ===== 2.0 Fasa 7: pencapaian (K), profil & reputasi (L), ABK (M), sambutan & aliran (O) =====
+const ACH=[
+  {id:'gm',n:'Goal Machine',ic:'⚽',cat:'Jaringan',d:'Seorang pemain menjaringkan gol dalam 10 perlawanan berturut-turut.'},
+  {id:'hat',n:'Hat-Trick Hero',ic:'🎩',cat:'Jaringan',d:'Seorang pemain kau menjaringkan hat-trick.'},
+  {id:'five',n:'Five-Star Performance',ic:'⭐',cat:'Jaringan',d:'Menang 5-0 buat kali pertama dalam rekod kelab.'},
+  {id:'tank',n:'Park the Tank',ic:'🛡️',cat:'Pertahanan',d:'10 clean sheet berturut-turut.'},
+  {id:'wall',n:'Defensive Wall',ic:'🧱',cat:'Pertahanan',d:'20 clean sheet dalam satu musim.'},
+  {id:'splash',n:'Splash the Cash',ic:'💸',cat:'Perpindahan',d:'Membeli pemain dengan yuran melebihi RM2 juta.'},
+  {id:'record',n:'Record Signing',ic:'🖊️',cat:'Perpindahan',d:'Memecahkan rekod pembelian kelab (sekurang-kurangnya RM100k).'},
+  {id:'streak',n:'Winning Streak',ic:'🔥',cat:'Pengurus',d:'8 kemenangan berturut-turut.'},
+  {id:'giant',n:'Giant Killer',ic:'🗡️',cat:'Pengurus',d:'Menewaskan kelab yang jauh lebih kuat (selisih kekuatan 1.0 atau lebih).'},
+  {id:'league',n:'League Champion',ic:'🏆',cat:'Pengurus',d:'Menjuarai liga.'},
+  {id:'cup',n:'Cup Winner',ic:'🥇',cat:'Pengurus',d:'Menjuarai Piala FA, Piala TBPM atau Piala Sumbangsih.'},
+  {id:'asia',n:'Continental Glory',ic:'🌏',cat:'Pengurus',d:'Menjuarai pertandingan Asia.'},
+  {id:'abk',n:'Dinobatkan ABK',ic:'🎖️',cat:'Anugerah',d:'Pemain atau pengurus kelab kau memenangi anugerah utama ABK.'}];
+function achGive(id,detail){if(!S.user)return false;if(!S.ach)S.ach={};if(S.ach[id])return false;const a=ACH.find(x=>x.id===id);if(!a)return false;
+  S.ach[id]={d:curDate(),s:S.season,c:S.user,t:detail||''};
+  inbox('award',`Pencapaian: ${a.n}`,`${a.d}${detail?' '+detail:''}`,{read:false});
+  celebrate('ach|'+id,'ach',`Pencapaian dibuka: ${a.n}`,a.d+(detail?' '+detail:''),`${a.ic} ${a.cat} · ${fmtDate(curDate(),'long')}`);return true}
+function achMatch(fx){if(!S.user||!fx.played||fx.comp==='FR')return;const me=S.user,home=fx.h===me,gf=home?fx.hg:fx.ag,ga=home?fx.ag:fx.hg,res=userRes(fx);
+  const A=S.achS||(S.achS={ws:0,cs:0,gs:{},sc:0,sk:S.season});if(A.sk!==S.season){A.sk=S.season;A.sc=0}
+  A.ws=res>0?A.ws+1:0;if(A.ws>=8)achGive('streak',`${A.ws} kemenangan berturut-turut.`);
+  if(ga===0){A.cs++;A.sc++}else A.cs=0;if(A.cs>=10)achGive('tank',`${A.cs} perlawanan tanpa bolos.`);if(A.sc>=20)achGive('wall',`${A.sc} clean sheet musim ini.`);
+  if(gf>=5&&ga===0&&res>0)achGive('five',`${S.clubs[me].name} ${gf}-0 menentang ${S.clubs[home?fx.a:fx.h].name}.`);
+  const side=(fx.rt&&fx.rt[home?0:1])||[];const sc=new Set();side.forEach(x=>{if(x[3]>0)sc.add(x[0]);if(x[3]>=3&&S.players[x[0]])achGive('hat',`${S.players[x[0]].name} menjaringkan ${x[3]} gol.`)});
+  Object.keys(A.gs).forEach(id=>{if(!sc.has(id))delete A.gs[id]});sc.forEach(id=>{A.gs[id]=(A.gs[id]||0)+1;if(A.gs[id]>=10&&S.players[id])achGive('gm',`${S.players[id].name} menjaring dalam ${A.gs[id]} perlawanan berturut-turut.`)});
+  const o=home?fx.a:fx.h;if(res>0&&clubStrength(o)-clubStrength(me)>=1.0)achGive('giant',`Menewaskan ${S.clubs[o].name}.`);
+  const J=S.job;if(J){J.gf=(J.gf||0)+gf;J.ga=(J.ga||0)+ga;const h=J.hist&&J.hist.find(x=>x.to===null&&x.cid===me);if(h){h.w=(h.w||0)+(res>0?1:0);h.d=(h.d||0)+(res===0?1:0);h.l=(h.l||0)+(res<0?1:0)}}
+  if(fx.round==='F'||fx.comp==='SB'||fx.comp==='AS'){if(fx.win===me){const nm=compName(fx);
+    if(fx.comp==='AC'||fx.comp==='AL'||fx.comp==='AS'){achGive('asia',nm+'.');celebrate('W|'+fx.comp+'|'+S.season,'asia',`Juara ${nm}!`,`${S.clubs[me].name} menjuarai ${nm} dengan keputusan ${S.clubs[fx.h].name} ${scoreStr(fx)} ${S.clubs[fx.a].name}.`,`${nm} · ${fmtDate(curDate(),'long')}`)}
+    else if(fx.comp==='FA'||fx.comp==='TB'||fx.comp==='SB'){achGive('cup',nm+'.');celebrate('W|'+fx.comp+'|'+S.season,'cup',`Juara ${nm}!`,`${S.clubs[me].name} mengangkat trofi ${nm}. Final: ${S.clubs[fx.h].name} ${scoreStr(fx)} ${S.clubs[fx.a].name}.`,`${nm} · ${fmtDate(curDate(),'long')}`)}}}}
+function achSigning(fee,pid){if(!S.user||!fee)return;const p=S.players[pid];if(fee>2e6)achGive('splash',`${p?p.name:'Pemain'} dibeli dengan ${fmtRM(fee)}.`);
+  const old=S.recSign||0;if(fee>old){S.recSign=fee;if(old>0&&fee>=1e5)achGive('record',`${p?p.name:'Pemain'} (${fmtRM(fee)}) memecahkan rekod lama ${fmtRM(old)}.`)}}
+function vAch(){const A=S.ach||{};const n=ACH.filter(a=>A[a.id]).length;
+  return `<div class="view"><div class="row sp"><h2>Pencapaian</h2><span class="mono mute">${n}/${ACH.length} dibuka</span></div><section class="panel"><div class="achgrid">${ACH.map(a=>{const u=A[a.id];
+   return `<div class="ach ${u?'on':''}"><div class="aic" aria-hidden="true">${u?a.ic:'🔒'}</div><div><b>${esc(a.n)}</b> <span class="chip">${a.cat}</span><div class="mute" style="font-size:.84rem">${esc(a.d)}</div>${u?`<div style="font-size:.82rem;margin-top:3px">${fmtDate(u.d)} · musim ${seasonLabel(u.s)}${u.t?' · '+esc(u.t):''}</div>`:'<div class="mute" style="font-size:.8rem">Belum dibuka</div>'}</div></div>`}).join('')}</div></section></div>`}
+// --- O3: sambutan
+function celebrate(key,kind,title,body,ctx){if(!S.celeb)S.celeb={};if(S.celeb[key])return;S.celeb[key]=1;(S.celQ=S.celQ||[]).push({kind,title,body,ctx})}
+const CEL_ST={gold:['#f5c542','🏆'],up:['#34d399','⬆️'],down:['#f87171','⬇️'],cup:['#60a5fa','🥇'],asia:['#b18cff','🌏'],ach:['#2dd4bf','🎖️'],award:['#fb923c','⭐']};
+function celShow(){if(!S.celQ||!S.celQ.length)return;if(document.getElementById('modal').innerHTML||document.getElementById('summ').innerHTML||LIVE)return;const c=S.celQ.shift();const st=CEL_ST[c.kind==='league'?'gold':c.kind]||CEL_ST.ach;
+  openModal(`<div class="cel" style="--cel:${st[0]}"><div class="celi" aria-hidden="true">${st[1]}</div><span class="lbl">${esc(c.ctx||'')}</span><h2>${esc(c.title)}</h2><p>${esc(c.body)}</p><div class="row"><button class="btn primary" data-act="celnext">${S.celQ.length?'Seterusnya':'Teruskan'}</button></div></div>`);save()}
+function celSoon(){setTimeout(()=>{try{celShow()}catch(e){}},400)}
+function seasonCelebrations(rec){if(!rec.user)return;const me=rec.user.cid,ul=rec.user.l,pos=rec.user.pos,s=S.season;
+  if(rec.ch[ul]===me){celebrate('L|'+s,'league',`Juara ${LG_NAME[ul]}!`,`${S.clubs[me].name} menamatkan ${LG_NAME[ul]} ${seasonLabel(s)} di tempat pertama. Gelaran liga disahkan.`,`${LG_NAME[ul]} · ${seasonLabel(s)}`);achGive('league',`${LG_NAME[ul]} ${seasonLabel(s)}.`)}
+  const up=rec.up.find(x=>x[0]===me),dn=rec.down.find(x=>x[0]===me);
+  if(up)celebrate('N|'+s,'up',`Naik ke ${LG_NAME[up[2]]}!`,`${S.clubs[me].name} menamatkan ${LG_NAME[ul]} di tempat ke-${pos} dan layak ke ${LG_NAME[up[2]]} musim depan.`,`Kenaikan divisyen · ${seasonLabel(s)}`);
+  if(dn)celebrate('R|'+s,'down',`Diturunkan ke ${LG_NAME[dn[2]]}`,`${S.clubs[me].name} menamatkan ${LG_NAME[ul]} di tempat ke-${pos} dan tersingkir ke ${LG_NAME[dn[2]]}. Musim depan ialah peluang untuk bangkit.`,`Penurunan divisyen · ${seasonLabel(s)}`)}
+// --- L: reputasi & kad pengurus
+const REP_LV=[[0,'Unknown'],[10,'Local'],[22,'Established'],[35,'Respected'],[48,'Good'],[62,'Excellent'],[78,'World Class'],[92,'Legendary']];
+function repLevel(r){let i=0;REP_LV.forEach((x,k)=>{if(r>=x[0])i=k});return i}
+function repLabel(r){return REP_LV[repLevel(r)][1]}
+function mgrCard(){const J=S.job;if(!J)return '';const w=J.wdl||[0,0,0],n=w[0]+w[1]+w[2],pc=n?Math.round(w[0]/n*1000)/10:0;const lv=repLevel(J.rep),nx=REP_LV[lv+1];const c=S.user?S.clubs[S.user]:null;
+  const honours=(S.trophies||[]).filter(t=>/^Juara|^Naik/.test(t.t));const stints=J.hist||[];const ach=ACH.filter(a=>S.ach&&S.ach[a.id]);
+  return `<section class="panel mgrcard"><div class="mgrtop"><div class="mgrid" aria-hidden="true">${esc((S.manager||'?').split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase())}</div><div><div class="lbl">Kad pengurus</div><h2 style="margin:0">${esc(S.manager)}</h2><div class="mute">${c?esc(c.name)+' · ':'Tanpa kelab · '}${J.since?`sejak ${seasonLabel(J.since)}`:''}${J.since?` (${S.season-J.since+1} musim)`:''}</div></div>
+   <div class="replv"><span class="lbl">Reputasi</span><b class="replvn">${REP_LV[lv][1]}</b><span class="bar" style="width:120px"><span style="width:${nx?Math.round((J.rep-REP_LV[lv][0])/(nx[0]-REP_LV[lv][0])*100):100}%"></span></span><span class="mute" style="font-size:.78rem">${J.rep}/100${nx?` · seterusnya ${nx[1]} pada ${nx[0]}`:''}</span></div></div>
+   <div class="mgrstats"><div><b class="num">${n}</b><span>Perlawanan</span></div><div><b class="num">${w[0]}</b><span>Menang</span></div><div><b class="num">${w[1]}</b><span>Seri</span></div><div><b class="num">${w[2]}</b><span>Kalah</span></div><div><b class="num">${pc}%</b><span>Peratus menang</span></div><div><b class="num">${J.gf||0}-${J.ga||0}</b><span>Gol (dijaring-bolos)*</span></div></div>
+   <p class="mute" style="font-size:.78rem;margin:2px 0">Peratus menang = Menang ÷ Jumlah perlawanan × 100, dikira daripada perlawanan sebenar (tidak termasuk persahabatan). *Gol dikira sejak 2.0.</p>
+   <div class="grid2"><div><span class="lbl">Honours</span>${honours.length?`<ul class="honl">${honours.slice(-8).reverse().map(t=>`<li>${seasonLabel(t.s)} · ${esc(t.t)}</li>`).join('')}</ul>`:'<p class="mute">Belum ada.</p>'}</div>
+   <div><span class="lbl">Kelab yang diurus</span><ul class="honl">${stints.slice().reverse().map(h=>`<li><b>${esc(h.name)}</b> ${seasonLabel(h.from)}–${h.to?seasonLabel(h.to):'kini'}${h.w!=null?` · M${h.w} S${h.d||0} K${h.l||0}`:''}</li>`).join('')||'<li class="mute">—</li>'}</ul></div></div>
+   <div><span class="lbl">Pencapaian utama</span><div class="row">${ach.length?ach.slice(-6).map(a=>`<span class="chip" title="${esc(a.d)}">${a.ic} ${esc(a.n)}</span>`).join(''):'<span class="mute">Belum ada.</span>'}<button class="btn sm" data-act="nav" data-arg="ach">Semua pencapaian</button></div></div></section>`}
+// --- M: ABK
+const TW_ABK={1:0,2:-.3,3:-.6};
+function abkScore(p,l){const s=p.st.L,ap=s.ap;if(!ap)return -99;const g=AWG[p.pos],avg=s.rt/ap,cs=s.cs||0;
+  const pg=(s.g*(g==='a'?1:g==='m'?1.1:g==='d'?2:3)+s.as*(g==='a'?.7:g==='m'?.9:1.2))/ap,csr=cs/ap;
+  return avg+TW_ABK[l]+.8*(ap/38)+(g==='g'?csr*.9:g==='d'?csr*.5+pg*.6:pg*.9)}
+const B11=[['GK',['GK']],['RB',['RB','RWB']],['CB',['CB']],['CB',['CB']],['LB',['LB','LWB']],['DM',['DM','CM']],['DM',['DM','CM']],['RWF',['RWF','RM']],['AM',['AM']],['LWF',['LWF','LM']],['CF',['CF']]];
+function abkEleven(pool){const used=new Set(),out=new Array(11).fill(null);
+  const elig=(p,ps)=>ps.includes(p.pos)?0:(p.alt||[]).some(a=>ps.includes(a))?.3:null;
+  const order=B11.map((s,i)=>({i,n:pool.filter(r=>elig(r.p,s[1])!=null).length})).sort((a,b)=>a.n-b.n);
+  order.forEach(({i})=>{const s=B11[i];let best=null;pool.forEach(r=>{if(used.has(r.p.id))return;const pen=elig(r.p,s[1]);if(pen==null)return;const v=r.sc-pen;if(!best||v>best.v||(v===best.v&&r.p.id<best.r.p.id))best={r,v}});if(best){used.add(best.r.p.id);out[i]=best.r}});
+  order.forEach(({i})=>{if(out[i])return;const s=B11[i];const g=AWG[s[0]];let best=null;pool.forEach(r=>{if(used.has(r.p.id)||AWG[r.p.pos]!==g)return;const v=r.sc-.8;if(!best||v>best.v)best={r,v}});if(best){used.add(best.r.p.id);out[i]=best.r}});
+  return out}
+function abkRun(rec){if(!S.abk)S.abk=[];const pool=[];[1,2,3].forEach(l=>S.lg[l].forEach(cid=>S.clubs[cid].players.forEach(id=>{const p=S.players[id];if(p&&!p.res&&p.st.L.ap>=12)pool.push({p,l,sc:abkScore(p,l),ap:p.st.L.ap,avg:p.st.L.rt/p.st.L.ap})})));
+  const top=(f,min)=>{const L=pool.filter(r=>r.ap>=min&&f(r)).sort((a,b)=>b.sc-a.sc||b.ap-a.ap||b.avg-a.avg||(a.p.id<b.p.id?-1:1));return L[0]};
+  const ent=r=>r&&{id:r.p.id,n:r.p.name,c:r.p.club,pos:r.p.pos,l:r.l,avg:+r.avg.toFixed(2),g:r.p.st.L.g,as:r.p.st.L.as,ap:r.ap,sc:+r.sc.toFixed(2)};
+  const cats={poty:ent(top(()=>true,20)),ypoty:ent(top(r=>r.p.age<=21,12)),gk:ent(top(r=>AWG[r.p.pos]==='g',15)),def:ent(top(r=>AWG[r.p.pos]==='d',15)),mid:ent(top(r=>AWG[r.p.pos]==='m',15)),att:ent(top(r=>AWG[r.p.pos]==='a',15))};
+  // pengurus terbaik
+  let bm=null;[1,2,3].forEach(l=>{const t=rec.tables[l];const exp=S.lg[l].slice().sort((a,b)=>clubStrength(b)-clubStrength(a));const tb=leagueTable(l);
+    tb.forEach((r,i)=>{if(!r.p)return;const cid=r.id;let v=r.pts/r.p+TW_ABK[l]*.6+(exp.indexOf(cid)-i)*.03;if(rec.FA===cid)v+=.25;if(rec.TB===cid)v+=.2;if(i===0)v+=.3;if(rec.up.some(x=>x[0]===cid))v+=.2;if(rec.down.some(x=>x[0]===cid))v-=.2;
+      const a=ahRec&&ahRec();if(a&&(a.acl===cid||a.al===cid))v+=.3;if(!bm||v>bm.v)bm={v,cid,l,pos:i+1,ppg:+(r.pts/r.p).toFixed(2)}})});
+  cats.mgr=bm&&{c:bm.cid,n:bm.cid===S.user?S.manager:S.clubs[bm.cid].mgr,l:bm.l,pos:bm.pos,ppg:bm.ppg};
+  const xi=abkEleven(pool);const e11=xi.map((r,i)=>r&&{id:r.p.id,n:r.p.name,pos:B11[i][0],pp:r.p.pos,c:r.p.club,l:r.l,sc:+r.sc.toFixed(2)});
+  const a={s:S.season,d:curDate(),cats,xi:e11,form:'4-2-3-1'};S.abk.unshift(a);if(S.abk.length>60)S.abk.length=60;
+  if(S.user){const mine=Object.entries(cats).filter(([k,v])=>v&&(k==='mgr'?v.c===S.user:v.c===S.user)),inX=e11.filter(x=>x&&x.c===S.user).length;
+    const nm={poty:'Pemain Terbaik',ypoty:'Pemain Muda Terbaik',gk:'Penjaga Gol Terbaik',def:'Pemain Pertahanan Terbaik',mid:'Pemain Tengah Terbaik',att:'Penyerang Terbaik',mgr:'Pengurus Terbaik'};
+    inbox('award',`ABK ${seasonLabel(S.season)}: pemenang diumumkan`,`Pemain Terbaik: ${cats.poty?cats.poty.n:'—'}. Pemain Muda: ${cats.ypoty?cats.ypoty.n:'—'}. Penjaga Gol: ${cats.gk?cats.gk.n:'—'}. Pertahanan: ${cats.def?cats.def.n:'—'}. Tengah: ${cats.mid?cats.mid.n:'—'}. Penyerang: ${cats.att?cats.att.n:'—'}. Pengurus: ${cats.mgr?cats.mgr.n:'—'}. Best Eleven 4-2-3-1 ada ${inX} pemain kelab kau.${mine.length?' Anugerah kelab kau: '+mine.map(([k])=>nm[k]).join(', ')+'.':''}`,{links:[['awards','Buka Anugerah']]});
+    if(mine.length){achGive('abk',mine.map(([k])=>nm[k]).join(', ')+'.');celebrate('ABK|'+S.season,'award',`ABK: ${nm[mine[0][0]]}!`,`${mine.map(([k,v])=>`${nm[k]}: ${v.n}`).join('. ')}. Anugerah Bola Sepak Kebangsaan ${seasonLabel(S.season)}.`,`Anugerah Bola Sepak Kebangsaan · ${seasonLabel(S.season)}`)}}}
+function abkPitch(xi){const slots=FORMS['4-2-3-1'];return `<div class="pitch sm">${pitchSVG()}${slots.map(([pos,x,y],i)=>{const e=xi[i];if(!e)return '';return `<div class="mk" style="left:${x}%;top:${100-y}%"><span class="dot" style="${kitSt(e.c)}"><span>${pos}</span></span><div class="mn">${esc(e.n)}</div><div class="mr">${e.sc.toFixed(1)}</div></div>`}).join('')}</div>`}
+function abkHTML(){const L=S.abk||[];if(!L.length)return `<section class="panel"><h3>Anugerah Bola Sepak Kebangsaan (ABK)</h3><p class="mute">Diumumkan hujung setiap musim, selepas semua perlawanan tamat.</p></section>`;
+  const sel=L.find(x=>x.s===UI.abkS)||L[0];const c=sel.cats;const NM=[['poty','Pemain Terbaik'],['ypoty','Pemain Muda Terbaik (21 tahun ke bawah)'],['gk','Penjaga Gol Terbaik'],['def','Pemain Pertahanan Terbaik'],['mid','Pemain Tengah Terbaik'],['att','Penyerang Terbaik']];
+  return `<section class="panel"><div class="row sp"><h3>Anugerah Bola Sepak Kebangsaan (ABK)</h3><select data-chg="abks" aria-label="Musim ABK">${L.map(x=>`<option value="${x.s}" ${x.s===sel.s?'selected':''}>${seasonLabel(x.s)}</option>`).join('')}</select></div>
+   <div class="grid2"><div class="tbl"><table><tbody>${NM.map(([k,l])=>{const v=c[k];return `<tr class="${v&&v.c===S.user?'me':''}"><td class="lbl">${l}</td><td class="nm">${v?`${S.players[v.id]?plink(v.id,v.n):esc(v.n)} <span class="mute" style="font-size:.78rem">${esc(cname(v.c))}${v.avg?`, ${v.avg} · ${v.g}G ${v.as}B`:''}</span>`:'—'}</td></tr>`}).join('')}
+    <tr class="${c.mgr&&c.mgr.c===S.user?'me':''}"><td class="lbl">Pengurus Terbaik</td><td>${c.mgr?`${esc(c.mgr.n)} <span class="mute" style="font-size:.78rem">${esc(cname(c.mgr.c))}, ${LG_SHORT[c.mgr.l]} tempat ${c.mgr.pos}</span>`:'—'}</td></tr></tbody></table></div>
+   <div><span class="lbl">Best Eleven · 4-2-3-1 · ${fmtDate(sel.d,'long')}</span>${abkPitch(sel.xi)}</div></div></section>`}
+// --- O2: masa pemprosesan hari
+function advanceSlow(){if(UI.busy)return;let fast=false;try{fast=localStorage.getItem('pk-speed')==='fast'}catch(e){}if(fast){doAdvance();celSoon();return}
+  UI.busy=true;const e=curEntry();const minMs=e&&e.k==='M'?1200:500;let ov=document.getElementById('proc');if(!ov){ov=document.createElement('div');ov.id='proc';ov.setAttribute('role','status');document.body.appendChild(ov)}
+  ov.innerHTML=`<div class="procb"><span class="spin" aria-hidden="true"></span><b>Memproses hari…</b><span class="mute">${esc(fmtDate(e.d,'long'))}</span></div>`;ov.className='on';const t0=performance.now();
+  setTimeout(()=>{try{doAdvance()}catch(x){logErr(x&&x.message||x,'advanceSlow')}const left=Math.max(0,minMs-(performance.now()-t0));setTimeout(()=>{ov.className='';UI.busy=false;celSoon()},left)},40)}
 function stripUnknownComps(){if(!S.tl)return;const ok=e=>e.k!=='M'||!e.c||COMP[e.c[0]]||e.c[0]==='L';if(S.tl.every(ok))return;
   const map=[];let n=0;S.tl.forEach((e,i)=>{map[i]=n;if(ok(e))n++});map[S.tl.length]=n;const nt=i=>i==null?i:map[Math.min(Math.max(i,0),S.tl.length)];
   Object.keys(S.fixtures).forEach(k=>{const f=S.fixtures[k];if(!COMP[f.comp]&&f.comp!=='L')delete S.fixtures[k];else f.t=nt(f.t)});
@@ -2039,7 +2149,7 @@ function ensureState(){if(!S)return;if(typeof STC!=='undefined')STC.k=null;
   Object.values(S.clubs).forEach(c=>{if(c.tier&&!c.fac)c.fac=defaultFac(c)});
   if(!S.job){const since=S.season-(S.seasonNo||1)+1;S.job={rep:15,ctr:S.season+2,conf:60,warn:0,ult:null,since,hist:[],promo:0,cool:null,req:{},offers:[],jobless:null,obj:null};
     if(S.user){S.job.hist.push({cid:S.user,name:S.clubs[S.user].name,from:since,to:null});(S.trophies||[]).forEach(t=>{if(!t.c)t.c=S.user})}}
-  if(!S.ah)S.ah=[];if(!S.as)S.as=[];if(!S.nat)S.nat={w:0,d:0,l:0,gf:0,ga:0,hist:[]};if(!S.tr)S.tr=trDefault();if(S.fans==null)S.fans=60;if(!S.h2h)S.h2h={};Object.values(S.players).forEach(p=>{if(!p.ht)bodyGen(p)});if(!S.sr)S.sr={};if(!S.short)S.short={};if(!S.dec)S.dec=[];if(!S.scT)S.scT=[];if(!S.proj)S.proj=[];if(!S.vac)S.vac={};ensureTac();
+  if(!S.ah)S.ah=[];if(!S.as)S.as=[];if(!S.nat)S.nat={w:0,d:0,l:0,gf:0,ga:0,hist:[]};if(!S.tr)S.tr=trDefault();if(S.fans==null)S.fans=60;if(!S.h2h)S.h2h={};Object.values(S.players).forEach(p=>{if(!p.ht)bodyGen(p)});if(!S.sr)S.sr={};if(!S.short)S.short={};if(!S.dec)S.dec=[];if(!S.scT)S.scT=[];if(!S.ach)S.ach={};if(!S.abk)S.abk=[];if(!S.celeb)S.celeb={};if(!S.celQ)S.celQ=[];if(!S.proj)S.proj=[];if(!S.vac)S.vac={};ensureTac();
   if(S.user){ensureStaff(S.user);scEnsure();if(!S.job.obj||S.job.obj.season!==S.season||S.job.obj.cid!==S.user)setObjectives()}
   if(S.ended&&S.user&&!S.job.dead&&S.seasonNo<MAX_SEASONS)S.ended=false;frEnsure()}
 function nextId(){S.nextJ=(S.nextJ||1)+1;return 'j'+S.nextJ}
@@ -2168,7 +2278,7 @@ function jobSeasonEnd(rec){const J=S.job;if(!J)return;
     ev.forEach(o=>{const ok=o.st==='ok';const w={lg:12,fa:4,fin:5,youth:3}[o.k];if(o.k==='lg'){const pos=rec.user.pos;const miss=pos-J.obj.lg;dc+=ok?w:miss>6?-20:-w}else dc+=ok?w:-Math.round(w*.75);msgs.push(`${ok?'✓':'✗'} ${o.l}`)});
     if(rec.up.some(x=>x[0]===S.user))dc+=10;if(rec.ch[rec.user.l]===S.user)dc+=8;if(rec.down.some(x=>x[0]===S.user))dc-=15;J.conf=clamp(J.conf+dc,0,100);
     const exp=S.lg[rec.user.l].slice().sort((a,b)=>clubStrength(b)-clubStrength(a)).indexOf(S.user)+1;let dr=clamp((exp-rec.user.pos)*1.2,-8,10);
-    if(rec.ch[rec.user.l]===S.user)dr+=8;if(rec.up.some(x=>x[0]===S.user))dr+=10;if(rec.down.some(x=>x[0]===S.user))dr-=10;if(rec.FA===S.user)dr+=8;if(rec.TB===S.user)dr+=8;
+    if(rec.ch[rec.user.l]===S.user)dr+=8;if(rec.up.some(x=>x[0]===S.user))dr+=10;if(rec.down.some(x=>x[0]===S.user))dr-=10;if(rec.FA===S.user)dr+=8;if(rec.TB===S.user)dr+=8;{const ar=ahRec();if(ar&&(ar.acl===S.user||ar.al===S.user))dr+=10}if(c.bal<0)dr-=3;if(J.since!=null&&S.season-J.since>=2&&rec.user.pos<=exp)dr+=1;
     J.rep=clamp(Math.round(J.rep+dr),0,100);
     inbox('board',`Penilaian lembaga musim ${seasonLabel(S.season)}`,`${msgs.join('. ')}. Kepercayaan lembaga kini ${Math.round(J.conf)}/100. Reputasi kau ${J.rep}/100 (${repLabel(J.rep)}).`);
     if(J.ult){const played=5-J.ult.left;if(played>0&&J.ult.pts<J.ult.target*played/5)sackUser(`Kau gagal mencapai sasaran kata dua sebelum musim tamat (${J.ult.pts} mata dalam ${played} perlawanan).`);else{J.ult=null;J.warn=0}}
@@ -2458,7 +2568,7 @@ function vTactic(){ensureTac();const T=S.tac;
 
 // ---- halaman Profil pengurus
 function vProfile(){ensureTac();const P=S.prof;const J=S.job;const w=J&&J.wdl||[0,0,0];const n=w[0]+w[1]+w[2];
-  return `<div class="view"><div class="row sp"><h2>Profil pengurus</h2><span class="mono mute">${esc(S.manager)}</span></div>
+  return `<div class="view"><div class="row sp"><h2>Profil pengurus</h2><span class="mono mute">${esc(S.manager)}</span></div>${mgrCard()}
    <div class="grid2"><section class="panel"><h3>Butiran</h3>
      <label class="pf"><span class="lbl">Nama</span><input type="text" id="pf_name" maxlength="30" value="${esc(S.manager)}"></label>
      <label class="pf"><span class="lbl">Umur</span><input type="number" id="pf_age" min="25" max="80" value="${mgrAge()}"></label>
@@ -2501,10 +2611,10 @@ function setMeta(m){try{localStorage.setItem('pk3-meta',JSON.stringify(m))}catch
 // Skema simpanan: naikkan SCHEMA hanya bila struktur data berubah sehingga build lama tidak selamat membukanya.
 // Simpanan tanpa `sv` datang dari build 1.x sebelum 1.4.6.4 dan masih dibuka seperti biasa.
 // SCHEMA 2 (2.0 Fasa 2): format simpanan 'F' (deflate + pek 15-bit). SCHEMA 3 (Fasa 3): p.dob/bp/hist/mv/ih/injx/rest, S.legends. Migrasi didaftar dalam PK2.mig[versi].
-const SCHEMA=6;
+const SCHEMA=7;
 const MAX_IMPORT_BYTES=20*1024*1024;
 // Ruang nama 2.0. Modul baharu didaftar di bawah PK2, bukan sebagai global baharu. mig[v] menaikkan S daripada v-1 ke v (sekali sahaja).
-const PK2={mig:{2:()=>{/* v2: hanya format simpanan baharu; tiada perubahan struktur S */},3:()=>migrate3(),4:()=>{/* v4: had mutlak stadium 30,000 */Object.values(S.clubs).forEach(c=>{if(c.cap>CAP_ABS)c.cap=CAP_ABS})},5:()=>{/* v5: Asia (S.ah, S.as, S.asiaQ), pasukan kebangsaan (S.nat) */S.ah=S.ah||[];S.as=S.as||[];S.nat=S.nat||{w:0,d:0,l:0,gf:0,ga:0,hist:[]};S.asiaQ=S.asiaQ||null},6:()=>{/* v6: keputusan pemain (S.dec), had pinjaman (S.lc), scouting (S.scouts, S.scT) */S.dec=S.dec||[];S.scT=S.scT||[]}}};
+const PK2={mig:{2:()=>{/* v2: hanya format simpanan baharu; tiada perubahan struktur S */},3:()=>migrate3(),4:()=>{/* v4: had mutlak stadium 30,000 */Object.values(S.clubs).forEach(c=>{if(c.cap>CAP_ABS)c.cap=CAP_ABS})},5:()=>{/* v5: Asia (S.ah, S.as, S.asiaQ), pasukan kebangsaan (S.nat) */S.ah=S.ah||[];S.as=S.as||[];S.nat=S.nat||{w:0,d:0,l:0,gf:0,ga:0,hist:[]};S.asiaQ=S.asiaQ||null},6:()=>{/* v6: keputusan pemain (S.dec), had pinjaman (S.lc), scouting (S.scouts, S.scT) */S.dec=S.dec||[];S.scT=S.scT||[]},7:()=>{/* v7: pencapaian (S.ach), ABK (S.abk), sambutan (S.celeb, S.celQ) */S.ach=S.ach||{};S.abk=S.abk||[];S.celeb=S.celeb||{};S.celQ=S.celQ||[]}}};
 function runMigrations(){if(!S)return;const from=Number.isInteger(S.sv)?S.sv:1;for(let v=from+1;v<=SCHEMA;v++){if(PK2.mig[v])PK2.mig[v]()}S.sv=SCHEMA}
 // Pemampat 'F': fflate deflate (sync, ~6x lebih laju daripada LZString) dan pek 15-bit ke aksara UTF-16 (tiada surrogate, tiada NUL).
 const PK_OFF=0x100;
@@ -2582,7 +2692,7 @@ function delSlot(slot){saveFlush();try{localStorage.removeItem(skey(slot))}catch
 function migrateLegacy(){try{const t=localStorage.getItem(LEGACY_KEY);if(t&&!localStorage.getItem(skey('auto'))){const s=unpack(t);if(s){localStorage.setItem(skey('auto'),t);const c=s.clubs[s.user];const m=getMeta();m.auto={club:c.name,kit:c.kit,mgr:s.manager,lg:c.tier,season:s.season,no:s.seasonNo,d:s.tl[Math.min(s.t,s.tl.length-1)].d,ts:Date.now(),ver:'Beta 0.3'};setMeta(m)}}if(t)localStorage.removeItem(LEGACY_KEY)}catch(e){}}
 function storageKB(){let n=0;try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('pk3-'))n+=(localStorage.getItem(k)||'').length*2}}catch(e){}return Math.round(n/1024)}
 function pruneForSave(){Object.values(S.fixtures).forEach(f=>{if(f.played&&f.h!==S.user&&f.a!==S.user&&f.t<S.t-6){delete f.st;f.rt=f.rt&&f.rt.map(side=>side.filter(x=>x[1]>=7||x[3]))}});S.inbox=S.inbox.slice(0,120);S.tlog=S.tlog.slice(0,100)}
-function loadState(s){const prev=S;try{S=s;ensureState()}catch(e){S=prev;throw e}LIVE=null;UI.hist=[];UI.lastKey=null;UI.calOff=0;UI.screen='game';UI.view='home';UI.inboxSel=null;UI.clubView=null;UI.lgView=null;UI.delAsk=null;closeModal();render();window.scrollTo(0,0)}
+function loadState(s){const prev=S;try{S=s;ensureState()}catch(e){S=prev;throw e}LIVE=null;UI.hist=[];UI.lastKey=null;UI.calOff=0;UI.screen='game';UI.view='home';UI.inboxSel=null;UI.clubView=null;UI.lgView=null;UI.delAsk=null;closeModal();render();window.scrollTo(0,0);celSoon()}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function kitSt(cid){const c=S.clubs[cid];return c?`--k1:${c.kit[0]};--k2:${c.kit[1]}`:''}
 function kit(cid,lg){return cid&&S.clubs[cid]?`<span class="kit${lg?' lg':''}" style="${kitSt(cid)}"></span>`:''}
@@ -2905,13 +3015,13 @@ function renderTop(){const c=S.clubs[S.user];const e=curEntry();const wi=windowI
    ${S.ended?'<button class="btn primary" data-act="newgame">Kerjaya baharu</button>':`<button class="btn primary" data-act="${S.over?'newseason':'go'}">${S.over?'Musim baharu':'Teruskan'}</button>`}</header>`}
 function renderNav(){const u=unread();const J=S.job;
   const G=[[null,[['home','Utama'],['inbox','Inbox',u]]],['Kelab',[['squad','Skuad'],['tactic','Taktik'],['train','Latihan'],['medical','Medical',(S.user&&S.clubs[S.user]?S.clubs[S.user].players.filter(id=>S.players[id].inj>0).length:0)],['staff','Staf'],['morale','Moral skuad'],['scouting','Scouting',(S.scT?S.scT.filter(t=>t.st==='done').length:0)||0]]],
-    ['Pengurusan',[['transfer','Perpindahan',S.offers.length],['short','Senarai pendek',Object.keys(S.short||{}).length||0],['finance','Kewangan'],['board','Ahli Lembaga Pengarah',(J?J.offers.length:0)+(J&&J.warn?1:0)],['profile','Profil pengurus']]],
+    ['Pengurusan',[['transfer','Perpindahan',S.offers.length],['short','Senarai pendek',Object.keys(S.short||{}).length||0],['finance','Kewangan'],['board','Ahli Lembaga Pengarah',(J?J.offers.length:0)+(J&&J.warn?1:0)],['profile','Profil pengurus'],['ach','Pencapaian',S.ach?Object.keys(S.ach).length:0]]],
     ['Pertandingan',[['scout','Scout lawan'],['season','Musim ini'],['fixtures','Jadual'],['league','Liga'],['fa','Piala FA'],['tb','Piala TBPM'],['asia','Asia']]],
     ['Lain-lain',[['awards','Anugerah'],['stats','Statistik'],['clubs','Kelab'],['card','Kad kelab'],['saves','Save / Load'],['help','Cara main'],['feedback','Maklum balas']]]];
   const ord={home:'o0',inbox:'o0',help:'o1',feedback:'o1'};
   const btn=([k,l,b])=>k==='card'?`<button class="o2" data-act="cardopen">${l}</button>`:k==='short'?`<button class="${UI.view==='transfer'&&UI.tf.tab==='pendek'?'on':''} o2" data-act="navshort">${l}${b?`<span class="badge" style="background:var(--mute)">${b}</span>`:''}</button>`:`<button class="${UI.view===k?'on':''} ${ord[k]||'o2'}" data-act="nav" data-arg="${k}">${l}${b?`<span class="badge">${b}</span>`:''}</button>`;
   return `<nav class="rail">${G.map(([h,its])=>(h?`<span class="navh">${h}</span>`:'')+its.map(btn).join('')).join('')}<div class="spacer"></div><button class="supbtn o3" data-act="support">☕ Sokong pembangun</button><a class="mono vlink" href="nota.html" title="Nota versi dan isu diketahui">${VERSION} · Apa baharu</a></nav>`}
-function renderView(){return({home:vHome,inbox:vInbox,squad:vSquad,transfer:vTransfer,finance:vFinance,fixtures:vFixtures,league:vLeague,fa:vFA,tb:vTB,asia:vAsia,awards:vAwards,stats:vStats,clubs:vClubs,club:vClub,saves:vSaves,feedback:vFeedback,help:vHelp,train:vTrain,staff:vStaff,board:vBoard,jobs:vJobs,tactic:vTactic,profile:vProfile,season:vSeason,scout:vScout,medical:vMedical,morale:vMorale,scouting:vScouting})[UI.view]()}
+function renderView(){return({home:vHome,inbox:vInbox,squad:vSquad,transfer:vTransfer,finance:vFinance,fixtures:vFixtures,league:vLeague,fa:vFA,tb:vTB,asia:vAsia,awards:vAwards,stats:vStats,clubs:vClubs,club:vClub,saves:vSaves,feedback:vFeedback,help:vHelp,train:vTrain,staff:vStaff,board:vBoard,jobs:vJobs,tactic:vTactic,profile:vProfile,season:vSeason,scout:vScout,medical:vMedical,morale:vMorale,scouting:vScouting,ach:vAch})[UI.view]()}
 
 // Tempat Asia dari liga (spec A1: 4 tempat ACL + 1 melalui Piala FA, tempat 5-6 ke AL). Ubah di sini jika Zonan mahu 2+...
 const ASIA_SLOTS={acl:4,al:2};
@@ -3257,7 +3367,7 @@ function totwBoard(w,l){const xi=w.xi;const grp={g:[],d:[],m:[],a:[]};xi.slice()
    <div class="tbfoot"><span>★ Bintang minggu ini: <b>${esc(pname(best[0]))}</b> (${esc(cname(best[3]))}) <span class="srt ${rtCls(best[1])}">${best[1].toFixed(1)}</span></span><span>Purata XI <b class="num">${avg.toFixed(2)}</b></span>${topc&&topc[1]>1?`<span>${esc(cname(topc[0]))}: ${topc[1]} pemain</span>`:''}${mine?`<span class="tbme">Kelab kau: ${mine} pemain</span>`:''}</div></div>`}
 function vAwards(){const l=UI.awLg||myTier();const tw=S.aw.totw[l];const r=UI.awRound!=null&&tw.find(x=>x.r===UI.awRound)?UI.awRound:(tw.length?tw[tw.length-1].r:null);const cur=tw.find(x=>x.r===r);
   const months=S.aw.month.filter(x=>x.l===l).slice().reverse();const seas=S.aw.season.filter(x=>x.l===l).slice().reverse();
-  return `<div class="view"><div class="row sp"><h2>Anugerah</h2>${lgTabs(l,'awlg')}</div>
+  return `<div class="view"><div class="row sp"><h2>Anugerah</h2>${lgTabs(l,'awlg')}</div>${abkHTML()}
    <div class="grid2"><section class="panel"><div class="row sp"><h3>Team of the Week</h3>${tw.length?`<select data-chg="awround" aria-label="Pusingan">${tw.map(x=>`<option value="${x.r}" ${x.r===r?'selected':''}>Pusingan ${x.r}</option>`).join('')}</select>`:''}</div>
      ${cur?totwBoard(cur,l):'<p class="mute">Belum ada perlawanan liga musim ini.</p>'}</section>
     <section class="panel"><h3>Anugerah bulanan</h3><div class="tbl"><table><thead><tr><th>Bulan</th><th>Pemain Terbaik</th><th>Pengurus Terbaik</th></tr></thead><tbody>
@@ -3779,11 +3889,11 @@ function tick(){if(!LIVE||LIVE.paused||LIVE.m.done)return;const m=LIVE.m;stepMin
   if(m.pauseReq){m.pauseReq=false;LIVE.paused=true;LIVE.autoPaused=false;if(m.phase==='HT')LIVE.talk={st:'ht'};sndAmb(.45);updateMatch(true);return}
   updateMatch();LIVE.timer=setTimeout(tick,tickDelay(m))}
 function matchDone(){if(!LIVE.finished){finishMatch(LIVE.m);LIVE.finished=true;save()}liveSounds(LIVE.m);sndEnd();if(!LIVE.postDone&&!LIVE.talk)LIVE.talk={st:'post'};updateMatch(true)}
-function endLive(){sndStop();const fid=LIVE&&LIVE.m?LIVE.m.fx:null;document.getElementById('match').innerHTML='';LIVE=null;if(VZ.raf){cancelAnimationFrame(VZ.raf);VZ.raf=0}doAdvance(fid)}
+function endLive(){setTimeout(celSoon,600);sndStop();const fid=LIVE&&LIVE.m?LIVE.m.fx:null;document.getElementById('match').innerHTML='';LIVE=null;if(VZ.raf){cancelAnimationFrame(VZ.raf);VZ.raf=0}doAdvance(fid)}
 
 // ---------- flow
 function doAdvance(sumFid){const t=S.t,e=curEntry();const wasOver=!!S.over;const n0=S.tlog.length;try{advance();for(let g=0;g<40&&asiaSilent(curEntry());g++)advance()}catch(err){logErr((err&&err.message)||err,'advance');const back=loadSlot('auto');if(back)S=back;render();openModal(`<header><h2>Ralat semasa memproses</h2><button class="btn sm" data-act="close">Tutup</button></header><p>Langkah ini gagal diproses. Permainan dikembalikan ke simpanan automatik terakhir. Sila laporkan melalui halaman Maklum balas; butiran ralat sudah dimasukkan ke dalam templat laporan.</p><div class="row"><button class="btn primary" data-act="nav" data-arg="feedback">Buka Maklum balas</button></div>`);return}save();const newTf=S.tlog.slice(0,S.tlog.length-n0);render();if(UI.sacked){mSacked();return}const sup=!wasOver&&S.over;if(!S.user)mWeek(e,t,newTf);else if(sumFid&&S.fixtures[sumFid]&&S.fixtures[sumFid].lay)mSummary(sumFid,{newTf,live:1});else mWeek(e,t,newTf);if(sup)mSupport(true)}
-function go(){if(LIVE||S.over)return;if(!S.user){doAdvance();return}frEnsure();{const bl=blockers();if(bl.length){mBlock(bl);return}if(isLastWinStep()&&UI.dlOk!==S.t){const w=dlPending();if(w.length){mDeadline(w);return}}}if(frPending()){mFriendly();return}const e=curEntry();if(e.k==='M'){const fx=userFixture(S.t);if(fx&&!fx.played){mPrematch(fx);return}}doAdvance()}
+function go(){const slow=UI.viaBtn;UI.viaBtn=0;if(LIVE||S.over)return;if(!S.user){doAdvance();return}frEnsure();{const bl=blockers();if(bl.length){mBlock(bl);return}if(isLastWinStep()&&UI.dlOk!==S.t){const w=dlPending();if(w.length){mDeadline(w);return}}}if(frPending()){mFriendly();return}const e=curEntry();if(e.k==='M'){const fx=userFixture(S.t);if(fx&&!fx.played){mPrematch(fx);return}}if(slow)advanceSlow();else doAdvance()}
 function val(id){const el=document.getElementById(id);return el?el.value:''}
 function rerenderModalPlayer(pid,r){save();render();mPlayer(pid,r)}
 const ACT={
@@ -3799,7 +3909,7 @@ const ACT={
     inbox('board','Selamat datang, penguji beta',`Terima kasih kerana menguji Pengurus Kampung ${VERSION}. Mulakan di halaman Cara main untuk panduan ringkas dan senarai misi ujian. Laporkan bug atau cadangan melalui halaman Maklum balas.`,{links:[['help','Buka Cara main'],['feedback','Buka Maklum balas']]});
     wageReview(null);seasonDrawNews();ctrYearNews();inbox('youth','10 pemain pelapis menunggu',`Akademi ${c.name} mempunyai 10 pemain muda berusia 18 hingga 21 tahun. Semak bahagian pelapis di halaman Skuad.`);
     UI.view='home';save();render()},
-  go:()=>{UI.calOff=0;go()},budget:()=>mBudget(),bconv:a=>{const[d,v]=a.split('|');budgetConv(+d,+v)},tfreset:()=>{Object.assign(UI.tf,{pos:'',amin:'',amax:'',ca:'',wage:'',fee:'',tier:'',orig:''});render()},sqfreset:()=>{UI.sqf={};render()},back:()=>navBack(),calweek:a=>{UI.calOff=a==='0'?0:(UI.calOff||0)+(+a);render()},drawopen:a=>{const[c,r]=a.split('|');if(c==='FA'){UI.faRound=r;ACT.nav('fa')}else ACT.nav('tb')},fine:a=>fineAct(a),dofrenew:a=>{const r=dofRenew(a);save();render();if(document.querySelector('#modal .modal'))mPlayer(a,r);else showToast(r.msg)},dofall:a=>{const m=S.inbox.find(x=>x.id===a);if(!m||!m.ctrl)return;const L=m.ctrl.pids.map(id=>S.players[id]).filter(p=>p&&p.club===S.user&&p.ctr<=S.season&&dofAdvice(p).k==='renew');const ok=[],bad=[];L.forEach(p=>{const r=dofRenew(p.id);if(r.ok)ok.push(p.name);else bad.push(`${p.name}: ${r.msg}`)});save();render();alertMsg(`${ok.length?'Disambung: '+ok.join(', ')+'.':''}${bad.length?' Tidak berjaya: '+bad.join('; '):''}`,!bad.length)},club:a=>{UI.clubView=a;UI.view='club';closeModal();render();window.scrollTo(0,0)},
+  go:()=>{UI.calOff=0;UI.viaBtn=1;go()},budget:()=>mBudget(),bconv:a=>{const[d,v]=a.split('|');budgetConv(+d,+v)},tfreset:()=>{Object.assign(UI.tf,{pos:'',amin:'',amax:'',ca:'',wage:'',fee:'',tier:'',orig:''});render()},sqfreset:()=>{UI.sqf={};render()},back:()=>navBack(),calweek:a=>{UI.calOff=a==='0'?0:(UI.calOff||0)+(+a);render()},drawopen:a=>{const[c,r]=a.split('|');if(c==='FA'){UI.faRound=r;ACT.nav('fa')}else ACT.nav('tb')},fine:a=>fineAct(a),dofrenew:a=>{const r=dofRenew(a);save();render();if(document.querySelector('#modal .modal'))mPlayer(a,r);else showToast(r.msg)},dofall:a=>{const m=S.inbox.find(x=>x.id===a);if(!m||!m.ctrl)return;const L=m.ctrl.pids.map(id=>S.players[id]).filter(p=>p&&p.club===S.user&&p.ctr<=S.season&&dofAdvice(p).k==='renew');const ok=[],bad=[];L.forEach(p=>{const r=dofRenew(p.id);if(r.ok)ok.push(p.name);else bad.push(`${p.name}: ${r.msg}`)});save();render();alertMsg(`${ok.length?'Disambung: '+ok.join(', ')+'.':''}${bad.length?' Tidak berjaya: '+bad.join('; '):''}`,!bad.length)},club:a=>{UI.clubView=a;UI.view='club';closeModal();render();window.scrollTo(0,0)},
   player:a=>mPlayer(a),report:a=>{if(a)mReport(a)},close:()=>{closeModal();if(UI.view==='inbox')render()},mbg:(a,el,e)=>{if(e.target===el)closeModal()},
   spopen:a=>mSP(a),spset:a=>{const[k,id]=a.split('|');setSP(k,id);save();closeModal();render()},spauto:()=>{spAutoFill();save();render()},
   sqmode:a=>{UI.squadMode=a;render()},autopick:()=>{setUserAuto(S.lu.form);save();render()},clearlu:()=>{S.lu.xi=S.lu.xi.map(()=>null);S.lu.bench=[];save();render()},ment:a=>{S.lu.ment=a;curTac().ment=a;save();render()},
@@ -3896,7 +4006,7 @@ const ACT={
   crestreset:()=>{const c=curClub();delete c.crest;if(c.kitOrig){c.kit=c.kitOrig;delete c.kitOrig}save();render();mCard(c.id)},
   fropen:()=>{if(!UI.frSel)UI.frSel=[];mFriendly()},frtog:a=>{const i=+a;UI.frSel=UI.frSel||[];UI.frSel=UI.frSel.includes(i)?UI.frSel.filter(x=>x!==i):[...UI.frSel,i];mFriendly()},frauto:()=>frAuto(),frok:()=>frConfirm(),
   shortdel:a=>{if(S.short)delete S.short[a];save();render();if(document.querySelector('#modal .modal'))mPlayer(a)},navshort:()=>{UI.tf.tab='pendek';ACT.nav('transfer')},
-  sumclose:()=>closeSummary(),sumfull:a=>mReport(a,1),sumnav:a=>{closeSummary();ACT.nav(a)},sumtf:()=>{closeSummary();UI.tf.tab='sejarah';ACT.nav('transfer')}
+  sumclose:()=>{closeSummary();UI.view='home';UI.inboxOpen=false;render();window.scrollTo(0,0);celSoon()},celnext:()=>{closeModal();celShow()},sumfull:a=>mReport(a,1),sumnav:a=>{closeSummary();ACT.nav(a)},sumtf:()=>{closeSummary();UI.tf.tab='sejarah';ACT.nav('transfer')}
 };
 function importText(t){const r=parseSave(t);
   if(!r.s){UI.saveMsg={ok:false,msg:r.err||'Kod atau fail simpanan tidak sah.'};render();return}
@@ -3907,7 +4017,7 @@ const CHG={kitc:(a,el)=>{const v=String(el.value||'').toLowerCase();if(!/^#[0-9a
   impfile:(a,el)=>{const f=el.files&&el.files[0];if(!f)return;const bad=checkFile(f);if(bad){el.value='';UI.saveMsg={ok:false,msg:bad};render();return}
     const r=new FileReader();r.onload=()=>{el.value='';importText(r.result)};r.onerror=()=>{UI.saveMsg={ok:false,msg:'Fail tidak dapat dibaca.'};render()};r.readAsText(f)},
   place:(a,el)=>{const err=setPlace(a,el.value);save();render();if(err)alertMsg(err)},form:(a,el)=>{remapXI(el.value);curTac().form=el.value;save();render()},
-  lground:(a,el)=>{UI.lgRound=el.value;render()},tf:(a,el)=>{UI.tf[a]=el.value;render()},awround:(a,el)=>{UI.awRound=el.value;render()},
+  lground:(a,el)=>{UI.lgRound=el.value;render()},tf:(a,el)=>{UI.tf[a]=el.value;render()},awround:(a,el)=>{UI.awRound=el.value;render()},abks:(a,el)=>{UI.abkS=+el.value;render()},
 };
 function alertMsg(t,ok){openModal(`<header><h2>${ok?'Berjaya':'Perhatian'}</h2><button class="btn sm" data-act="close">Tutup</button></header><p>${esc(t)}</p>`)}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;const f=ACT[t.dataset.act];if(f)f(t.dataset.arg,t,e)});
