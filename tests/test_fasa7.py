@@ -19,6 +19,23 @@ with sync_playwright() as p:
     pg.evaluate("()=>{UI.screen='game';newWorld();UI.selClub=S.lg[1][0];renderStart();document.getElementById('mgr').value='Uji';ACT.startgame()}")
     pg.evaluate(PLAY)
 
+    # --- J1: seret & lepas pada papan taktikal
+    pg.evaluate("()=>{closeModal();closeSummary();UI.view='squad';render()}")
+    n = pg.evaluate("()=>document.querySelectorAll('.pitch [data-drag]').length")
+    pg.evaluate("()=>window.scrollTo(0,0)")
+    boxes = pg.evaluate("""()=>{const d=[...document.querySelectorAll('.pitch [data-drag]')].slice(1,3).map(e=>{e.scrollIntoView({block:'center'});const r=e.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,pid:e.dataset.pid}});return d}""")
+    boxes = pg.evaluate("""()=>{const d=[...document.querySelectorAll('.pitch [data-drag]')].slice(1,3);d[0].scrollIntoView({block:'center'});return d.map(e=>{const r=e.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,pid:e.dataset.pid}})}""")
+    before = pg.evaluate("()=>S.lu.xi.slice()")
+    pg.mouse.move(boxes[0]['x'], boxes[0]['y']); pg.mouse.down(); pg.mouse.move(boxes[0]['x']+20, boxes[0]['y']+10, steps=4); pg.mouse.move(boxes[1]['x'], boxes[1]['y'], steps=8); pg.mouse.up(); time.sleep(.3)
+    after = pg.evaluate("()=>S.lu.xi.slice()")
+    i0 = before.index(boxes[0]['pid']); i1 = before.index(boxes[1]['pid'])
+    check('seret-lepas menukar dua pemain pada padang, tiada pendua dalam XI', n >= 11 and after[i0] == boxes[1]['pid'] and after[i1] == boxes[0]['pid'] and len(set(x for x in after if x)) == len([x for x in after if x]), {'n': n, 'before': before[:4], 'after': after[:4]})
+    r = pg.evaluate("""()=>{const lu=S.lu;const a=lu.xi[0],b=lu.xi[1];setPlace(a,'x1');const dupe=lu.xi.filter(x=>x===a).length;const bench=lu.bench.length;const full=[...Array(12)].map((_,i)=>i);
+      return {dupe,uniq:new Set(lu.xi.filter(Boolean)).size===lu.xi.filter(Boolean).length,noBenchDup:!lu.xi.some(x=>x&&lu.bench.includes(x))}}""")
+    check('validasi barisan: pemain tidak boleh dua kali (XI/bangku)', r['dupe'] == 1 and r['uniq'] and r['noBenchDup'], r)
+    r = pg.evaluate("""()=>{const c=document.createElement('canvas');const nums=true;return typeof vzDraw==='function'&&vzDraw.toString().includes('p.no')&&vzDraw.toString().includes('fillText')}""")
+    check('paparan 2D melukis nombor jersi pada bulatan pemain', r, r)
+
     # --- UX: pemprosesan hari 1-2 s, tiada pemprosesan berganda, tarikh bergerak sekali
     r = pg.evaluate("""()=>new Promise(res=>{closeModal();S.t=0;if(S.fr&&!S.fr.done){frAuto();frConfirm()}closeModal();UI.view='home';render();const t0=S.t;const e=curEntry();ACT.go();ACT.go();ACT.go();const on1=document.getElementById('proc').className==='on';const busy=UI.busy;const tA=performance.now();
       const iv=setInterval(()=>{if(!UI.busy){clearInterval(iv);res({k:e.k,on1,busy,dt:S.t-t0,ms:performance.now()-tA,off:document.getElementById('proc').className===''})}},30)})""")
