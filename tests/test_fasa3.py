@@ -32,10 +32,10 @@ with sync_playwright() as p:
     # 2. migrasi v3 daripada simpanan sv=2 tanpa dob/bp/legends
     r = pg.evaluate("""()=>{const o=JSON.parse(JSON.stringify(S));o.sv=2;delete o.legends;Object.values(o.players).forEach(p=>{delete p.dob;delete p.bp});
       const prev=S;S=o;ensureState();const ps=Object.values(S.players);const res={sv:S.sv,ok:ps.every(p=>p.dob&&p.bp),cons:ps.every(p=>ageOf(p,S.season+'-07-01')===p.age),leg:typeof S.legends==='object'};S=prev;return res}""")
-    check('migrasi v3: dob/bp dijana, umur konsisten, legends wujud', r['sv'] == 3 and r['ok'] and r['cons'] and r['leg'], r)
+    check('migrasi v3: dob/bp dijana, umur konsisten, legends wujud', r['sv'] == 4 and r['ok'] and r['cons'] and r['leg'], r)
 
     # 3. main dua musim sebagai pengurus; semak arkib kerjaya
-    pg.evaluate("""()=>{window.__play=(target)=>{let n=0;while(S.seasonNo<target&&n<4000){if(S.over){ACT.newseason();closeModal();closeSummary();n++;continue}if(!S.user)return 'jobless';
+    pg.evaluate("""()=>{window.__play=(target)=>{let n=0;while(S.seasonNo<target&&n<4000){if(S.over){ACT.newseason();closeModal();closeSummary();n++;continue}if(!S.user){takeJob(S.lg[3][0]);closeModal()}
       if(S.fr&&!S.fr.done){frAuto();frConfirm()}if(S.job&&typeof S.job.conf==='number')S.job.conf=Math.max(S.job.conf,80);if(LIVE){try{endLive()}catch(e){}}doAdvance();closeSummary();closeModal();n++}return n}}""")
     pg.evaluate("()=>__play(2)")
     r = pg.evaluate("""()=>{const ps=Object.values(S.players);let bad=[];ps.forEach(p=>{const h=(p.hist||[]).reduce((a,x)=>a+x[2],0)+(p.cs?p.cs[2]:0);if(h!==p.car.ap)bad.push([p.name,h,p.car.ap])});
@@ -111,7 +111,7 @@ with sync_playwright() as p:
 
     # 8. simpan-muat termasuk medan baharu
     r = pg.evaluate("""()=>{const z=packS();const s2=unpack(z);const p=Object.values(s2.players).find(p=>p.hist&&p.hist.length);const q=S.players[p.id];return {sv:s2.sv,eq:JSON.stringify(s2)===JSON.stringify(S),leg:Object.keys(s2.legends).length>0,hist:JSON.stringify(p.hist)===JSON.stringify(q.hist)}}""")
-    check('simpan-muat mengekalkan DOB, sejarah, legends (ulang-alik tepat)', r['eq'] and r['leg'] and r['hist'] and r['sv'] == 3, r)
+    check('simpan-muat mengekalkan DOB, sejarah, legends (ulang-alik tepat)', r['eq'] and r['leg'] and r['hist'] and r['sv'] == 4, r)
     r = pg.evaluate("""()=>{const t=performance.now();for(let i=0;i<3;i++)saveSlot('auto');return {ms:(performance.now()-t)/3,kb:Math.round(packS().length*2/1024),json:Math.round(JSON.stringify(S).length/1024)}}""")
     print('simpan:', r)
     check('saveSlot masih < 300 ms', r['ms'] < 300, r)

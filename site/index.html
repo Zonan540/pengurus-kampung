@@ -29,6 +29,7 @@
   --accent:#4f8cff; --accent-ink:#ffffff; --hot:#ffc947; --hot-ink:#1f1600;
   --win:#4fd18b; --loss:#ff6b5e; --info:#7cc4ff; --board:#06102a;
   --pitch:#0c2756; --pitch-2:#0e2d63; --pitch-line:rgba(190,215,255,.42);
+  --c-L:#4f8cff; --c-FA:#ff9f43; --c-TB:#2dd4bf; --c-SB:#ffc947; --c-FR:#93a6cc; --c-AC:#b18cff; --c-AL:#ff7ac6;
   --g:#ffc947; --d:#7cc4ff; --m:#6fe0a6; --a:#ff8a7a;
   --f-display:'Saira Condensed','Arial Narrow',sans-serif;
   --f-body:'Source Sans 3',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -112,6 +113,10 @@ td.nm{font-weight:600}
 .pos.g{color:var(--g)} .pos.d{color:var(--d)} .pos.m{color:var(--m)} .pos.a{color:var(--a)}
 .alt{font-family:var(--f-mono);font-size:.7rem;color:var(--mute)}
 .chip{display:inline-block;font-family:var(--f-mono);font-size:.7rem;font-weight:600;padding:1px 6px;border-radius:4px;background:var(--panel-2);border:1px solid var(--line)}
+.chip.cc{color:var(--cc);border-color:var(--cc);background:color-mix(in srgb,var(--cc) 14%,var(--panel-2))}
+.chip.lab{font-size:.6rem;padding:0 4px;margin-left:4px;vertical-align:1px}
+.c-L{--cc:var(--c-L)}.c-FA{--cc:var(--c-FA)}.c-TB{--cc:var(--c-TB)}.c-SB{--cc:var(--c-SB)}.c-FR{--cc:var(--c-FR)}.c-AC{--cc:var(--c-AC)}.c-AL{--cc:var(--c-AL)}
+.wk.k-L,.wk.k-FA,.wk.k-TB,.wk.k-SB,.wk.k-FR{box-shadow:inset 3px 0 0 var(--cc)}
 .chip.inj{color:var(--loss);border-color:var(--loss)}
 .chip.ban{color:var(--hot);border-color:var(--hot)}
 .chip.imp{color:var(--info);border-color:transparent;background:none;padding:0 2px}
@@ -798,9 +803,9 @@ function colDist(a,b){const x=hexRgb(a),y=hexRgb(b);return Math.sqrt((x[0]-y[0])
 function makeKit(){const a=pick(PALETTE);let b;do{b=pick(PALETTE)}while(b===a||colDist(a,b)<140);return[a,b]}
 const LG_NAME={1:'Liga Kebangsaan',2:'Liga Negeri',3:'Liga Kampung'};
 const LG_SHORT={1:'KEB',2:'NEG',3:'KPG'};
-const TIER={1:{tv:180000,sp:[70000,35000],op:[110000,30000],tick:[10,1.5],cap:[15,40],prize:[3000000,500000],lvl:[12.5,15.5]},
-            2:{tv:115000,sp:[28000,14000],op:[45000,12000],tick:[8,1.2],cap:[7,18],prize:[1200000,200000],lvl:[10,12.6]},
-            3:{tv:70000,sp:[12000,6000],op:[12000,4000],tick:[5,1],cap:[2,7],prize:[400000,60000],lvl:[7.5,10.1]}};
+const TIER={1:{tv:180000,sp:[70000,35000],op:[110000,30000],tick:[10,1.5],cap:[12,30],prize:[3000000,500000],lvl:[12.5,15.5]},
+            2:{tv:115000,sp:[28000,14000],op:[45000,12000],tick:[8,1.2],cap:[6,18],prize:[1200000,200000],lvl:[10,12.6]},
+            3:{tv:85000,sp:[14000,6000],op:[12000,4000],tick:[5,1],cap:[2,8],prize:[400000,60000],lvl:[7.5,10.1]}};
 const FORMS10={'4-4-1':[['GK',50,7],['RB',86,27],['CB',62,20],['CB',38,20],['LB',14,27],['RM',86,57],['CM',62,51],['CM',38,51],['LM',14,57],['CF',50,84]],
  '4-3-2':[['GK',50,7],['RB',86,27],['CB',62,20],['CB',38,20],['LB',14,27],['CM',70,52],['DM',50,42],['CM',30,52],['CF',62,84],['CF',38,84]],
  '3-4-2':[['GK',50,7],['CB',72,22],['CB',50,19],['CB',28,22],['RWB',88,46],['CM',62,50],['CM',38,50],['LWB',12,46],['CF',62,84],['CF',38,84]],
@@ -815,23 +820,25 @@ function seasonLabel(y){return `${y}/${String(y+1).slice(2)}`}
 const MAX_SEASONS=50;
 
 // ---------- calendar
-const FA_AFTER={5:'R64',10:'R32',18:'R16',24:'QF',31:'SF'};
-const TB_AFTER={3:'G1',6:'G2',8:'G3',12:'G4',14:'G5',16:'G6',20:'QF1',22:'QF2',27:'SF1',29:'SF2'};
+// 2.0 Fasa 4: kalendar baharu. FA tamat (pusingan 30) sebelum TBPM (pusingan 34). Simpanan lama kekal dengan timeline asal sehingga musim baharu.
+const FA_AFTER={5:'R64',9:'R32',14:'R16',19:'QF',24:'SF',30:'F'};
+const TB_AFTER={7:'R16',13:'QF',22:'SF1',26:'SF2',34:'F'};
 const BREAK_AFTER=[4,11,29];
-const COMP={L:'Liga',FA:'Piala FA',TB:'Piala TBPM',FR:'Perlawanan persahabatan'};
-const COMP_SHORT={L:'LIGA',FA:'FA',TB:'TBPM',FR:'PERSAHABATAN'};
+const COMP={L:'Liga',FA:'Piala FA',TB:'Piala TBPM',SB:'Piala Sumbangsih',FR:'Perlawanan persahabatan'};
+function compChip(c){return `<span class="chip cc c-${c}">${COMP_SHORT[c]||c}</span>`}
+const COMP_SHORT={L:'LIGA',FA:'FA',TB:'TBPM',SB:'SUMBANGSIH',FR:'PERSAHABATAN'};
 const NEUTRAL_VENUE='Stadium Nasional Bukit Jalil';
 function compName(fx){return fx.comp==='L'?LG_NAME[fx.lg]:COMP[fx.comp]}
 function roundLabel(comp,r){if(comp==='L')return 'Pusingan '+r;if(comp==='FR')return 'Perlawanan '+r;return({R64:'Pusingan 64',R32:'Pusingan 32',R16:'Pusingan 16',QF:'Suku Akhir',SF:'Separuh Akhir',F:'Final',G1:'Kumpulan, Aksi 1',G2:'Kumpulan, Aksi 2',G3:'Kumpulan, Aksi 3',G4:'Kumpulan, Aksi 4',G5:'Kumpulan, Aksi 5',G6:'Kumpulan, Aksi 6',QF1:'Suku Akhir, Pertemuan Pertama',QF2:'Suku Akhir, Pertemuan Kedua',SF1:'Separuh Akhir, Pertemuan Pertama',SF2:'Separuh Akhir, Pertemuan Kedua'})[r]||r}
 function buildTimeline(y){
   const tl=[];const start=addDays(nextDow(`${y}-07-31`,6),7);
   let d=nextDow(`${y}-06-30`,6);let fn=0;while(d<start){const pe={d,k:'P',tw:1};if(fn>=1&&fn<=5)pe.fr=fn;fn++;tl.push(pe);d=addDays(d,7)}
+  if((S.honours||[]).length&&tl.length>=2){const lp=tl[tl.length-1];delete lp.fr;lp.k='M';lp.c=['SB','F']}
   let prev=tl[tl.length-1].d;
   for(let r=1;r<=38;r++){const sat=r===1?start:nextDow(prev,6);tl.push({d:sat,k:'M',c:['L',String(r)],tw:r<=3?1:0});prev=sat;
     const cups=[];if(FA_AFTER[r])cups.push(['FA',FA_AFTER[r]]);if(TB_AFTER[r])cups.push(['TB',TB_AFTER[r]]);
     for(const c of cups){const wd=nextDow(prev,3);tl.push({d:wd,k:'M',c});prev=wd}
     if(BREAK_AFTER.includes(r)){const b=nextDow(prev,6);tl.push({d:b,k:'B'});prev=b}}
-  let f=nextDow(prev,6);tl.push({d:f,k:'M',c:['FA','F']});f=nextDow(f,6);tl.push({d:f,k:'M',c:['TB','F']});
   tl.forEach(e=>{if(dt(e.d).getUTCMonth()===0)e.tw=1});return tl}
 function curEntry(){return S.tl[Math.min(S.t,S.tl.length-1)]}
 function curDate(){return curEntry().d}
@@ -958,11 +965,17 @@ function balanceHA(rounds,ids){let best=null,bv=1e9;
   return best}
 function makeSchedule(){
   [1,2,3].forEach(l=>balanceHA(roundRobin(shuffle(S.lg[l])),S.lg[l]).forEach((pairs,i)=>pairs.forEach(([h,a])=>{addFx('L',i+1,h,a,{lg:l});addFx('L',i+20,a,h,{lg:l})})));
-  drawFA('R64');setupTB()}
+  drawFA('R64');setupTBko();setupSB()}
+// Piala Sumbangsih: juara Liga 1 lwn juara FA musim lalu (jika sama, naib juara liga). Tiada pada musim pertama.
+function sbPair(){const h=(S.honours||[])[0];if(!h||!h.tables||!h.tables[1])return null;
+  const ex=id=>id&&S.clubs[id]&&S.clubs[id].tier>0&&S.clubs[id].players.length>=11;
+  const ch=h.ch[1];let a=h.FA;if(!ex(a)||a===ch)a=h.tables[1].find(id=>id!==ch&&ex(id));
+  return ex(ch)&&ex(a)?[ch,a]:null}
+function setupSB(){if(tIndex('SB','F')<0)return;const pr=sbPair();if(!pr)return;S.draws=S.draws||{};S.draws['SB|F']={d:curDate()};addFx('SB','F',pr[0],pr[1],{neutral:true,ko:1})}
 function fxOf(comp,round){return Object.values(S.fixtures).filter(f=>f.comp===comp&&f.round===round)}
 function fixturesAt(t){return Object.values(S.fixtures).filter(f=>f.t===t)}
 function userFixture(t){return fixturesAt(t).find(f=>f.h===S.user||f.a===S.user)}
-function isKO(fx){return fx.comp==='FA'||fx.round==='F'||!!fx.first}
+function isKO(fx){return fx.comp==='FA'||fx.comp==='SB'||fx.round==='F'||!!fx.first||!!fx.ko}
 function drawFA(round){
   let alive;if(round==='R64')alive=[...S.lg[1],...S.lg[2],...S.lg[3],...S.amateur];else{const prev={R32:'R64',R16:'R32',QF:'R16',SF:'QF',F:'SF'}[round];alive=fxOf('FA',prev).map(f=>f.win)}
   alive=shuffle(alive);S.draws=S.draws||{};S.draws['FA|'+round]={d:curDate()};for(let i=0;i<alive.length;i+=2){let h=alive[i],a=alive[i+1];if(tierOf(a)>tierOf(h))[h,a]=[a,h];addFx('FA',round,h,a,Object.assign({dn:i/2+1},round==='F'?{neutral:true}:{}))}}
@@ -972,6 +985,18 @@ function setupTB(){
   const groups={A:[],B:[],C:[],D:[]};for(let p=0;p<4;p++){const pot=shuffle(part.slice(p*4,p*4+4));['A','B','C','D'].forEach((g,i)=>groups[g].push(pot[i]))}
   S.tb={groups,part,pots:[0,1,2,3].map(p=>part.slice(p*4,p*4+4))};S.draws=S.draws||{};S.draws['TB|G']={d:curDate()};
   Object.entries(groups).forEach(([g,ids])=>balanceHA(roundRobin(ids),ids).forEach((pairs,i)=>pairs.forEach(([h,a])=>{addFx('TB','G'+(i+1),h,a,{grp:g});addFx('TB','G'+(i+4),a,h,{grp:g})})))}
+// Format baharu (fmt 'ko'): 16 kelab, Pusingan 16 -> Suku Akhir (satu perlawanan) -> Separuh Akhir (dua suku) -> Final.
+function setupTBko(){
+  const pickTop=(l,n)=>S.lg[l].slice().sort((a,b)=>clubStrength(b)-clubStrength(a)).slice(0,n);
+  const part=[...pickTop(1,10),...pickTop(2,4),...pickTop(3,2)].sort((a,b)=>clubStrength(b)-clubStrength(a));
+  const seeds=shuffle(part.slice(0,8)),un=shuffle(part.slice(8));
+  S.tb={fmt:'ko',groups:{},part,pots:[part.slice(0,8),part.slice(8)]};S.draws=S.draws||{};S.draws['TB|R16']={d:curDate()};
+  seeds.forEach((h,i)=>addFx('TB','R16',h,un[i],{tie:i,ko:1}))}
+function drawTBko(next,prev){S.draws=S.draws||{};S.draws['TB|'+next]={d:curDate()};
+  const w=fxOf('TB',prev).sort((a,b)=>a.tie-b.tie).map(f=>f.win);
+  if(next==='QF'){for(let i=0;i<w.length;i+=2){const[h,a]=R()<.5?[w[i],w[i+1]]:[w[i+1],w[i]];addFx('TB','QF',h,a,{tie:i/2,ko:1})}}
+  else{for(let i=0;i<w.length;i+=2){const[h,a]=R()<.5?[w[i],w[i+1]]:[w[i+1],w[i]];const x=addFx('TB','SF1',h,a,{tie:i/2});addFx('TB','SF2',a,h,{first:x,tie:i/2})}}
+  return w}
 function tbGroupTable(g){return standings(S.tb.groups[g],f=>f.comp==='TB'&&f.grp===g)}
 function drawTBQF(){S.draws=S.draws||{};S.draws['TB|QF']={d:curDate()};const t={};['A','B','C','D'].forEach(g=>t[g]=tbGroupTable(g));
   const pairs=[[t.B[1].id,t.A[0].id],[t.A[1].id,t.B[0].id],[t.D[1].id,t.C[0].id],[t.C[1].id,t.D[0].id]];
@@ -1209,7 +1234,7 @@ function finishMatch(m){
       if(e.pos==='GK')r+=e.sv*.28-e.ga*.35+(e.ga===0?.6:0);else if(DEFP.includes(e.pos))r+=-e.ga*.18+(e.ga===0?.4:0);else if(e.pos==='DM')r+=-e.ga*.08+(e.ga===0?.2:0);
       r+=(roleRating(p,e.pos)-12)*.06;if(e.red)r-=1.5;const end=e.out!=null?e.out:(m.et?120:90);if(end-e.in<20)r=6+(r-6.3)*.5;
       r=Math.round(clamp(r,3.5,10)*10)/10;e.rt=r;rts[s].push([e.id,r,e.pos,e.g,e.as,e.in]);if(r>mv){mv=r;motm=e.id}
-      if(fx.comp!=='FR'){const st=p.st[fx.comp];st.ap++;st.g+=e.g;st.as+=e.as;st.rt+=r;p.car.ap++;p.car.g+=e.g;stintAdd(p,e,r)}p.cond=Math.round(e.cond);
+      if(fx.comp!=='FR'&&fx.comp!=='SB'){const st=p.st[fx.comp];st.ap++;st.g+=e.g;st.as+=e.as;st.rt+=r;p.car.ap++;p.car.g+=e.g;stintAdd(p,e,r)}p.cond=Math.round(e.cond);
       if(e.inj){createInjury(p,'match');if(p.club===S.user)inbox('inj',`${p.name} cedera: ${injLabel(p)}`,`${INJ_SEV[p.injx.sv]}. Dijangka berehat ${p.inj} hari, kembali sekitar ${fmtDate(p.injx.ret)}. Kecederaan berlaku dalam perlawanan menentang ${S.clubs[fx.h===S.user?fx.a:fx.h].name}.`,{links:[['medical','Buka Medical']]})}
       if(fx.comp==='FR'){}else if(e.red){p.ban+=1;if(p.club===S.user){const amt=redFine(p);inbox('inj',`${p.name} digantung satu perlawanan`,`Akibat kad merah ketika menentang ${S.clubs[fx.h===S.user?fx.a:fx.h].name}. Kau boleh mengenakan denda separuh minggu gaji (${fmtRM(amt,1)}) atau memberi amaran sahaja.`,{fine:{pid:p.id,amt,st:0},fx:fx.id})}}
       else if(e.yel){p.yel++;if(p.yel>=5){p.yel=0;p.ban+=1;if(p.club===S.user)inbox('inj',`${p.name} digantung`,'Mengumpul lima kad kuning. Dia akan terlepas perlawanan seterusnya.')}}
@@ -1303,7 +1328,8 @@ function seasonAwards(){
 const FA_PRIZE={R64:15000,R32:30000,R16:50000,QF:80000,SF:150000,F:300000,W:600000};
 function seasonDrawNews(){if(!S.user)return;const mine=fxOf('FA','R64').find(f=>f.h===S.user||f.a===S.user);
   if(mine)inbox('match',`Undian Piala FA: ${roundLabel('FA','R64')}`,`Kau akan berdepan ${S.clubs[opp(mine)].name} ${mine.h===S.user?'di laman sendiri':'di tempat lawan'} pada ${fmtDate(dateOfT(tIndex('FA','R64')),'long')}. Senarai penuh undian ada di halaman Piala FA.`,{draw:'FA|R64'});
-  if(S.tb&&S.tb.part.includes(S.user)){const g=Object.keys(S.tb.groups).find(k=>S.tb.groups[k].includes(S.user));inbox('match','Undian kumpulan Piala TBPM',`Kelab kau dalam Kumpulan ${g} bersama ${S.tb.groups[g].filter(c=>c!==S.user).map(c=>S.clubs[c].name).join(', ')}.`,{draw:'TB|G'})}}
+  if(S.tb&&S.tb.fmt==='ko'&&S.tb.part.includes(S.user)){const f=fxOf('TB','R16').find(x=>x.h===S.user||x.a===S.user);if(f)inbox('match','Undian Piala TBPM: Pusingan 16',`Kau akan berdepan ${S.clubs[opp(f)].name} ${f.h===S.user?'di laman sendiri':'di tempat lawan'} pada ${fmtDate(dateOfT(f.t),'long')}.`,{draw:'TB|R16'})}
+  else if(S.tb&&S.tb.part.includes(S.user)){const g=Object.keys(S.tb.groups).find(k=>S.tb.groups[k].includes(S.user));inbox('match','Undian kumpulan Piala TBPM',`Kelab kau dalam Kumpulan ${g} bersama ${S.tb.groups[g].filter(c=>c!==S.user).map(c=>S.clubs[c].name).join(', ')}.`,{draw:'TB|G'})}}
 function ctrYearNews(){if(!S.user)return;const L=S.clubs[S.user].players.map(id=>S.players[id]).filter(p=>p&&!p.loan&&!p.res&&p.ctr===S.season);if(!L.length)return;const c=curClub();const d=c.staff&&c.staff.dof;
   inbox('ctr',`${L.length} pemain kontrak berbaki setahun`,`Kontrak pemain berikut tamat hujung musim ${seasonLabel(S.season)}: ${L.map(p=>p.name).join(', ')}. ${d?`${d.name}, Director of Football, sudah menyediakan saranan untuk setiap pemain.`:'Lantik Director of Football di halaman Staf untuk saranan dan bantuan rundingan.'}`,{ctrl:{pids:L.map(p=>p.id),k:'y'}})}
 function ctrSixMonth(){if(!S.user)return;const c=curClub();const d=c.staff&&c.staff.dof;
@@ -1321,7 +1347,18 @@ function postEntry(e,t){
     if(next){drawFA(next);const mine=fxOf('FA',next).find(f=>f.h===S.user||f.a===S.user);
       if(mine)inbox('match',`Undian Piala FA: ${roundLabel('FA',next)}`,`Kau akan berdepan ${S.clubs[mine.h===S.user?mine.a:mine.h].name} ${next==='F'?`di ${NEUTRAL_VENUE}`:(mine.h===S.user?'di laman sendiri':'di tempat lawan')} pada ${fmtDate(dateOfT(tIndex('FA',next)),'long')}. Senarai penuh undian ada di halaman Piala FA.`,{draw:'FA|'+next})}
     else{const f=fxOf('FA','F')[0];if(f.win===S.user)S.trophies.push({s:S.season,c:S.user,t:'Juara Piala FA'});inbox('league',`${S.clubs[f.win].name} juara Piala FA`,`Final: ${S.clubs[f.h].name} ${scoreStr(f)} ${S.clubs[f.a].name}.`)}}
-  if(comp==='TB'){
+  if(comp==='SB'){const f=fxOf('SB','F')[0];if(f&&f.played){addMoney(f.win,150000,'prize');addMoney(f.win===f.h?f.a:f.h,75000,'prize');
+    S.sb=S.sb||[];S.sb.unshift({s:S.season,w:f.win,l:f.win===f.h?f.a:f.h});if(f.win===S.user)S.trophies.push({s:S.season,c:S.user,t:'Juara Piala Sumbangsih'});
+    inbox('league',`${S.clubs[f.win].name} menang Piala Sumbangsih`,`${S.clubs[f.h].name} ${scoreStr(f)} ${S.clubs[f.a].name} di ${NEUTRAL_VENUE}. Musim baharu bermula.`)}}
+  if(comp==='TB'&&S.tb.fmt==='ko'){
+    const prize={R16:80000,QF:120000,SF2:200000};
+    if(round==='R16'||round==='QF'){fxOf('TB',round).forEach(f=>addMoney(f.win===f.h?f.a:f.h,prize[round],'prize'));
+      const nx=round==='R16'?'QF':'SF1';const w=drawTBko(round==='R16'?'QF':'SF',round);
+      inbox('league',round==='R16'?'Piala TBPM: lapan pasukan ke suku akhir':'Undian separuh akhir Piala TBPM',
+        (round==='R16'?w.map(id=>S.clubs[id].name).join(', ')+'.':fxOf('TB','SF1').map(f=>`${S.clubs[f.h].name} lwn ${S.clubs[f.a].name}`).join('. ')+'. Kelab pertama disebut menjadi tuan rumah pertemuan pertama.')+(()=>{const f=fxOf('TB',nx).find(x=>x.h===S.user||x.a===S.user);return f?` Kau menentang ${S.clubs[opp(f)].name}.`:''})(),{draw:'TB|'+(round==='R16'?'QF':'SF')})}
+    if(round==='SF2'){fxOf('TB','SF2').forEach(f=>addMoney(f.win===f.h?f.a:f.h,prize.SF2,'prize'));const w=drawTBF();inbox('league','Final Piala TBPM ditentukan',`${S.clubs[w[0]].name} lwn ${S.clubs[w[1]].name} di ${NEUTRAL_VENUE}.`,{draw:'TB|F'})}
+    if(round==='F'){const f=fxOf('TB','F')[0];addMoney(f.win,800000,'prize');addMoney(f.win===f.h?f.a:f.h,400000,'prize');if(f.win===S.user)S.trophies.push({s:S.season,c:S.user,t:'Juara Piala TBPM'});inbox('league',`${S.clubs[f.win].name} julang Piala TBPM`,`Final: ${S.clubs[f.h].name} ${scoreStr(f)} ${S.clubs[f.a].name}.`)}
+  } else if(comp==='TB'){
     if(round==='G1')S.tb.part.forEach(c=>addMoney(c,80000,'prize'));
     if(round==='G6'){const q=drawTBQF();inbox('league','Piala TBPM: lapan pasukan ke suku akhir',`${q.map(id=>S.clubs[id].name).join(', ')}.`+(()=>{const f=fxOf('TB','QF1').find(x=>x.h===S.user||x.a===S.user);return f?` Kau menentang ${S.clubs[opp(f)].name}.`:''})(),{draw:'TB|QF'})}
     if(round==='QF2'){drawTBSF();inbox('league','Undian separuh akhir Piala TBPM',fxOf('TB','SF1').map(f=>`${S.clubs[f.h].name} lwn ${S.clubs[f.a].name}`).join('. ')+'. Kelab pertama disebut menjadi tuan rumah pertemuan pertama.',{draw:'TB|SF'})}
@@ -1399,7 +1436,7 @@ function newSeason(){
   const lastD=S.tl[S.tl.length-1].d;const ny=S.season+1;const tl=buildTimeline(ny);const gap=daysBetween(lastD,tl[0].d);finTick(daysBetween(lastD,tl[0].d));
   returnLoans(true);projTick(true);
   // promotion / relegation
-  const mv=S.pendingMoves||{up:[],down:[]};[...mv.up,...mv.down].forEach(([cid,from,to])=>{S.lg[from]=S.lg[from].filter(x=>x!==cid);S.lg[to].push(cid);const c=S.clubs[cid];c.tier=to;c.lvl+=to<from?.6:-.6;setTierMoney(c)});
+  const mv=S.pendingMoves||{up:[],down:[]};[...mv.up,...mv.down].forEach(([cid,from,to])=>{S.lg[from]=S.lg[from].filter(x=>x!==cid);S.lg[to].push(cid);const c=S.clubs[cid];c.tier=to;c.lvl+=to<from?.6:-.6;setTierMoney(c);if(to>from&&PARACHUTE[from]){c.bal+=PARACHUTE[from];if(cid===S.user)inbox('board','Bantuan penurunan divisyen',`Persatuan memberi ${fmtRM(PARACHUTE[from])} kepada kelab yang turun ke ${LG_NAME[to]} untuk menampung kejatuhan pendapatan.`)}});
   S.season=ny;S.seasonNo++;if(S.fans!=null)S.fans=Math.round(60+(S.fans-60)*.5);const retired=[];const relRes=[];
   [1,2,3].forEach(l=>S.lg[l].forEach(cid=>{const c=S.clubs[cid];
     c.players.slice().forEach(pid=>{const p=S.players[pid];develop(p);p.st=emptyStats();p.cond=100;p.inj=Math.max(0,(p.inj||0)-gap);if(!p.inj)p.injx=null;delete p.rest;p.ban=0;p.yel=0;p.mor=70;
@@ -1415,6 +1452,7 @@ function newSeason(){
     while(c.players.length<20){const p=makeYouth(c);promoteReserve(p.id)}
     ensureGK(c)
     makeReserves(c);c.fin=emptyFin();c.hist=[Math.round(c.bal)];c.warned=0;setBudgets(c)}));
+  aiStadiums();aiInvest();
   const uc=S.user?S.clubs[S.user]:null;if(uc&&uc._rel){inbox('youth','Pelapis musim lalu dilepaskan',`${uc._rel.join(', ')} tidak dinaikkan ke skuad utama dan telah dilepaskan.`);delete uc._rel}
   if(uc)inbox('youth',`10 pemain pelapis baharu`,`Akademi menghantar 10 pemain muda berusia 18 hingga 21 tahun. Semak skuad pelapis dan naikkan yang berbakat ke skuad utama.`);
   S.fa.slice().forEach(pid=>{const p=S.players[pid];if(!p)return;if(p.age>=34||R()<.3){deletePlayer(pid)}else{develop(p);p.inj=Math.max(0,(p.inj||0)-gap);if(!p.inj)p.injx=null;p.wage=wageFor(p)}});
@@ -1571,7 +1609,17 @@ function aiLoanRequests(){Object.keys(S.loanList).forEach(pid=>{const p=S.player
 // ===== 1.0: kerjaya pengurus, lembaga, kemudahan, latihan, staf =====
 const PROT_BAL=-1500000;
 const FA_ORDER=['R64','R32','R16','QF','SF','F','W'];
-const CAP_MAX={1:60000,2:30000,3:12000};
+// 2.0 Fasa 4: kapasiti stadium ikut status kelab. Had binaan per divisyen (Liga 1 maksimum mutlak 30,000). Kelab yang turun divisyen kekal dengan stadium sedia ada tetapi tidak boleh membesarkannya lagi.
+const CAP_MAX={1:30000,2:18000,3:8000},CAP_ABS=30000;
+const STAD_STEPS={1:[2500,5000,10000],2:[1000,2500,5000],3:[500,1000,2000]},SEAT_COST={1:300,2:220,3:150};
+const RESERVE={1:6e6,2:2.5e6,3:1e6},INVEST_RATE=.3,PARACHUTE={1:1200000,2:300000};
+function stadTarget(c){const r=rep(c),mn={1:12000,2:6000,3:2000}[c.tier],mx=CAP_MAX[c.tier];return Math.round((mn+(mx-mn)*(r-1)/4)/500)*500}
+function stadPlan(c,seats){const T=c.tier;const cost=seats*SEAT_COST[T];const extra=Math.round(seats*c.tick*19*.85);return{seats,cost,extra,payback:extra>0?cost/extra:99,cap:c.cap+seats}}
+function aiStadiums(){[1,2,3].forEach(l=>S.lg[l].forEach(cid=>{if(cid===S.user)return;const c=S.clubs[cid];if(S.proj.some(p=>p.cid===cid&&p.k==='stad'))return;
+  const room=CAP_MAX[l]-c.cap,want=stadTarget(c)-c.cap;if(room<=0||want<500)return;const seats=Math.min(room,want,STAD_STEPS[l][1]),cost=seats*SEAT_COST[l];
+  if(c.bal-cost<RESERVE[l])return;c.bal-=cost;c.fin.ops+=cost;S.proj.push({cid,k:'stad',seats,done:'ns',cost})}))}
+// Sink untuk kelab AI yang menimbun wang: sebahagian lebihan di atas rizab dilaburkan (infrastruktur, akademi, komuniti).
+function aiInvest(){[1,2,3].forEach(l=>S.lg[l].forEach(cid=>{if(cid===S.user)return;const c=S.clubs[cid];const ex=c.bal-RESERVE[l];if(ex>0){const v=Math.round(ex*INVEST_RATE/1000)*1000;c.bal-=v;c.fin.ops+=v}}))}
 const FAC_NAME={train:'Padang latihan',youth:'Akademi pelapis',med:'Pusat perubatan'};
 const FAC_DESC={train:'Kualiti latihan dan perkembangan atribut pemain.',youth:'Kebolehan dan potensi 10 pelapis yang tiba setiap musim.',med:'Tempoh kecederaan dan pemulihan kondisi.'};
 const STAFF_R={am:'Penolong Pengurus',fit:'Jurulatih Kecergasan',att:'Jurulatih Serangan',def:'Jurulatih Pertahanan',gk:'Jurulatih Penjaga Gol',phy:'Fisioterapi',sc:'Ketua Scout',dof:'Director of Football'};
@@ -1811,10 +1859,16 @@ function jobNewSeason(){const J=S.job;if(!J)return;J.offers=J.offers.filter(o=>o
 
 // ---- permintaan lembaga & kemudahan
 function homeFill(){const c=curClub();const hs=Object.values(S.fixtures).filter(f=>f.played&&f.h===S.user&&!f.neutral&&f.att&&f.comp!=='FR');if(hs.length<3)return null;return hs.reduce((a,f)=>a+Math.min(1,f.att/c.cap),0)/hs.length}
-function reqCost(k){const c=curClub();if(!c)return 0;if(k==='stad')return({1:5000,2:2500,3:1000}[c.tier])*({1:300,2:220,3:150}[c.tier]);if(FAC_NAME[k])return({1:700000,2:300000,3:120000}[c.tier])*c.fac[k];return 0}
-function stadSeats(){const c=curClub();return Math.min({1:5000,2:2500,3:1000}[c.tier],CAP_MAX[c.tier]-c.cap)}
+function reqCost(k,seats){const c=curClub();if(!c)return 0;if(k==='stad')return(seats||STAD_STEPS[c.tier][0])*SEAT_COST[c.tier];if(FAC_NAME[k])return({1:700000,2:300000,3:120000}[c.tier])*c.fac[k];return 0}
+function stadSeats(){const c=curClub();return Math.max(0,CAP_MAX[c.tier]-c.cap)}
+function mStadium(){const c=curClub();if(!c)return;const room=stadSeats(),fill=homeFill(),J=S.job;
+  const opts=STAD_STEPS[c.tier].filter(x=>x<=room).map(x=>stadPlan(c,x));
+  openModal(`<header><div><span class="lbl">Pembesaran stadium</span><h2>${esc(c.stadium)}</h2></div><button class="btn sm" data-act="close">Tutup</button></header>
+   <div class="kv2"><span>Kapasiti semasa</span><b class="mono">${c.cap.toLocaleString('ms-MY')}</b><span>Had ${LG_NAME[c.tier]}</span><b class="mono">${CAP_MAX[c.tier].toLocaleString('ms-MY')}</b><span>Purata kehadiran</span><b class="mono">${fill==null?'belum cukup data':Math.round(fill*100)+'%'}</b><span>Baki bank</span><b class="mono">${fmtRM(c.bal,1)}</b></div>
+   <p class="mute" style="font-size:.86rem">Lembaga hanya meluluskan jika kepercayaan sekurang-kurangnya 55, purata kehadiran 80% ke atas dan baki bank sekurang-kurangnya 1.3 kali kos. Siap sebelum musim depan. Tambahan pendapatan dianggar daripada 19 perlawanan liga di laman sendiri pada kadar isi 85%, dan hanya tercapai jika permintaan penyokong cukup.</p>
+   ${opts.length?`<div class="tbl"><table><thead><tr><th>Peringkat</th><th class="r">Kapasiti baharu</th><th class="r">Kos</th><th class="r">Tiket tambahan/musim</th><th class="r">Pulang modal</th><th></th></tr></thead><tbody>${opts.map(o=>`<tr><td class="num">+${o.seats.toLocaleString('ms-MY')}</td><td class="r num">${o.cap.toLocaleString('ms-MY')}</td><td class="r num">${fmtRM(o.cost)}</td><td class="r num plus">${fmtRM(o.extra)}</td><td class="r num">${o.payback<20?o.payback.toFixed(1)+' musim':'—'}</td><td class="r"><button class="btn sm good" data-act="breq" data-arg="stad|${o.seats}" ${c.bal<o.cost*1.3||(J&&J.conf<55)?'disabled':''}>Minta</button></td></tr>`).join('')}</tbody></table></div>`:`<p>Stadium sudah mencapai had ${LG_NAME[c.tier]}. Naik divisyen untuk membesarkan lagi.</p>`}`)}
 function projOf(k){return S.proj.find(p=>p.cid===S.user&&p.k===k)}
-function boardRequest(k){const c=curClub();const J=S.job;if(!c)return{ok:false,msg:'Tiada kelab.'};const d=curDate();
+function boardRequest(k){let xs=0;if(String(k).startsWith('stad|')){xs=+String(k).split('|')[1];k='stad'}const c=curClub();const J=S.job;if(!c)return{ok:false,msg:'Tiada kelab.'};const d=curDate();
   if(J.cool&&d<J.cool)return{ok:false,msg:`Lembaga belum bersedia mendengar permintaan baharu. Cuba semula selepas ${fmtDate(J.cool,'long')}.`};
   const rej=(m)=>{const dd=k==='wb'?45:90;J.cool=addDays(d,dd);return{ok:false,msg:m+` Kau boleh buat permintaan semula selepas ${dd===45?'6 minggu':'3 bulan'}.`}};const okc=()=>{J.cool=addDays(d,30)};
   if(k==='tb'||k==='wb'){if(k==='wb'){const q=J.req.wbn&&J.req.wbn[0]===S.season?J.req.wbn:[S.season,0];if(q[1]>=2)return{ok:false,msg:'Had gaji hanya boleh diminta dua kali semusim.'};q[1]++;J.req.wbn=q}else{if(J.req[k]===S.season)return{ok:false,msg:'Permintaan ini hanya boleh dibuat sekali semusim.'};J.req[k]=S.season}
@@ -1823,13 +1877,13 @@ function boardRequest(k){const c=curClub();const J=S.job;if(!c)return{ok:false,m
     if(k==='tb'){const add=r1k(Math.max(20000,c.bal*.08));c.tb+=add;okc();inbox('board','Bajet pindahan ditambah',`Lembaga meluluskan tambahan ${fmtRM(add)}.`,{read:true});return{ok:true,msg:`Lembaga meluluskan tambahan bajet pindahan ${fmtRM(add)}.`}}
     const add=r1k(Math.max(c.wb*.1,Math.min(c.bal*.012,c.wb*.3)));if(c.bal<add*6)return rej('Lembaga menolak kerana baki tidak cukup menampung gaji tambahan.');c.wb+=add;okc();inbox('board','Had gaji dinaikkan',`Had gaji bulanan naik ${fmtRM(add)} kepada ${fmtRM(c.wb)}.`,{read:true});return{ok:true,msg:`Had gaji dinaikkan kepada ${fmtRM(c.wb)} sebulan.`}}
   if(projOf(k))return{ok:false,msg:'Projek ini sedang berjalan.'};
-  const cost=reqCost(k);
-  if(k==='stad'){if(stadSeats()<=0)return{ok:false,msg:`Stadium sudah mencapai had kapasiti ${LG_NAME[c.tier]} (${CAP_MAX[c.tier].toLocaleString('ms-MY')}). Naik divisyen untuk besarkan lagi.`};
+  const cost=reqCost(k,xs);
+  if(k==='stad'){if(!STAD_STEPS[c.tier].includes(xs)||xs>stadSeats())return{ok:false,msg:'Pilihan pembesaran tidak sah atau melebihi had divisyen.'};if(stadSeats()<=0)return{ok:false,msg:`Stadium sudah mencapai had kapasiti ${LG_NAME[c.tier]} (${CAP_MAX[c.tier].toLocaleString('ms-MY')}). Naik divisyen untuk besarkan lagi.`};
     const fill=homeFill();if(fill==null)return{ok:false,msg:'Lembaga mahu lihat sekurang-kurangnya 3 perlawanan di laman sendiri musim ini sebelum menimbang.'};
     if(J.conf<55)return rej(`Lembaga menolak. Kepercayaan ${Math.round(J.conf)}/100 belum cukup (perlu 55).`);
     if(fill<.8)return rej(`Lembaga menolak. Purata kehadiran hanya ${Math.round(fill*100)}% kapasiti, belum perlu dibesarkan (perlu 80%).`);
     if(c.bal<cost*1.3)return rej(`Lembaga menolak. Kos ${fmtRM(cost)} terlalu besar berbanding baki ${fmtRM(c.bal)}.`);
-    const seats=stadSeats();c.bal-=cost;c.fin.ops+=cost;S.proj.push({cid:S.user,k,seats,done:'ns',cost});okc();inbox('board','Pembesaran stadium diluluskan',`${seats.toLocaleString('ms-MY')} tempat duduk tambahan. Kos ${fmtRM(cost)}. Siap sebelum musim depan.`,{read:true});
+    const seats=xs;c.bal-=cost;c.fin.ops+=cost;S.proj.push({cid:S.user,k,seats,done:'ns',cost});okc();inbox('board','Pembesaran stadium diluluskan',`${seats.toLocaleString('ms-MY')} tempat duduk tambahan. Kos ${fmtRM(cost)}. Siap sebelum musim depan.`,{read:true});
     return{ok:true,msg:`Lembaga meluluskan pembesaran ${seats.toLocaleString('ms-MY')} tempat duduk dengan kos ${fmtRM(cost)}. Siap sebelum musim depan.`}}
   if(FAC_NAME[k]){if(c.fac[k]>=5)return{ok:false,msg:`${FAC_NAME[k]} sudah di tahap maksimum.`};
     if(J.conf<50)return rej(`Lembaga menolak. Kepercayaan ${Math.round(J.conf)}/100 belum cukup (perlu 50).`);
@@ -1959,7 +2013,7 @@ function vBoard(){const c=curClub();const J=S.job;if(!c)return vJobs();const obj
      <p class="mute" style="font-size:.84rem">Objektif dinilai pada hujung musim. Objektif liga paling berat.</p></section></div>
    <section class="panel"><div class="row sp"><h3>Permintaan kepada lembaga</h3>${cool?`<span class="chip ban">Boleh minta semula ${fmtDate(J.cool)}</span>`:'<span class="mute" style="font-size:.84rem">Ditolak: tunggu 3 bulan. Diluluskan: tunggu 1 bulan.</span>'}</div>
     <div class="facrow"><div><b>Stadium</b> <span class="mono">${c.cap.toLocaleString('ms-MY')}</span> <span class="mute">/ had ${CAP_MAX[c.tier].toLocaleString('ms-MY')}</span><div class="mute" style="font-size:.82rem">${esc(c.stadium)}. Purata kehadiran musim ini: ${fill==null?'belum cukup data':Math.round(fill*100)+'% kapasiti'}. Lembaga hanya pertimbang jika purata 80% ke atas.</div></div>
-     <div class="facact">${sp?`<span class="chip ban">+${sp.seats.toLocaleString('ms-MY')} tempat duduk, siap musim depan</span>`:seats<=0?'<span class="chip sale">Had divisyen</span>':`<button class="btn sm" data-act="breq" data-arg="stad" ${cool?'disabled':''}>Besarkan +${seats.toLocaleString('ms-MY')} · ${fmtRM(reqCost('stad'))}</button>`}</div></div>
+     <div class="facact">${sp?`<span class="chip ban">+${sp.seats.toLocaleString('ms-MY')} tempat duduk, siap musim depan</span>`:seats<=0?'<span class="chip sale">Had divisyen</span>':`<button class="btn sm" data-act="stadm" ${cool?'disabled':''}>Rancang pembesaran…</button>`}</div></div>
     ${['train','youth','med'].map(facRow).join('')}
     <div class="facrow"><div><b>Bajet pindahan tambahan</b><div class="mute" style="font-size:.82rem">Sekali semusim. Perlu kepercayaan 60 dan baki positif. Bajet semasa ${fmtRM(c.tb)}.</div></div><div class="facact"><button class="btn sm" data-act="breq" data-arg="tb" ${cool||J.req.tb===S.season?'disabled':''}>${J.req.tb===S.season?'Sudah diminta musim ini':'Minta tambahan'}</button></div></div>
     <div class="facrow"><div><b>Naikkan had gaji</b><div class="mute" style="font-size:.82rem">Sekali semusim, +10%. Perlu kepercayaan 55. Had semasa ${fmtRM(c.wb)} sebulan, digunakan ${fmtRM(wageBill(S.user))}.</div></div><div class="facact"><button class="btn sm" data-act="breq" data-arg="wb" ${cool||J.req.wb===S.season?'disabled':''}>${J.req.wb===S.season?'Sudah diminta musim ini':'Minta naik'}</button></div></div>
@@ -2123,10 +2177,10 @@ function setMeta(m){try{localStorage.setItem('pk3-meta',JSON.stringify(m))}catch
 // Skema simpanan: naikkan SCHEMA hanya bila struktur data berubah sehingga build lama tidak selamat membukanya.
 // Simpanan tanpa `sv` datang dari build 1.x sebelum 1.4.6.4 dan masih dibuka seperti biasa.
 // SCHEMA 2 (2.0 Fasa 2): format simpanan 'F' (deflate + pek 15-bit). SCHEMA 3 (Fasa 3): p.dob/bp/hist/mv/ih/injx/rest, S.legends. Migrasi didaftar dalam PK2.mig[versi].
-const SCHEMA=3;
+const SCHEMA=4;
 const MAX_IMPORT_BYTES=20*1024*1024;
 // Ruang nama 2.0. Modul baharu didaftar di bawah PK2, bukan sebagai global baharu. mig[v] menaikkan S daripada v-1 ke v (sekali sahaja).
-const PK2={mig:{2:()=>{/* v2: hanya format simpanan baharu; tiada perubahan struktur S */},3:()=>migrate3()}};
+const PK2={mig:{2:()=>{/* v2: hanya format simpanan baharu; tiada perubahan struktur S */},3:()=>migrate3(),4:()=>{/* v4: had mutlak stadium 30,000 */Object.values(S.clubs).forEach(c=>{if(c.cap>CAP_ABS)c.cap=CAP_ABS})}}};
 function runMigrations(){if(!S)return;const from=Number.isInteger(S.sv)?S.sv:1;for(let v=from+1;v<=SCHEMA;v++){if(PK2.mig[v])PK2.mig[v]()}S.sv=SCHEMA}
 // Pemampat 'F': fflate deflate (sync, ~6x lebih laju daripada LZString) dan pek 15-bit ke aksara UTF-16 (tiada surrogate, tiada NUL).
 const PK_OFF=0x100;
@@ -2298,6 +2352,7 @@ function tbStatus(cid){if(!S.tb||!S.tb.part.includes(cid))return{st:'na',txt:'Ti
   const ko=Object.values(S.fixtures).filter(f=>f.comp==='TB'&&!f.grp&&f.played&&f.win&&(f.h===cid||f.a===cid)).sort((a,b)=>b.t-a.t)[0];
   if(ko&&ko.win!==cid)return{st:'fail',txt:`Tersingkir di ${roundLabel('TB',ko.round).replace(/, Pertemuan.*/,'')}`,next:null};
   if(ko&&ko.win===cid)return{st:'pend',txt:`Mara dari ${roundLabel('TB',ko.round).replace(/, Pertemuan.*/,'')}`,next:nx};
+  if(S.tb.fmt==='ko')return{st:'pend',txt:ko?`Mara dari ${roundLabel('TB',ko.round).replace(/, Pertemuan.*/,'')}`:'Menunggu Pusingan 16',next:nx};
   const g=Object.keys(S.tb.groups).find(k=>S.tb.groups[k].includes(cid));const t=tbGroupTable(g);const i=t.findIndex(r=>r.id===cid);const r=t[i];
   const gDone=fxOf('TB','G6').length&&fxOf('TB','G6').every(f=>f.played);const inKO=['QF1','SF1'].some(rd=>fxOf('TB',rd).some(f=>f.h===cid||f.a===cid));
   if(gDone&&!inKO)return{st:'fail',txt:`Tersingkir di peringkat kumpulan (tempat ke-${i+1}, Kumpulan ${g})`,next:null};
@@ -2383,16 +2438,16 @@ function mondayOf(d){return addDays(d,-((dow(d)+6)%7))}
 function weekStrip(){const cur=curDate();const first=S.tl[0].d,last=S.tl[S.tl.length-1].d;const m0=mondayOf(cur);
   const minO=Math.round(daysBetween(m0,mondayOf(first))/7),maxO=Math.round(daysBetween(m0,mondayOf(last))/7);const off=clamp(UI.calOff||0,minO,maxO);UI.calOff=off;
   const mon=addDays(m0,off*7);const byD={};S.tl.forEach((e,i)=>{(byD[e.d]=byD[e.d]||[]).push(i)});let h='';
-  for(let k=0;k<7;k++){const d=addDays(mon,k);const idx=byD[d]||[];const isCur=d===cur&&!S.over;const past=d<cur||(S.over&&d===cur);let body='',match=false;
+  for(let k=0;k<7;k++){const d=addDays(mon,k);const idx=byD[d]||[];const isCur=d===cur&&!S.over;const past=d<cur||(S.over&&d===cur);let body='',match=false,wc='';
     for(const i of idx){const e=S.tl[i];const fx=fixturesAt(i).find(f=>f.h===S.user||f.a===S.user);
-      if(fx){match=true;const o=opp(fx);const ha=fx.neutral?'N':fx.h===S.user?'H':'A';let res='';
+      if(fx){match=true;wc=fx.comp;const o=opp(fx);const ha=fx.neutral?'N':fx.h===S.user?'H':'A';let res='';
         if(fx.played){const g=fx.h===S.user?fx.hg:fx.ag,x=fx.h===S.user?fx.ag:fx.hg;const r=fx.win?(fx.win===S.user?'M':'K'):(g>x?'M':g<x?'K':'S');res=`<button class="link wres ${r}" data-act="report" data-arg="${fx.id}">${r} ${g}-${x}</button>`}
-        body+=`<span class="wtop"><span class="chip">${COMP_SHORT[fx.comp]||fx.comp}</span><span class="wha ${ha}">${ha}</span>${isDerby(fx)?'<span class="chip derby">DERBI</span>':''}</span><span class="wopp">${kit(o)} <button class="link" data-act="club" data-arg="${o}">${esc(S.clubs[o].name)}</button></span>${res}`}
-      else if(e.k==='M')body+=`<span class="wtop"><span class="chip">${COMP_SHORT[e.c[0]]||e.c[0]}</span></span><span class="mute">Tiada perlawanan untuk kelab kau</span>`;
+        body+=`<span class="wtop">${compChip(fx.comp)}<span class="wha ${ha}">${ha}</span>${isDerby(fx)?'<span class="chip derby">DERBI</span>':''}</span><span class="wopp">${kit(o)} <button class="link" data-act="club" data-arg="${o}">${esc(S.clubs[o].name)}</button></span>${res}`}
+      else if(e.k==='M')body+=`<span class="wtop">${compChip(e.c[0])}</span><span class="mute">Tiada perlawanan untuk kelab kau</span>`;
       else if(e.k==='B')body+='<span class="mute">Rehat antarabangsa</span>';
       else body+=`<span class="mute">${e.fr&&frPending()?'Slot persahabatan':'Pra-musim'}</span>`}
     if(!body){const lg1=(S.tl.find(x=>x.c&&x.c[0]==='L')||{}).d;body=`<span class="mute">${d<first?'Persediaan musim':d>last?'Cuti musim':dow(d)===0?'Hari rehat':lg1&&d<lg1?'Latihan pra-musim':'Latihan'}</span>`}
-    h+=`<div class="wk ${isCur?'cur':''} ${past&&!isCur?'past':''} ${match?'':'off'}"><span class="wd">${DAYS[dow(d)]}, ${fmtDate(d)}${isCur?' · kini':''}</span>${body}</div>`}
+    h+=`<div class="wk ${isCur?'cur':''} ${past&&!isCur?'past':''} ${match?'':'off'} ${wc?'c-'+wc+' k-'+wc:''}"><span class="wd">${DAYS[dow(d)]}, ${fmtDate(d)}${isCur?' · kini':''}</span>${body}</div>`}
   return `<section class="panel wstrip"><div class="row sp"><h3>Kalendar mingguan</h3><div class="row" style="gap:6px"><button class="btn sm" data-act="calweek" data-arg="-1" ${off<=minO?'disabled':''} aria-label="Minggu sebelum">‹</button><span class="mono" style="font-size:.84rem;min-width:118px;text-align:center">${fmtDate(mon)} – ${fmtDate(addDays(mon,6))}</span><button class="btn sm" data-act="calweek" data-arg="1" ${off>=maxO?'disabled':''} aria-label="Minggu seterusnya">›</button>${off?'<button class="btn sm" data-act="calweek" data-arg="0">Minggu ini</button>':''}</div><button class="btn sm" data-act="nav" data-arg="fixtures">Kalendar penuh</button></div>
    <div class="wrow cal7">${h}</div><span class="mute" style="font-size:.78rem">H = laman sendiri · A = tempat lawan · N = tempat neutral</span></section>`}
 
@@ -2403,7 +2458,7 @@ function homeStats(){const me=S.user;if(!me)return '';const all=Object.values(S.
   let w=0,d=0,l=0,gf=0,ga=0,cs=0,po=0,xf=0,xa=0,sh=0,ot=0,ns=0;
   fx.forEach(f=>{const r=res(f);gf+=r.g;ga+=r.x;if(!r.x)cs++;if(r.k==='M')w++;else if(r.k==='S')d++;else l++;const st=f.st;if(st&&st.po){ns++;po+=st.po[r.s];xf+=st.xg[r.s];xa+=st.xg[1-r.s];sh+=st.sh[r.s];ot+=st.ot[r.s]}});
   const frR=fr.map(res);const frTxt=fr.length?`Persahabatan: M${frR.filter(r=>r.k==='M').length} S${frR.filter(r=>r.k==='S').length} K${frR.filter(r=>r.k==='K').length}`:'';
-  const row=f=>{const r=res(f);const o=r.s?f.h:f.a;return `<button class="hsrow" data-act="report" data-arg="${f.id}">${formHTML([r.k])}<span class="chip">${COMP_SHORT[f.comp]||f.comp}</span><span class="wha ${f.neutral?'N':r.s?'A':'H'}">${f.neutral?'N':r.s?'A':'H'}</span><span class="hso">${esc(S.clubs[o].name)}</span><b class="num">${r.g}-${r.x}</b></button>`};
+  const row=f=>{const r=res(f);const o=r.s?f.h:f.a;return `<button class="hsrow" data-act="report" data-arg="${f.id}">${formHTML([r.k])}${compChip(f.comp)}<span class="wha ${f.neutral?'N':r.s?'A':'H'}">${f.neutral?'N':r.s?'A':'H'}</span><span class="hso">${esc(S.clubs[o].name)}</span><b class="num">${r.g}-${r.x}</b></button>`};
   let h=`<section class="panel hstats"><div class="row sp"><h3>Prestasi ${seasonLabel(S.season)}</h3><span class="mute" style="font-size:.78rem">Perlawanan rasmi</span></div>`;
   if(!n){h+=`<p class="mute" style="font-size:.88rem">Belum ada perlawanan rasmi musim ini.${frTxt?' '+frTxt+'.':''}</p>`+(fr.length?`<span class="lbl">Persahabatan</span><div class="hslist">${fr.slice(-5).reverse().map(row).join('')}</div>`:'')+'</section>';return h}
   const tile=(l,v,s)=>`<div class="hst"><span class="lbl">${l}</span><b class="num">${v}</b>${s?`<span class="mute">${s}</span>`:''}</div>`;
@@ -2534,9 +2589,25 @@ function renderNav(){const u=unread();const J=S.job;
   return `<nav class="rail">${G.map(([h,its])=>(h?`<span class="navh">${h}</span>`:'')+its.map(btn).join('')).join('')}<div class="spacer"></div><button class="supbtn o3" data-act="support">☕ Sokong pembangun</button><a class="mono vlink" href="nota.html" title="Nota versi dan isu diketahui">${VERSION} · Apa baharu</a></nav>`}
 function renderView(){return({home:vHome,inbox:vInbox,squad:vSquad,transfer:vTransfer,finance:vFinance,fixtures:vFixtures,league:vLeague,fa:vFA,tb:vTB,awards:vAwards,stats:vStats,clubs:vClubs,club:vClub,saves:vSaves,feedback:vFeedback,help:vHelp,train:vTrain,staff:vStaff,board:vBoard,jobs:vJobs,tactic:vTactic,profile:vProfile,season:vSeason,scout:vScout,medical:vMedical})[UI.view]()}
 
-function leagueTableHTML(l,compact){const t=leagueTable(l);
+// Tempat Asia dari liga (spec A1: 4 tempat ACL + 1 melalui Piala FA, tempat 5-6 ke AL). Ubah di sini jika Zonan mahu 2+...
+const ASIA_SLOTS={acl:4,al:2};
+// Label J/R/ACL/AL/N dikira dengan matematik mata maksimum: hanya dipaparkan bila kedudukan sudah TIDAK boleh berubah.
+function tableLabels(l,t){const out={};const N=t.length,TG=38;if(N<2)return out;
+  const mx=t.map(r=>r.pts+3*Math.max(0,TG-r.p));
+  const fin=t.every(r=>r.p>=TG);// musim tamat: kedudukan (termasuk pemecah seri) sudah muktamad
+  const lockTop=(i,n)=>fin?i<n:t.reduce((c,r,j)=>c+(j!==i&&mx[j]>=t[i].pts?1:0),0)<n;
+  const lockBelow=(i,n)=>fin?i>=N-n:t.reduce((c,r,j)=>c+(j!==i&&r.pts>mx[i]?1:0),0)>=N-n;
+  t.forEach((r,i)=>{
+    if(lockTop(i,1)&&t.some(x=>x.p>0)){out[r.id]=['J','Juara '+LG_NAME[l]];return}
+    if(l>1&&lockTop(i,3)){out[r.id]=['N','Naik divisyen'];return}
+    if(l===1&&lockTop(i,ASIA_SLOTS.acl)){out[r.id]=['ACL','Layak Liga Juara-Juara Asia'];return}
+    if(l===1&&lockTop(i,ASIA_SLOTS.acl+ASIA_SLOTS.al)){out[r.id]=['AL','Layak Liga Asia'];return}
+    if(l<3&&lockBelow(i,3))out[r.id]=['R','Tersingkir ke divisyen bawah']});
+  return out}
+function labChip(x){if(!x)return '';const k={J:'c-L',N:'c-TB',ACL:'c-AC',AL:'c-AL',R:'c-FA'}[x[0]]||'';return ` <span class="chip cc lab ${k}" title="${esc(x[1])}">${x[0]}</span>`}
+function leagueTableHTML(l,compact){const t=leagueTable(l);const LB=tableLabels(l,t);
   return `<div class="tbl"><table><thead><tr><th class="r">#</th><th>Kelab</th><th class="r">M</th>${compact?'':'<th class="r">M</th><th class="r">S</th><th class="r">K</th><th class="r">JG</th><th class="r">BG</th>'}<th class="r">PG</th><th class="r">Mata</th><th>Form</th></tr></thead><tbody>
-  ${t.map((r,i)=>`<tr class="${r.id===S.user?'me':''} ${l>1&&i<3?'zup':''} ${l<3&&i>16?'zdown':''}"><td class="r num">${i+1}</td><td class="nm">${kit(r.id)} ${clink(r.id)}</td><td class="r num">${r.p}</td>${compact?'':`<td class="r num">${r.w}</td><td class="r num">${r.d}</td><td class="r num">${r.l}</td><td class="r num">${r.gf}</td><td class="r num">${r.ga}</td>`}<td class="r num">${r.gf-r.ga>0?'+':''}${r.gf-r.ga}</td><td class="r num"><b>${r.pts}</b></td><td>${formHTML(r.form.slice(-5))}</td></tr>`).join('')}</tbody></table></div>`}
+  ${t.map((r,i)=>`<tr class="${r.id===S.user?'me':''} ${l>1&&i<3?'zup':''} ${l<3&&i>16?'zdown':''}"><td class="r num">${i+1}</td><td class="nm">${kit(r.id)} ${clink(r.id)}${labChip(LB[r.id])}</td><td class="r num">${r.p}</td>${compact?'':`<td class="r num">${r.w}</td><td class="r num">${r.d}</td><td class="r num">${r.l}</td><td class="r num">${r.gf}</td><td class="r num">${r.ga}</td>`}<td class="r num">${r.gf-r.ga>0?'+':''}${r.gf-r.ga}</td><td class="r num"><b>${r.pts}</b></td><td>${formHTML(r.form.slice(-5))}</td></tr>`).join('')}</tbody></table></div>`}
 
 // ---------- home
 function helpHidden(){try{return localStorage.getItem('pk3-hidehelp')==='1'}catch(e){return false}}
@@ -2751,6 +2822,16 @@ function vTransfer(){const wi=windowInfo();const c=S.clubs[S.user];const ic=impo
 function sparkSVG(h){if(h.length<2)return '<p class="mute">Belum cukup data.</p>';const W=600,H=90,min=Math.min(0,...h),max=Math.max(...h),rg=(max-min)||1;
   const pts=h.map((v,i)=>[i/(h.length-1)*W,H-8-(v-min)/rg*(H-20)]);const d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');const zy=H-8-(0-min)/rg*(H-20);
   return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Baki sepanjang musim"><path class="ar" d="${d} L${W} ${H} L0 ${H} Z"/>${min<0?`<line class="zero" x1="0" x2="${W}" y1="${zy}" y2="${zy}"/>`:''}<path class="ln" d="${d}"/></svg><div class="row sp mono mute" style="font-size:.75rem"><span>Awal musim ${fmtRM(h[0])}</span><span>Tertinggi ${fmtRM(max)}</span><span>Kini ${fmtRM(h[h.length-1])}</span></div>`}
+// Ringkasan & ramalan kewangan (I5): aliran tetap bulanan, ramalan baki hujung musim, projek stadium yang belum siap.
+function finOutlook(c){const last=S.tl[S.tl.length-1].d,mo=Math.max(0,daysBetween(curDate(),last)/7*12/52);const wb=wageBill(c.id);
+  const fixed=c.spons+c.tv-wb-c.ops;const hf=Object.values(S.fixtures).filter(f=>f.h===c.id&&f.comp==='L'&&!f.neutral);const pl=hf.filter(f=>f.played&&f.gate),rem=hf.filter(f=>!f.played).length;
+  const avg=pl.length?pl.reduce((a,f)=>a+f.gate,0)/pl.length:c.cap*.6*c.tick;const proj=Math.round(c.bal+fixed*mo+avg*rem);
+  const sp=S.proj.filter(p=>p.cid===c.id&&p.k==='stad')[0];const runway=fixed<0?c.bal/-fixed:null;
+  return `<section class="panel"><h3>Ringkasan & ramalan</h3><div class="kv2"><span>Aliran tetap sebulan (penajaan + siaran − gaji − operasi)</span><b class="mono ${fixed<0?'minus':'plus'}">${fmtRM(fixed,1)}</b>
+   <span>Kutipan tiket purata setiap perlawanan liga di laman sendiri</span><b class="mono">${fmtRM(avg)}</b><span>Perlawanan liga di laman sendiri berbaki</span><b class="mono">${rem}</b>
+   <span>Ramalan baki hujung musim</span><b class="mono ${proj<0?'minus':''}">${fmtRM(proj)}</b>${runway!=null?`<span>Baki cukup untuk</span><b class="mono">${runway.toFixed(1)} bulan tanpa tiket</b>`:''}
+   <span>Stadium</span><b class="mono">${c.cap.toLocaleString('ms-MY')} / had ${CAP_MAX[c.tier].toLocaleString('ms-MY')}${sp?` · +${sp.seats.toLocaleString('ms-MY')} dalam pembinaan`:''}</b></div>
+   <p class="mute" style="font-size:.84rem">Ramalan tidak termasuk hadiah pertandingan, jual beli pemain dan pelaburan lain yang belum berlaku.</p></section>`}
 function vFinance(){const c=S.clubs[S.user];const f=c.fin;const wb=wageBill(S.user);
   const inc=[['Kutipan tiket',f.gate],['Penajaan',f.spons],['Hak siaran',f.tv],['Hadiah pertandingan',f.prize],['Jualan pemain',f.sale]],exp=[['Gaji pemain',f.wage],['Kos operasi',f.ops],['Pembelian pemain',f.buy]];
   const ti=inc.reduce((s,x)=>s+x[1],0),te=exp.reduce((s,x)=>s+x[1],0);const l=c.tier;
@@ -2766,6 +2847,7 @@ function vFinance(){const c=S.clubs[S.user];const f=c.fin;const wb=wageBill(S.us
      <tr><th colspan="2">Pendapatan</th></tr>${inc.map(([a,v])=>`<tr><td>${a}</td><td class="r num plus">${fmtRM(v)}</td></tr>`).join('')}<tr><td><b>Jumlah pendapatan</b></td><td class="r num plus"><b>${fmtRM(ti)}</b></td></tr>
      <tr><th colspan="2">Perbelanjaan</th></tr>${exp.map(([a,v])=>`<tr><td>${a}</td><td class="r num minus">${fmtRM(v)}</td></tr>`).join('')}<tr><td><b>Jumlah perbelanjaan</b></td><td class="r num minus"><b>${fmtRM(te)}</b></td></tr>
      <tr><td><b>Untung / rugi</b></td><td class="r num ${ti-te<0?'minus':'plus'}"><b>${fmtRM(ti-te)}</b></td></tr></tbody></table></div></section></div>
+   ${finOutlook(c)}
    <section class="panel"><h3>Ekonomi ${LG_NAME[l]}</h3><div class="tbl"><table><thead><tr><th>Kelab</th><th class="r">Baki</th><th class="r">Gaji/bln</th><th class="r">Nilai skuad</th><th class="r">Bajet pindahan</th><th class="r">Beli</th><th class="r">Jual</th><th class="c">Import</th></tr></thead><tbody>${rows}</tbody></table></div>
     <p class="mute" style="font-size:.84rem">Purata baki: Kebangsaan ${fmtRM(avg(1))}, Negeri ${fmtRM(avg(2))}, Kampung ${fmtRM(avg(3))}. Hadiah juara: ${[1,2,3].map(t=>`${LG_SHORT[t]} ${fmtRM(prizeFor(t,0))}`).join(', ')}.</p></section></div>`}
 
@@ -2776,13 +2858,13 @@ function fxRow(fx,me){const res=fx.played?`<button class="link num" data-act="re
 function vFixtures(){const rows=S.tl.map((e,i)=>{const cur=i===S.t&&!S.over;const tw=e.tw?'<span class="chip sale">TW</span>':'';
     if(e.k!=='M')return `<tr class="${cur?'me':''}"><td class="num">${fmtDate(e.d,'day')}</td><td>${tw}</td><td colspan="5" class="mute">${e.k==='P'?'Pra-musim':'Rehat antarabangsa'}</td></tr>`;
     const[comp,r]=e.c;const fx=fixturesAt(i).find(f=>f.h===S.user||f.a===S.user);
-    return `<tr class="${cur?'me':''}"><td class="num">${fmtDate(e.d,'day')}</td><td>${tw}</td><td><span class="chip">${COMP_SHORT[comp]||comp}</span> ${roundLabel(comp,r)}</td>${fx?fxRow(fx,true):`<td colspan="4" class="mute">${fxOf(comp,r).length?'Tiada perlawanan untuk kelab kau':'Menunggu cabutan'}</td>`}</tr>`}).join('');
+    return `<tr class="${cur?'me':''}"><td class="num">${fmtDate(e.d,'day')}</td><td>${tw}</td><td>${compChip(comp)} ${roundLabel(comp,r)}</td>${fx?fxRow(fx,true):`<td colspan="4" class="mute">${fxOf(comp,r).length?'Tiada perlawanan untuk kelab kau':'Menunggu cabutan'}</td>`}</tr>`}).join('');
   return `<div class="view"><section class="panel"><div class="row sp"><h2>Kalendar musim ${seasonLabel(S.season)}</h2><span class="mute" style="font-size:.86rem"><span class="chip sale">TW</span> jendela pindahan dibuka</span></div>
    <div class="tbl"><table><thead><tr><th>Tarikh</th><th></th><th>Pertandingan</th><th>Tuan rumah</th><th class="c">Keputusan</th><th>Pelawat</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></section></div>`}
 function lgTabs(cur,act){return `<div class="tabs">${[1,2,3].map(l=>`<button class="${cur===l?'on':''}" data-act="${act}" data-arg="${l}">${LG_NAME[l]}</button>`).join('')}</div>`}
 function vLeague(){const l=UI.lgView||myTier();const played=Object.values(S.fixtures).filter(f=>f.comp==='L'&&f.lg===l&&f.played).map(f=>+f.round);const cur=UI.lgRound||String(Math.max(1,...played,1));
   return `<div class="view"><div class="row sp"><h2>${LG_NAME[l]} ${seasonLabel(S.season)}</h2>${lgTabs(l,'lgview')}</div>
-   <section class="panel">${leagueTableHTML(l,false)}<p class="mute" style="font-size:.84rem">${l>1?'Garis hijau: tiga teratas naik divisyen. ':''}${l<3?'Garis merah: tiga terbawah turun divisyen.':''}</p></section>
+   <section class="panel">${leagueTableHTML(l,false)}<p class="mute" style="font-size:.84rem">${l>1?'Garis hijau: tiga teratas naik divisyen. ':''}${l<3?'Garis merah: tiga terbawah turun divisyen. ':''}Label (J juara, N naik, R tersingkir, ACL/AL Asia) hanya muncul bila kedudukan sudah pasti.</p></section>
    <section class="panel"><div class="row sp"><h3>Keputusan & jadual</h3><select data-chg="lground" aria-label="Pusingan">${Array.from({length:38},(_,i)=>`<option value="${i+1}" ${String(i+1)===cur?'selected':''}>Pusingan ${i+1} · ${fmtDate(dateOfT(tIndex('L',i+1)))}</option>`).join('')}</select></div>
    <div class="tbl"><table><tbody>${fxOf('L',cur).filter(f=>f.lg===l).map(f=>`<tr class="${f.h===S.user||f.a===S.user?'me':''}">${fxRow(f,false)}</tr>`).join('')}</tbody></table></div></section></div>`}
 function tieHTML(f,note){if(!f)return `<div class="tie empty"><div class="tr"><span>Belum ditentukan</span></div><div class="tr"><span>&nbsp;</span></div></div>`;
@@ -2797,7 +2879,20 @@ function vFA(){const rounds=['R64','R32','R16','QF','SF','F'];const drawn=rounds
   return `<div class="view"><div class="row sp"><h2>Piala FA ${seasonLabel(S.season)}</h2><span class="mute">64 pasukan dari tiga divisyen dan kelab amatur. Undian rawak dibuat selepas setiap pusingan. Kelab divisyen lebih rendah menjadi tuan rumah.</span></div>
    <div class="tabs">${rounds.map(x=>`<button class="${x===r?'on':''}" data-act="faround" data-arg="${x}">${roundLabel('FA',x)} · ${fmtDate(dateOfT(tIndex('FA',x)))}</button>`).join('')}</div>
    <section class="panel">${head}${fx.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">${fx.map(([f,n])=>tieHTML(f,`Undian ${n}`)).join('')}</div>`:''}</section></div>`}
-function vTB(){if(!S.tb)return '<div class="view"><p class="mute">Tiada Piala TBPM.</p></div>';const D=S.draws||{};
+function vTBko(){const D=S.draws||{};const inIt=S.tb.part.includes(S.user);const dl=(k,t)=>D[k]?`${t} ${fmtDate(D[k].d,'long')}. `:'';
+  const one=(rd,wait)=>{const b=fxOf('TB',rd).sort((x,y)=>x.tie-y.tie);return b.length?b.map(f=>tieHTML(f,`Undian ${f.tie+1}`)).join(''):`<p class="mute">${wait}</p>`};
+  const two=(r1,r2,wait)=>{const a=fxOf('TB',r2).sort((x,y)=>x.tie-y.tie),b=fxOf('TB',r1).sort((x,y)=>x.tie-y.tie);if(!b.length)return `<p class="mute">${wait}</p>`;
+    return b.map(f1=>{const f2=a.find(x=>x.first===f1.id);return `<div style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Undian ${f1.tie+1}</span>${tieHTML(f1,'Pertemuan pertama')}${tieHTML(f2,f2&&f2.played?`Agregat ${f2.hg+f1.ag}-${f2.ag+f1.hg}`:'Pertemuan kedua')}</div>`}).join('')};
+  const fin=fxOf('TB','F')[0];const dd=(c,r)=>fmtDate(dateOfT(tIndex(c,r)),'long');
+  return `<div class="view"><div class="row sp"><h2>Piala TBPM ${seasonLabel(S.season)}</h2><span class="mute">16 kelab jemputan: 10 Kebangsaan, 4 Negeri, 2 Kampung. Kalah satu perlawanan, keluar. Final di ${NEUTRAL_VENUE}.</span></div>
+   ${inIt?'':'<div class="banner off">Kelab kau tidak dijemput musim ini. Kuatkan skuad atau naik divisyen untuk layak.</div>'}
+   <section class="panel"><div class="row sp"><h3>Pusingan 16 · ${dd('TB','R16')}</h3><span class="mute" style="font-size:.84rem">${dl('TB|R16','Undian')}Lapan kelab teratas (ikut kekuatan) dipasangkan dengan lapan yang lain. Kelab disaring menjadi tuan rumah.</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">${one('R16','')}</div></section>
+   <section class="panel"><div class="row sp"><h3>Suku akhir · ${dd('TB','QF')}</h3><span class="mute" style="font-size:.84rem">${dl('TB|QF','Undian')}Satu perlawanan. Tuan rumah dicabut rawak.</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">${one('QF',`Undian dibuat selepas Pusingan 16, ${dd('TB','R16')}.`)}</div></section>
+   <div class="grid2"><section class="panel"><div class="row sp"><h3>Separuh akhir</h3><span class="mute" style="font-size:.84rem">${dl('TB|SF','Undian')}Dua pertemuan, agregat. ${dd('TB','SF1')} dan ${dd('TB','SF2')}.</span></div><div style="display:flex;flex-direction:column;gap:12px">${two('SF1','SF2',`Undian dibuat selepas suku akhir, ${dd('TB','QF')}.`)}</div></section>
+    <section class="panel"><h3>Final · ${dd('TB','F')}</h3>${fin?tieHTML(fin):`<p class="mute">Ditentukan selepas separuh akhir, ${dd('TB','SF2')}.</p>`}</section></div></div>`}
+function vTB(){if(!S.tb)return '<div class="view"><p class="mute">Tiada Piala TBPM.</p></div>';if(S.tb.fmt==='ko')return vTBko();const D=S.draws||{};
   const grp=g=>{const t=tbGroupTable(g);return `<section class="panel"><h3>Kumpulan ${g}</h3><div class="tbl"><table><thead><tr><th class="r">#</th><th>Kelab</th><th class="r">M</th><th class="r">PG</th><th class="r">Mata</th></tr></thead><tbody>
     ${t.map((r,i)=>`<tr class="${r.id===S.user?'me':''} ${i===1?'cut':''}"><td class="r num">${i+1}</td><td class="nm">${kit(r.id)} ${clink(r.id)} <span class="mute mono" style="font-size:.7rem">${LG_SHORT[S.clubs[r.id].tier]||''}</span></td><td class="r num">${r.p}</td><td class="r num">${r.gf-r.ga}</td><td class="r num"><b>${r.pts}</b></td></tr>`).join('')}</tbody></table></div></section>`};
   const two=(r1,r2,wait)=>{const a=fxOf('TB',r2).sort((x,y)=>x.tie-y.tie),b=fxOf('TB',r1).sort((x,y)=>x.tie-y.tie);if(!b.length)return `<p class="mute">${wait}</p>`;
@@ -3449,6 +3544,7 @@ const ACT={
   stafffire:a=>{const s=curClub().staff[a];openModal(`<header><h2>Lepaskan ${esc(s.name)}?</h2><button class="btn sm" data-act="close">Batal</button></header><p>Pampasan ${fmtRM(staffComp(s))} akan dibayar dan jawatan ${STAFF_R[a]} menjadi kosong.</p><div class="row"><button class="btn bad" data-act="stafffireok" data-arg="${a}">Ya, lepaskan</button><button class="btn" data-act="close">Batal</button></div>`)},
   stafffireok:a=>{const err=fireStaff(a);save();closeModal();render();if(err)alertMsg(err)},
   breq:a=>{const r=boardRequest(a);save();render();alertMsg(r.msg,r.ok)},
+  stadm:()=>mStadium(),
   resignask:()=>{const el=document.getElementById('resignbox');if(el)el.innerHTML=`<div class="banner warn">Letak jawatan? Reputasi kau turun dan kau akan tanpa kelab sehingga ada tawaran. <button class="btn sm bad" data-act="resignok">Sahkan letak jawatan</button></div>`},
   resignok:()=>{resignUser();save();render()},
   jobacc:a=>mJobConfirm(a),jobok:a=>{const err=acceptJob(a);UI.sacked=null;save();closeModal();if(err){render();alertMsg(err);return}UI.view='home';render();window.scrollTo(0,0)},
