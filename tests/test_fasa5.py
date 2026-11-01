@@ -123,7 +123,7 @@ with sync_playwright() as p:
       return bad}""")
     check('paparan Asia (3 tab), kelab asing dan paparan lain render tanpa ralat/NaN', not r, r)
     r = pg.evaluate("""()=>{const o=JSON.parse(JSON.stringify(S));o.sv=4;delete o.ah;delete o.as;delete o.nat;delete o.asiaQ;const prev=S;S=o;ensureState();const res={sv:S.sv,ah:Array.isArray(S.ah),as:Array.isArray(S.as),nat:!!S.nat&&Array.isArray(S.nat.hist)};S=prev;return res}""")
-    check('migrasi v5: S.ah, S.as, S.nat dicipta untuk simpanan sv=4', r['sv'] == 5 and r['ah'] and r['as'] and r['nat'], r)
+    check('migrasi v5: S.ah, S.as, S.nat dicipta untuk simpanan sv=4', r['sv'] == 6 and r['ah'] and r['as'] and r['nat'], r)
     r = pg.evaluate("""()=>{const s2=unpack(packS());return {eq:JSON.stringify(s2)===JSON.stringify(S),size:JSON.stringify(S).length}}""")
     check('simpan-muat dengan data Asia ulang-alik tepat', r['eq'], r)
     print('INFO saiz S (musim 2 permulaan, KB):', r['size'] // 1024, ' musim 1 tamat KB:', sz1 // 1024)

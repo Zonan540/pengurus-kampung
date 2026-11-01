@@ -86,7 +86,7 @@ with sync_playwright() as p:
     check('semua stadium <= had divisyen; Liga 1 maksimum mutlak 30,000', r['maxCap'] <= 30000 and r['abs'] == 30000 and r['max']['1'] == 30000, r)
     r = pg.evaluate("""()=>{const o=JSON.parse(JSON.stringify(S));o.sv=3;const cid=Object.keys(o.clubs).find(k=>o.clubs[k].tier===1);o.clubs[cid].cap=52000;
       const prev=S;S=o;ensureState();const res={sv:S.sv,cap:S.clubs[cid].cap};S=prev;return res}""")
-    check('migrasi v4: kapasiti > 30,000 dipotong ke 30,000', r['sv'] == 5 and r['cap'] == 30000, r)
+    check('migrasi v4: kapasiti > 30,000 dipotong ke 30,000', r['sv'] == 6 and r['cap'] == 30000, r)
     r = pg.evaluate("""()=>{const c=S.clubs[S.user];c.cap=CAP_MAX[c.tier]-STAD_STEPS[c.tier][1];c.bal=5e7;S.job.conf=90;S.job.cool=null;S.proj=S.proj.filter(p=>p.cid!==S.user);const hf=window.homeFill;window.homeFill=()=>0.95;
       const steps=STAD_STEPS[c.tier];const bad=boardRequest('stad|'+steps[steps.length-1]);mStadium();const html=document.getElementById('modal')?document.getElementById('modal').innerHTML:document.body.innerHTML;
       const cap0=c.cap,bal0=c.bal;const ok=boardRequest('stad|'+steps[0]);const pj=S.proj.find(p=>p.cid===S.user&&p.k==='stad');

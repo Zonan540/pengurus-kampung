@@ -32,7 +32,7 @@ with sync_playwright() as p:
     # 2. migrasi v3 daripada simpanan sv=2 tanpa dob/bp/legends
     r = pg.evaluate("""()=>{const o=JSON.parse(JSON.stringify(S));o.sv=2;delete o.legends;Object.values(o.players).forEach(p=>{delete p.dob;delete p.bp});
       const prev=S;S=o;ensureState();const ps=Object.values(S.players);const res={sv:S.sv,ok:ps.every(p=>p.dob&&p.bp),cons:ps.every(p=>ageOf(p,S.season+'-07-01')===p.age),leg:typeof S.legends==='object'};S=prev;return res}""")
-    check('migrasi v3: dob/bp dijana, umur konsisten, legends wujud', r['sv'] == 5 and r['ok'] and r['cons'] and r['leg'], r)
+    check('migrasi v3: dob/bp dijana, umur konsisten, legends wujud', r['sv'] == 6 and r['ok'] and r['cons'] and r['leg'], r)
 
     # 3. main dua musim sebagai pengurus; semak arkib kerjaya
     pg.evaluate("""()=>{window.__play=(target)=>{let n=0;while(S.seasonNo<target&&n<4000){if(S.over){ACT.newseason();closeModal();closeSummary();n++;continue}if(!S.user){takeJob(S.lg[3][0]);closeModal()}
@@ -111,7 +111,7 @@ with sync_playwright() as p:
 
     # 8. simpan-muat termasuk medan baharu
     r = pg.evaluate("""()=>{const z=packS();const s2=unpack(z);const p=Object.values(s2.players).find(p=>p.hist&&p.hist.length);const q=S.players[p.id];return {sv:s2.sv,eq:JSON.stringify(s2)===JSON.stringify(S),leg:Object.keys(s2.legends).length>0,hist:JSON.stringify(p.hist)===JSON.stringify(q.hist)}}""")
-    check('simpan-muat mengekalkan DOB, sejarah, legends (ulang-alik tepat)', r['eq'] and r['leg'] and r['hist'] and r['sv'] == 5, r)
+    check('simpan-muat mengekalkan DOB, sejarah, legends (ulang-alik tepat)', r['eq'] and r['leg'] and r['hist'] and r['sv'] == 6, r)
     r = pg.evaluate("""()=>{const t=performance.now();for(let i=0;i<3;i++)saveSlot('auto');return {ms:(performance.now()-t)/3,kb:Math.round(packS().length*2/1024),json:Math.round(JSON.stringify(S).length/1024)}}""")
     print('simpan:', r)
     check('saveSlot masih < 300 ms', r['ms'] < 300, r)
