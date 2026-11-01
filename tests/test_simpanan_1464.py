@@ -65,7 +65,7 @@ with sync_playwright() as p:
 
     ver = pg.evaluate("()=>[VERSION,BUILD,SCHEMA]")
     import re
-    check('label versi 1.4.3.x / b146x / SCHEMA 7', bool(re.fullmatch(r'Versi 1\.4\.3\.\d+', ver[0])) and bool(re.fullmatch(r'b146\d', ver[1])) and ver[2] == 7, ver)
+    check('label versi 2.0 Beta / b200x / SCHEMA 7', bool(re.fullmatch(r'Versi 2\.0 Beta \d+', ver[0])) and bool(re.fullmatch(r'b200\d', ver[1])) and ver[2] == 7, ver)
 
     # ---- 3. Simpanan lama (tanpa sv) boleh dibuka
     r = pg.evaluate("""([z,bb])=>{const a=parseSave(z),c=parseSave(bb);return {z:!!a.s,zerr:a.err||null,b:!!c.s,berr:c.err||null,zsv:a.s&&a.s.sv,zseason:a.s&&a.s.seasonNo,zt:a.s&&a.s.t}}""", [old_z, old_b])
