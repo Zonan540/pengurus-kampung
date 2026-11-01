@@ -62,10 +62,10 @@ with sync_playwright() as p:
       const s=loadSlot(2);const bk=localStorage.getItem('pk3-backup-pre2');const prev=S;S=s;ensureState();const sv=S.sv;S=prev;
       localStorage.setItem('pk3-slot-2','Z'+LZString.compressToUTF16(JSON.stringify(Object.assign({},o,{sv:1}))));loadSlot(2);
       return {bkSame:bk===raw,sv,bkStill:localStorage.getItem('pk3-backup-pre2')===raw}}""")
-    check('ensureState menaikkan sv ke 2', r['sv'] == 2, r)
+    check('ensureState menaikkan sv ke SCHEMA', r['sv'] == 3, r)
     check('sandaran pra-2.0 dibuat sekali dan tidak ditimpa', r['bkSame'] and r['bkStill'], r)
     r = pg.evaluate("""()=>{const z=packS();localStorage.removeItem('pk3-backup-pre2');localStorage.setItem('pk3-slot-3',z);loadSlot(3);return localStorage.getItem('pk3-backup-pre2')===null}""")
-    check('simpanan format F (sv=2) tidak mencetus sandaran', r, r)
+    check('simpanan format F (sv=SCHEMA) tidak mencetus sandaran', r, r)
 
     # 9. nipis fixture AI lama: statistik dibuang, penjaring kekal, perlawanan pengguna tidak disentuh
     r = pg.evaluate("""()=>{const fx=Object.values(S.fixtures);const old=fx.filter(f=>f.played&&f.t<S.t-THIN_AGO);const mine=old.filter(f=>f.h===S.user||f.a===S.user);const ai=old.filter(f=>f.h!==S.user&&f.a!==S.user);

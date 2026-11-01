@@ -855,7 +855,7 @@ function mgrName(){const r=R();const o=r<.55?'MLY':r<.65?'CHN':r<.75?'IND':r<.83
 function emptyStats(){return{L:{ap:0,g:0,as:0,rt:0},FA:{ap:0,g:0,as:0,rt:0},TB:{ap:0,g:0,as:0,rt:0}}}
 const HT0={GK:187,CB:185,CF:181,DM:179,CM:176,AM:174,RB:175,LB:175,RWB:174,LWB:174,RM:173,LM:173,RWF:172,LWF:172};
 function bodyGen(p){const h=clamp(Math.round((HT0[p.pos]||176)+(p.nat==='MAS'?-2:2)+(p.a.hea-10)*.45+gauss()*4.5),158,201);const bmi=clamp(22.3+(p.a.str-10)*.17+gauss()*.9,19.5,26.5);p.ht=h;p.wt=Math.round(bmi*(h/100)**2)}
-function makePlayer(pos,level,origin,age,imp){
+function makePlayer(pos,level,origin,age,imp,state){
   age=age||clamp(Math.round(25+gauss()*4.2),17,35);
   let base=level+gauss()*1.4+(imp?1.7:0);
   if(age<=19)base-=2.2;else if(age<=21)base-=1.2;else if(age<=23)base-=.5;else if(age>=33)base-=1;else if(age>=31)base-=.4;
@@ -864,13 +864,13 @@ function makePlayer(pos,level,origin,age,imp){
     a[k]=clamp(Math.round(base+off+gauss()*1.6),1,20)});
   const nat=IMP[origin]?origin:'MAS';
   const p={id:'p'+(S.nextP++),name:makeName(origin),nat,imp:nat!=='MAS',pos,alt:R()<.45&&ALT[pos].length?[pick(ALT[pos])]:[],age,a,
-    cond:100,mor:70,inj:0,ban:0,yel:0,st:emptyStats(),car:{ap:0,g:0},club:null,wage:0,ctr:S.season+ri(0,2),pot:0,no:0,res:false,loan:null};
+    cond:100,mor:70,inj:0,ban:0,yel:0,st:emptyStats(),car:{ap:0,g:0},club:null,wage:0,ctr:S.season+ri(0,2),pot:0,no:0,res:false,loan:null,dob:dobFor(age,S.season),bp:bpFor(nat,state)};
   const ab=ability(p);p.pot=Math.min(20,ab+(age<=19?ri(1,6):age<=22?ri(0,4):age<=25?ri(0,1):0));
   bodyGen(p);S.players[p.id]=p;return p}
 function assignNo(cid,p){const c=S.clubs[cid];if(!c)return;const used=new Set([...c.players,...(c.res||[])].map(id=>S.players[id]&&S.players[id].no).filter(Boolean));
   const pref=p.res?[...Array(30)].map((_,i)=>i+31):p.pos==='GK'?[1,13,25,30,40]:[...Array(40)].map((_,i)=>i+2);for(const n of pref)if(!used.has(n)&&!(p.pos!=='GK'&&n===1)){p.no=n;return}p.no=99}
 function makeYouth(c){const pos=pick(['GK','CB','CB','RB','LB','DM','CM','CM','AM','RM','LM','RWF','LWF','CF','CF']);
-  const yl=(c.fac&&c.fac.youth||1)-1;const lvl=clamp(c.lvl-2.6+yl*.45+gauss()*2.2,3,c.lvl+3+yl*.3);const p=makePlayer(pos,lvl,originFor(c.state),ri(18,21),false);
+  const yl=(c.fac&&c.fac.youth||1)-1;const lvl=clamp(c.lvl-2.6+yl*.45+gauss()*2.2,3,c.lvl+3+yl*.3);const p=makePlayer(pos,lvl,originFor(c.state),ri(18,21),false,c.state);
   p.pot=Math.min(20,ability(p)+ri(1,6)+(R()<.06+yl*.02?ri(4,7):0)+(R()<yl*.12?1:0));p.res=true;p.club=c.id;p.wage=Math.max(800,r100(wageFor(p)*.5));p.ctr=S.season+1;assignNo(c.id,p);c.res.push(p.id);return p}
 function makeReserves(c){c.res=[];for(let i=0;i<10;i++)makeYouth(c);if(!c.res.some(id=>S.players[id].pos==='GK')){const p=S.players[c.res[0]];p.pos='GK';p.alt=[];}}
 
@@ -923,7 +923,7 @@ function makeClub(d,lvl,tier,nick){
   const nImp=tier===1?5:tier===2?ri(4,5):tier===3?ri(1,4):0;
   const idx=shuffle(list.map((p,i)=>i).filter(i=>list[i]!=='GK'||R()<.15)).slice(0,nImp);
   list.forEach((pos,i)=>{const k=idx.indexOf(i);const origin=k<0?originFor(d[1]):k<3?pick(ASIA):pick(OTHER);
-    const p=makePlayer(pos,lvl,origin,null,k>=0);p.club=id;p.wage=r100(wageFor(p)*(tier?.85+R()*.3:.25));assignNo(id,p);c.players.push(p.id)});
+    const p=makePlayer(pos,lvl,origin,null,k>=0,d[1]);p.club=id;p.wage=r100(wageFor(p)*(tier?.85+R()*.3:.25));assignNo(id,p);c.players.push(p.id)});
   if(tier){setTierMoney(c);const r=rep(c);c.bal=(tier===1?2.5e6:tier===2?1e6:3e5)+r*(tier===1?9e5:tier===2?3e5:1e5)+ri(0,4)*(tier===1?2e5:5e4);c.fin=emptyFin();c.hist=[c.bal];makeReserves(c);setBudgets(c)}
   return c}
 function makeFreeAgent(level,origin,pos,age){const p=makePlayer(pos||pick(POSL.slice(1).concat(['GK','CB','CM','CF'])),level,origin,age,!!IMP[origin]);p.club=null;p.faT=S.t||0;p.faS=S.season;p.wage=wageFor(p);p.ctr=0;S.fa.push(p.id);return p}
@@ -931,7 +931,7 @@ function fillFreeAgents(){while(S.fa.length<55){const r=R();const o=r<.15?pick(A
 function newWorld(){
   S={v:3,season:2027,seasonNo:1,t:0,tl:[],nextP:1,nextC:1,nextF:1,nextO:1,nextM:1,clubs:{},players:{},fixtures:{},inbox:[],user:null,manager:'',lu:null,honours:[],names:{},
     lg:{1:[],2:[],3:[]},amateur:[],tb:null,over:false,ended:false,usedDist:[],fa:[],offers:[],listed:{},loanList:{},loans:[],tlog:[],negs:{},
-    aw:{totw:{1:[],2:[],3:[]},month:[],season:[]},trophies:[]};
+    aw:{totw:{1:[],2:[],3:[]},month:[],season:[]},trophies:[],legends:{},sv:SCHEMA};
   const pool=shuffle(DISTRICTS);const sb=pool.filter(d=>d[1]==='Sabah'),sw=pool.filter(d=>d[1]==='Sarawak');
   const others=pool.filter(d=>d[1]!=='Sabah'&&d[1]!=='Sarawak');
   const groups={1:[sb[0],sw[0]],2:[sb[1],sw[1]],3:[sb[2],sw[2]]};
@@ -991,7 +991,7 @@ function clubForm(cid,n){return Object.values(S.fixtures).filter(f=>f.played&&f.
 function clubStrength(cid){const xs=S.clubs[cid].players.map(id=>ability(S.players[id])).sort((a,b)=>b-a).slice(0,11);return xs.reduce((s,x)=>s+x,0)/Math.max(1,xs.length)}
 
 // ---------- lineups
-function available(p){return !p.inj&&!p.ban}
+function available(p){return !p.inj&&!p.ban&&!p.rest}
 function condF(p){return .55+.45*p.cond/100}
 function autoLineup(cid,form){
   const slots=FORMS[form]||FORMS['4-4-2'];const avail=S.clubs[cid].players.map(id=>S.players[id]).filter(available);
@@ -1144,7 +1144,7 @@ function card(m,s){
 function bestBench(m,s,pos){let best=null,bv=-1;for(const id of m.sides[s].bench){const p=S.players[id];const v=roleRating(p,pos)*condF(p);if(v>bv){bv=v;best=id}}return best}
 function doSub(m,s,outE,inId,newPos){const sd=m.sides[s];outE.off=true;outE.out=m.min;const ne=mkEntry(inId,newPos||outE.pos,m.min,outE.x,outE.y);sd.on.push(ne);
   sd.bench=sd.bench.filter(x=>x!==inId);sd.subs--;m.subsLog.push({t:clockLabel(m),s,i:inId,o:outE.id});lg(m,s,'sub',`Pertukaran ${cnm(m,s)}: ${nm(inId)} masuk menggantikan ${nm(outE.id)}.`,inId);return ne}
-function injury(m,s){const on=activeOn(m,s);if(!on.length)return;const e=pick(on);
+function injury(m,s){const on=activeOn(m,s);if(!on.length)return;const e=wpick(on,x=>injWeight(S.players[x.id],x));
   e.inj=true;lg(m,s,'inj',`${nm(e.id)} terbaring kesakitan dan tidak dapat meneruskan permainan.`,e.id);
   const b=m.sides[s].subs>0?bestBench(m,s,e.pos):null;if(b)doSub(m,s,e,b);else{e.off=true;e.out=m.min}}
 function aiManage(m,s){const sd=m.sides[s];if(m.phase!=='2H'&&m.phase!=='ST'&&m.phase!=='ET')return;const diff=m.sc[s]-m.sc[1-s];
@@ -1209,8 +1209,8 @@ function finishMatch(m){
       if(e.pos==='GK')r+=e.sv*.28-e.ga*.35+(e.ga===0?.6:0);else if(DEFP.includes(e.pos))r+=-e.ga*.18+(e.ga===0?.4:0);else if(e.pos==='DM')r+=-e.ga*.08+(e.ga===0?.2:0);
       r+=(roleRating(p,e.pos)-12)*.06;if(e.red)r-=1.5;const end=e.out!=null?e.out:(m.et?120:90);if(end-e.in<20)r=6+(r-6.3)*.5;
       r=Math.round(clamp(r,3.5,10)*10)/10;e.rt=r;rts[s].push([e.id,r,e.pos,e.g,e.as,e.in]);if(r>mv){mv=r;motm=e.id}
-      if(fx.comp!=='FR'){const st=p.st[fx.comp];st.ap++;st.g+=e.g;st.as+=e.as;st.rt+=r;p.car.ap++;p.car.g+=e.g}p.cond=Math.round(e.cond);
-      if(e.inj){p.inj=p.club===S.user?Math.max(2,Math.round(injDays()*medMul())):injDays();if(p.club===S.user)inbox('inj',`${p.name} cedera`,`Dijangka berehat ${p.inj} hari. Kecederaan berlaku dalam perlawanan menentang ${S.clubs[fx.h===S.user?fx.a:fx.h].name}.`)}
+      if(fx.comp!=='FR'){const st=p.st[fx.comp];st.ap++;st.g+=e.g;st.as+=e.as;st.rt+=r;p.car.ap++;p.car.g+=e.g;stintAdd(p,e,r)}p.cond=Math.round(e.cond);
+      if(e.inj){createInjury(p,'match');if(p.club===S.user)inbox('inj',`${p.name} cedera: ${injLabel(p)}`,`${INJ_SEV[p.injx.sv]}. Dijangka berehat ${p.inj} hari, kembali sekitar ${fmtDate(p.injx.ret)}. Kecederaan berlaku dalam perlawanan menentang ${S.clubs[fx.h===S.user?fx.a:fx.h].name}.`,{links:[['medical','Buka Medical']]})}
       if(fx.comp==='FR'){}else if(e.red){p.ban+=1;if(p.club===S.user){const amt=redFine(p);inbox('inj',`${p.name} digantung satu perlawanan`,`Akibat kad merah ketika menentang ${S.clubs[fx.h===S.user?fx.a:fx.h].name}. Kau boleh mengenakan denda separuh minggu gaji (${fmtRM(amt,1)}) atau memberi amaran sahaja.`,{fine:{pid:p.id,amt,st:0},fx:fx.id})}}
       else if(e.yel){p.yel++;if(p.yel>=5){p.yel=0;p.ban+=1;if(p.club===S.user)inbox('inj',`${p.name} digantung`,'Mengumpul lima kad kuning. Dia akan terlepas perlawanan seterusnya.')}}
       p.mor=clamp(Math.round(p.mor+((res>0?6:res<0?-6:1)+(r>=7.5?3:r<5.8?-3:0))*(fx.comp==='FR'?.4:m.derby?1.5:1)),20,100)})});
@@ -1308,7 +1308,7 @@ function ctrYearNews(){if(!S.user)return;const L=S.clubs[S.user].players.map(id=
   inbox('ctr',`${L.length} pemain kontrak berbaki setahun`,`Kontrak pemain berikut tamat hujung musim ${seasonLabel(S.season)}: ${L.map(p=>p.name).join(', ')}. ${d?`${d.name}, Director of Football, sudah menyediakan saranan untuk setiap pemain.`:'Lantik Director of Football di halaman Staf untuk saranan dan bantuan rundingan.'}`,{ctrl:{pids:L.map(p=>p.id),k:'y'}})}
 function ctrSixMonth(){if(!S.user)return;const c=curClub();const d=c.staff&&c.staff.dof;
   c.players.map(id=>S.players[id]).filter(p=>p&&!p.loan&&!p.res&&p.ctr<=S.season).forEach(p=>{const a=d?dofAdvice(p):null;
-    inbox('ctr',`Kontrak ${p.name} berbaki enam bulan`,`Kontrak ${p.name} (${p.pos}, ${p.age} tahun) tamat hujung musim ${seasonLabel(p.ctr)}. Jika tidak disambung, dia pergi sebagai ejen bebas pada Julai.${a?` Saranan ${d.name}: ${a.t}`:''}`,{ctrl:{pids:[p.id],k:'h'}})});
+    inbox('ctr',`Kontrak ${p.name} berbaki enam bulan`,`Kontrak ${p.name} (${p.pos}, ${ageOf(p)} tahun) tamat hujung musim ${seasonLabel(p.ctr)}. Jika tidak disambung, dia pergi sebagai ejen bebas pada Julai.${a?` Saranan ${d.name}: ${a.t}`:''}`,{ctrl:{pids:[p.id],k:'h'}})});
   Object.keys(S.short||{}).map(id=>S.players[id]).filter(p=>p&&p.club&&p.club!==S.user&&!p.loan&&!p.res&&S.clubs[p.club]&&S.clubs[p.club].tier&&p.ctr<=S.season).forEach(p=>
     inbox('tf',`Senarai pendek: kontrak ${p.name} berbaki enam bulan`,`Kontrak ${p.name} bersama ${cname(p.club)} tamat hujung musim ${seasonLabel(p.ctr)}. Jika kelabnya tidak menyambung kontrak, dia boleh ditandatangani tanpa yuran sebagai ejen bebas. Nilai semasa ${fmtRM(valueOf(p))}.`,{pl:p.id}))}
 function derbyWeekNews(){if(!S.user||S.over)return;const e=curEntry();if(!e||e.k!=='M')return;const fx=userFixture(S.t);if(!fx||fx.played||fx.dwn||!isDerby(fx))return;fx.dwn=1;const o=opp(fx);
@@ -1331,10 +1331,12 @@ function finTick(days){const k=12/52*days/7;
   [1,2,3].forEach(l=>S.lg[l].forEach(cid=>{const c=S.clubs[cid];const wages=wageBill(cid)*k,ops=c.ops*k,sp=c.spons*k,tv=c.tv*k;
     c.bal+=sp+tv-wages-ops;c.fin.wage+=wages;c.fin.ops+=ops;c.fin.spons+=sp;c.fin.tv+=tv;c.hist.push(Math.round(c.bal))}))}
 function recover(days){const k=days/7;for(const id in S.players){const p=S.players[id];if(!p.club)continue;p.cond=Math.min(100,Math.round(p.cond+(18+p.a.sta*.5)*k));
-  if(p.inj>0){p.inj=Math.max(0,p.inj-days);if(p.inj===0&&p.club===S.user)inbox('inj',`${p.name} pulih`,'Pasukan perubatan mengesahkan dia boleh dipilih semula.')}}}
+  if(p.inj>0){p.inj=Math.max(0,p.inj-days);if(p.inj===0){if(p.injx&&!p.injx.rec)p.injx.rec=p.injx.sv>=4?14:7;if(p.club===S.user)inbox('inj',`${p.name} pulih`,'Pasukan perubatan mengesahkan dia boleh dipilih semula.'+(p.injx&&p.injx.rec?' Risiko kambuh sedikit tinggi buat sementara waktu.':''))}}
+    else if(p.injx){p.injx.rec=(p.injx.rec||0)-days;if(p.injx.rec<=0)p.injx=null}
+    if(p.rest>0){p.cond=Math.min(100,p.cond+14*k);p.rest=Math.max(0,p.rest-days);if(!p.rest){delete p.rest;if(p.club===S.user)inbox('inj',`${p.name} tamat cuti rehat`,'Kondisinya sudah dipulihkan. Dia boleh dipilih semula.')}}}}
 function returnLoans(force){const d=curDate();S.loans=S.loans.filter(pid=>{const p=S.players[pid];if(!p||!p.loan)return false;
   if(force||p.loan.until<=d){const from=p.loan.from,to=p.club;const tc=S.clubs[to];if(tc)tc.players=tc.players.filter(x=>x!==pid);
-    S.clubs[from].players.push(pid);p.club=from;p.loan=null;assignNo(from,p);
+    mvAdd(p,to,from,0,2);S.clubs[from].players.push(pid);p.club=from;p.loan=null;assignNo(from,p);
     if(to===S.user&&S.lu){S.lu.xi=S.lu.xi.map(x=>x===pid?null:x);S.lu.bench=S.lu.bench.filter(x=>x!==pid)}
     if(from===S.user||to===S.user)inbox('tf',`${p.name} pulang dari pinjaman`,`${p.name} kembali ke ${S.clubs[from].name} selepas tempoh pinjaman di ${tc?tc.name:'kelab lain'}.`);return false}return true})}
 function advance(){
@@ -1377,10 +1379,10 @@ function seasonEnd(){
 function develop(p){p.age++;const ab=ability(p);const apps=p.st.L.ap+p.st.FA.ap+p.st.TB.ap;
   let g=p.age<=20?1.1:p.age<=23?.6:p.age<=28?.15:p.age<=31?-.35:-.9;if(p.age<=23&&apps>=15)g+=.35;if(g>0&&ab>=p.pot)g=Math.min(g,.05);
   ATTR.forEach(k=>{if(p.pos!=='GK'&&(k==='ref'||k==='han'))return;let d=g+gauss()*.7;if((k==='pac'||k==='sta')&&p.age>29)d-=.4;p.a[k]=clamp(Math.round(p.a[k]+d),1,20)})}
-function releaseToFA(pid){const p=S.players[pid];const c=S.clubs[p.club];if(c){c.players=c.players.filter(x=>x!==pid);c.res=(c.res||[]).filter(x=>x!==pid)}
+function releaseToFA(pid){const p=S.players[pid];const c=S.clubs[p.club];mvAdd(p,p.club,null,0,3);if(c){c.players=c.players.filter(x=>x!==pid);c.res=(c.res||[]).filter(x=>x!==pid)}
   p.club=null;p.faT=S.t||0;p.faS=S.season;p.ctr=0;p.res=false;p.wage=wageFor(p);delete S.listed[pid];delete S.loanList[pid];if(!S.fa.includes(pid))S.fa.push(pid);
   if(S.lu){S.lu.xi=S.lu.xi.map(x=>x===pid?null:x);S.lu.bench=S.lu.bench.filter(x=>x!==pid)}}
-function deletePlayer(pid){const p=S.players[pid];if(!p)return;const c=S.clubs[p.club];if(c){c.players=c.players.filter(x=>x!==pid);c.res=(c.res||[]).filter(x=>x!==pid)}S.fa=S.fa.filter(x=>x!==pid);delete S.players[pid];delete S.listed[pid];delete S.loanList[pid]}
+function deletePlayer(pid){const p=S.players[pid];if(!p)return;archivePlayer(p);const c=S.clubs[p.club];if(c){c.players=c.players.filter(x=>x!==pid);c.res=(c.res||[]).filter(x=>x!==pid)}S.fa=S.fa.filter(x=>x!==pid);delete S.players[pid];delete S.listed[pid];delete S.loanList[pid]}
 function ensureGK(c){let n=c.players.filter(id=>S.players[id].pos==='GK').length;
   while(n<2){const r=(c.res||[]).find(id=>S.players[id].pos==='GK');
     if(r){promoteReserve(r);if(c.id===S.user)inbox('youth',`${S.players[r].name} dinaikkan sebagai penjaga gol`,'Skuad utama kekurangan penjaga gol, jadi pelapis dinaikkan secara automatik.')}
@@ -1393,14 +1395,15 @@ function demoteToReserve(pid){const p=S.players[pid];const c=S.clubs[p.club];if(
   c.players=c.players.filter(x=>x!==pid);c.res.push(pid);p.res=true;if(S.lu){S.lu.xi=S.lu.xi.map(x=>x===pid?null:x);S.lu.bench=S.lu.bench.filter(x=>x!==pid)}return null}
 function newSeason(){
   if(S.ended)return;
-  const lastD=S.tl[S.tl.length-1].d;const ny=S.season+1;const tl=buildTimeline(ny);finTick(daysBetween(lastD,tl[0].d));
+  Object.values(S.players).forEach(stintClose);
+  const lastD=S.tl[S.tl.length-1].d;const ny=S.season+1;const tl=buildTimeline(ny);const gap=daysBetween(lastD,tl[0].d);finTick(daysBetween(lastD,tl[0].d));
   returnLoans(true);projTick(true);
   // promotion / relegation
   const mv=S.pendingMoves||{up:[],down:[]};[...mv.up,...mv.down].forEach(([cid,from,to])=>{S.lg[from]=S.lg[from].filter(x=>x!==cid);S.lg[to].push(cid);const c=S.clubs[cid];c.tier=to;c.lvl+=to<from?.6:-.6;setTierMoney(c)});
   S.season=ny;S.seasonNo++;if(S.fans!=null)S.fans=Math.round(60+(S.fans-60)*.5);const retired=[];const relRes=[];
   [1,2,3].forEach(l=>S.lg[l].forEach(cid=>{const c=S.clubs[cid];
-    c.players.slice().forEach(pid=>{const p=S.players[pid];develop(p);p.st=emptyStats();p.cond=100;p.inj=0;p.ban=0;p.yel=0;p.mor=70;
-      if(p.age>=36||(p.age>=33&&R()<.3)){retired.push(p);if(cid===S.user)inbox('ctr',`${p.name} bersara`,`Pada usia ${p.age} tahun, selepas ${p.car.ap} penampilan dan ${p.car.g} gol.`);deletePlayer(pid);return}
+    c.players.slice().forEach(pid=>{const p=S.players[pid];develop(p);p.st=emptyStats();p.cond=100;p.inj=Math.max(0,(p.inj||0)-gap);if(!p.inj)p.injx=null;delete p.rest;p.ban=0;p.yel=0;p.mor=70;
+      if(p.age>=36||(p.age>=33&&R()<.3)){retired.push(p);if(cid===S.user)inbox('ctr',`${p.name} bersara`,`Pada usia ${ageOf(p)} tahun, selepas ${p.car.ap} penampilan dan ${p.car.g} gol.`);deletePlayer(pid);return}
       if(p.ctr<S.season){if(cid===S.user){releaseToFA(pid);inbox('ctr',`${p.name} meninggalkan kelab`,'Kontraknya tamat dan tidak disambung. Dia kini ejen bebas.')}
         else if((R()<.8||c.players.length<=23)&&p.age<34){p.ctr=S.season+ri(0,2);p.wage=r100(wageFor(p)*(.9+R()*.2))}else releaseToFA(pid)}});
     // reserves
@@ -1414,7 +1417,7 @@ function newSeason(){
     makeReserves(c);c.fin=emptyFin();c.hist=[Math.round(c.bal)];c.warned=0;setBudgets(c)}));
   const uc=S.user?S.clubs[S.user]:null;if(uc&&uc._rel){inbox('youth','Pelapis musim lalu dilepaskan',`${uc._rel.join(', ')} tidak dinaikkan ke skuad utama dan telah dilepaskan.`);delete uc._rel}
   if(uc)inbox('youth',`10 pemain pelapis baharu`,`Akademi menghantar 10 pemain muda berusia 18 hingga 21 tahun. Semak skuad pelapis dan naikkan yang berbakat ke skuad utama.`);
-  S.fa.slice().forEach(pid=>{const p=S.players[pid];if(!p)return;if(p.age>=34||R()<.3){deletePlayer(pid)}else{develop(p);p.wage=wageFor(p)}});
+  S.fa.slice().forEach(pid=>{const p=S.players[pid];if(!p)return;if(p.age>=34||R()<.3){deletePlayer(pid)}else{develop(p);p.inj=Math.max(0,(p.inj||0)-gap);if(!p.inj)p.injx=null;p.wage=wageFor(p)}});
   if(S.fa.length>80)S.fa.map(id=>S.players[id]).sort((a,b)=>ability(a)-ability(b)).slice(0,S.fa.length-80).forEach(p=>deletePlayer(p.id));
   S.amateur.forEach(cid=>{S.clubs[cid].players.forEach(pid=>delete S.players[pid]);delete S.clubs[cid]});S.amateur=[];
   const pool=shuffle(DISTRICTS.filter(d=>!S.usedDist.includes(d[0])));pool.slice(0,4).forEach(d=>{const c=makeClub(d,5.5+R()*2,0,null);S.amateur.push(c.id)});
@@ -1447,14 +1450,14 @@ function doTransfer(pid,toCid,fee,wage,years){
   if(from){const fc=S.clubs[from];fc.players=fc.players.filter(x=>x!==pid);fc.res=(fc.res||[]).filter(x=>x!==pid);if(fc.tier){fc.bal+=fee;fc.fin.sale+=fee;fc.tb+=Math.round(fee*.75)}}
   else S.fa=S.fa.filter(x=>x!==pid);
   to.bal-=fee;to.fin.buy+=fee;to.tb=Math.max(0,to.tb-fee);to.players.push(pid);
-  p.club=toCid;p.res=false;p.wage=wage;p.ctr=S.season+years-1;p.mor=75;p.moved=S.season;delete S.listed[pid];delete S.loanList[pid];delete S.negs[pid];assignNo(toCid,p);
+  mvAdd(p,from,toCid,fee,0);p.club=toCid;p.res=false;p.wage=wage;p.ctr=S.season+years-1;p.mor=75;p.moved=S.season;delete S.listed[pid];delete S.loanList[pid];delete S.negs[pid];assignNo(toCid,p);
   if(from===S.user&&S.lu){S.lu.xi=S.lu.xi.map(x=>x===pid?null:x);S.lu.bench=S.lu.bench.filter(x=>x!==pid)}
   S.offers=S.offers.filter(o=>o.pid!==pid);
   S.tlog.unshift({d:curDate(),pid,name:p.name,pos:p.pos,from:from||null,to:toCid,fee});if(S.tlog.length>250)S.tlog.length=250;
   if(toCid!==S.user&&to.players.length>28){const worst=to.players.map(id=>S.players[id]).filter(q=>q.id!==pid&&!q.loan).sort((a,b)=>valueOf(a)-valueOf(b))[0];if(worst)releaseToFA(worst.id)}}
 function doLoan(pid,toCid,months,share){const p=S.players[pid];const from=p.club;const fc=S.clubs[from];fc.players=fc.players.filter(x=>x!==pid);fc.res=(fc.res||[]).filter(x=>x!==pid);
   if(from===S.user&&S.lu){S.lu.xi=S.lu.xi.map(x=>x===pid?null:x);S.lu.bench=S.lu.bench.filter(x=>x!==pid)}
-  const wasRes=p.res;p.res=false;S.clubs[toCid].players.push(pid);p.club=toCid;p.loan={from,until:addDays(curDate(),months===6?182:364),share,months,wasRes};p.moved=S.season;assignNo(toCid,p);
+  mvAdd(p,from,toCid,0,1);const wasRes=p.res;p.res=false;S.clubs[toCid].players.push(pid);p.club=toCid;p.loan={from,until:addDays(curDate(),months===6?182:364),share,months,wasRes};p.moved=S.season;assignNo(toCid,p);
   if(!S.loans.includes(pid))S.loans.push(pid);delete S.loanList[pid];delete S.listed[pid];delete S.negs[pid];S.offers=S.offers.filter(o=>o.pid!==pid);
   S.tlog.unshift({d:curDate(),pid,name:p.name,pos:p.pos,from,to:toCid,fee:0,loan:months})}
 // --- user buying: club stage
@@ -1472,7 +1475,7 @@ function offerTerms(pid,wage,years){const p=S.players[pid];const n=S.negs[pid]||
   const err=canBuy(S.user,p,fee,wage);if(err)return{ok:false,msg:err};const dem=wageDemand(p,S.user);
   if(wage<dem*.95){n.wcounter=dem;return{ok:false,msg:`${p.name} mahukan ${fmtRM(dem,1)} sebulan. Tawaran kau ${fmtRM(wage,1)} terlalu rendah; minimum yang diterima ${fmtRM(Math.ceil(dem*.95/100)*100,1)}.`,wcounter:dem}}
   const from=p.club;const wasFA=!from;doTransfer(pid,S.user,fee,wage,years);
-  inbox('tf',`${p.name} sertai ${S.clubs[S.user].name}`,`${POS_NAME[p.pos]}, ${p.age} tahun, dari ${wasFA?'senarai ejen bebas':S.clubs[from].name}. Yuran ${fee?fmtRM(fee):'percuma'}, gaji ${fmtRM(wage)} sebulan, kontrak hingga ${seasonLabel(p.ctr)}.`);
+  inbox('tf',`${p.name} sertai ${S.clubs[S.user].name}`,`${POS_NAME[p.pos]}, ${ageOf(p)} tahun, dari ${wasFA?'senarai ejen bebas':S.clubs[from].name}. Yuran ${fee?fmtRM(fee):'percuma'}, gaji ${fmtRM(wage)} sebulan, kontrak hingga ${seasonLabel(p.ctr)}.`);
   return{ok:true,done:true,msg:`Selesai! ${p.name} kini pemain kau.`}}
 // --- loans in
 function loanRequest(pid,months,share){const p=S.players[pid];const c=S.clubs[S.user];
@@ -1587,6 +1590,73 @@ function defaultFac(c){const b=c.tier===1?3:c.tier===2?2:1;return{train:clamp(b+
 function curClub(){return S&&S.user?S.clubs[S.user]:null}
 function lastTier(){if(S.user)return S.clubs[S.user].tier||3;const h=S.job&&S.job.hist[S.job.hist.length-1];const c=h&&S.clubs[h.cid];return c&&c.tier?c.tier:3}
 function trDefault(){return{focus:'bal',int:'N',ind:{},log:[],mon:[]}}
+// ---------- 2.0 Fasa 3: biodata, sejarah kerjaya kekal, kecederaan berstruktur, RST dan rehat
+const BP_CITY={KOR:['Seoul','Busan','Incheon','Daegu'],JPN:['Tokyo','Osaka','Nagoya','Fukuoka'],UZB:['Tashkent','Samarkand','Bukhara'],AUS:['Sydney','Melbourne','Perth','Brisbane'],THA:['Bangkok','Chiang Mai','Khon Kaen','Pattaya'],IRN:['Tehran','Isfahan','Shiraz','Tabriz'],BRA:['Sao Paulo','Rio de Janeiro','Belo Horizonte','Salvador'],ARG:['Buenos Aires','Rosario','Cordoba'],NGA:['Lagos','Kano','Ibadan','Enugu'],ESP:['Madrid','Sevilla','Valencia','Bilbao'],COL:['Bogota','Medellin','Cali'],CMR:['Douala','Yaounde','Garoua']};
+function bpFor(nat,state){if(nat==='MAS'||!BP_CITY[nat])return(!state||R()<.25)?pick(STATES):state;return pick(BP_CITY[nat])}
+// Tarikh lahir: umur pada 1 Julai musim semasa tepat p.age, hari lahir rawak sepanjang tahun.
+function dobFor(age,season){return addDays(`${season-age}-07-01`,-ri(0,364))}
+function ageOf(p,d){if(!p)return 0;if(!p.dob)return p.age;if(!d)d=(S&&S.tl&&S.tl.length)?curDate():`${S.season}-07-01`;
+  let a=+d.slice(0,4)-+p.dob.slice(0,4);if(d.slice(5)<p.dob.slice(5))a--;return a}
+const INJ_T={otot:['Otot tegang',3,8,1,30],lebam:['Lebam (benturan)',2,5,1,22],buku:['Buku lali terseliuh',5,14,2,16],ham:['Hamstring',10,21,2,12],groin:['Kecederaan groin',9,18,2,6],
+  lutut:['Kecederaan lutut',21,42,3,5],mcl:['Ligamen lutut (MCL)',28,49,3,2],tulang:['Retak tulang kaki',42,70,4,1.5],acl:['Koyak ACL',150,210,5,.5],patah:['Patah kaki',110,170,5,.4]};
+const INJ_SEV=['','Ringan','Sederhana','Serius','Teruk','Jangka panjang'];
+const REST_DAYS=7;
+function injLabel(p){return p.injx&&INJ_T[p.injx.k]?INJ_T[p.injx.k][0]:'Kecederaan'}
+function injPhase(p){const x=p.injx;if(!x||!x.n)return 'Rawatan';const f=1-p.inj/x.n;return f<.4?'Rawatan':f<.8?'Pemulihan':'Latihan ringan'}
+// Berat pemilihan pemain cedera dalam perlawanan: keletihan, umur, sejarah dan kembali terlalu awal menaikkan risiko.
+function injWeight(p,e){let w=1;const c=e?e.cond:p.cond;if(c<80)w+=(80-c)/40;if(p.age>=31)w*=1.2;
+  const ih=(p.ih||[]).filter(x=>x[0]>=S.season-1).length;w*=1+ih*.25;if(p.injx&&p.injx.rec>0)w*=p.injx.rush?5:2;return w}
+function createInjury(p,src){const tired=p.cond<65,old=p.age>=31;const ag=p.injx&&p.injx.rec>0?p.injx:null;
+  const k=ag&&R()<.6?ag.k:wpick(Object.keys(INJ_T),x=>{const T=INJ_T[x];let w=T[4];if(src==='train'&&T[3]>2)return 0;if(['otot','ham','groin'].includes(x)){if(tired)w*=1.5;if(old)w*=1.3}return w});
+  const T=INJ_T[k];let n=ri(T[1],T[2]);if(ag)n=Math.round(n*1.5);if(p.club===S.user)n=Math.max(2,Math.round(n*medMul()));
+  p.inj=n;p.injx={k,n,d0:curDate(),ret:addDays(curDate(),n),rec:0,rush:0,ag:ag?1:0,sv:T[3]};
+  (p.ih=p.ih||[]).unshift([S.season,k,n]);if(p.ih.length>8)p.ih.length=8;return p.injx}
+function rushBack(p){if(!p||p.club!==S.user||!(p.inj>0))return 'Pemain ini tidak cedera.';const x=p.injx;if(!x)return 'Rekod kecederaan tidak lengkap.';
+  if(p.inj>Math.max(3,Math.round(x.n*.25)))return 'Terlalu awal. Pasukan perubatan mahu dia pulih sekurang-kurangnya 75% dahulu.';
+  p.inj=0;x.rush=1;x.rec=14;p.cond=Math.min(p.cond,80);return null}
+function setRest(p){if(!p||p.club!==S.user||p.res)return 'Pemain tidak berada dalam skuad utama.';if(p.inj>0)return 'Pemain cedera sedang menjalani rawatan.';if(p.rest>0)return 'Dia sudah bercuti.';p.rest=REST_DAYS;if(S.lu)purgeLineup();return null}
+function isRST(p){return !p.inj&&!p.rest&&p.cond<65}
+// Sejarah kerjaya: stint = [musim,kelab,main,gol,bantuan,penilaian*10,pinjaman]. Tidak pernah dipadam; pemain bersara disimpan dalam S.legends.
+function stintClose(p){const c=p.cs;if(c){if(c[2]>0){(p.hist=p.hist||[]).push(c);if(p.hist.length>60)p.hist.shift()}p.cs=null}}
+function stintAdd(p,e,r){let c=p.cs;if(!c||c[1]!==p.club||c[0]!==S.season||!!c[6]!==!!p.loan){stintClose(p);c=p.cs=[S.season,p.club,0,0,0,0,p.loan?1:0]}c[2]++;c[3]+=e.g;c[4]+=e.as;c[5]+=Math.round(r*10)}
+function mvAdd(p,from,to,fee,kind){(p.mv=p.mv||[]).push([curDate(),from||null,to||null,fee||0,kind]);if(p.mv.length>16)p.mv.shift()}
+function archivePlayer(p){if(!p||!((p.car&&p.car.ap>0)||(p.hist&&p.hist.length)))return;stintClose(p);if(!S.legends)S.legends={};
+  S.legends[p.id]={n:p.name,nat:p.nat,pos:p.pos,dob:p.dob,bp:p.bp,ht:p.ht,wt:p.wt,rs:S.season,car:[p.car.ap,p.car.g],h:p.hist||[],mv:p.mv||[],ih:p.ih||[],il:p.intl||null}}
+function cn2(cid){return cid&&S.clubs[cid]?S.clubs[cid].name:cid?'(kelab lama)':'Ejen bebas'}
+function bioRows(p,o){o=o||{};const rows=[['Nama penuh',esc(p.name)],['Tarikh lahir',p.dob?`${fmtDate(p.dob,'long')}${o.retired?'':` · ${ageOf(p)} tahun`}`:'—'],['Tempat lahir',esc(p.bp||'—')],
+  ['Kewarganegaraan',esc(NAT_NAME[p.nat]||p.nat)],['Posisi',`${POS_NAME[p.pos]}${p.alt&&p.alt.length?' · juga '+p.alt.join(', '):''}`]];
+  if(o.retired)rows.push(['Status',`Bersara pada musim ${seasonLabel(o.retired)}`]);
+  else rows.push(['Kelab',p.club?esc(cname(p.club))+(p.loan?` (pinjaman dari ${esc(cname(p.loan.from))})`:''):'Ejen bebas'],['Kontrak',p.club?`hingga ${seasonLabel(p.ctr)}`:'—']);
+  const il=p.intl;if(il&&(il.c||il.g))rows.push(['Pasukan kebangsaan',`${il.c||0} caps · ${il.g||0} gol (${esc(NAT_NAME[il.cc||p.nat]||p.nat)})`]);
+  return `<div class="kv2">${rows.map(([a,b])=>`<span>${a}</span><b>${b}</b>`).join('')}</div>`}
+function careerBody(p){const h=(p.hist||[]).slice();if(p.cs&&p.cs[2]>0)h.push(p.cs);
+  const tot=h.reduce((a,x)=>[a[0]+x[2],a[1]+x[3],a[2]+x[4]],[0,0,0]);
+  const hist=h.length?`<div class="tbl"><table><thead><tr><th>Musim</th><th>Kelab</th><th class="r">Main</th><th class="r">Gol</th><th class="r">Bantuan</th><th class="r">Purata</th></tr></thead><tbody>${h.map(x=>`<tr><td class="num">${seasonLabel(x[0])}</td><td>${esc(cn2(x[1]))}${x[6]?' <span class="mute">(pinjaman)</span>':''}</td><td class="r num">${x[2]}</td><td class="r num">${x[3]}</td><td class="r num">${x[4]}</td><td class="r num">${x[2]?(x[5]/10/x[2]).toFixed(2):'—'}</td></tr>`).join('')}<tr><td colspan="2"><b>Jumlah</b></td><td class="r num"><b>${tot[0]}</b></td><td class="r num"><b>${tot[1]}</b></td><td class="r num"><b>${tot[2]}</b></td><td></td></tr></tbody></table></div>`:'<p class="mute" style="font-size:.86rem">Belum ada penampilan direkodkan.</p>';
+  const KD=['Pindah','Pinjam','Pulang pinjaman','Dilepaskan'];
+  const mv=(p.mv||[]).length?`<div class="tbl"><table><thead><tr><th>Tarikh</th><th>Jenis</th><th>Daripada</th><th>Kepada</th><th class="r">Yuran</th></tr></thead><tbody>${p.mv.slice().reverse().map(m=>`<tr><td class="num">${fmtDate(m[0])}</td><td>${KD[m[4]]||''}</td><td>${esc(cn2(m[1]))}</td><td>${esc(cn2(m[2]))}</td><td class="r num">${m[3]?fmtRM(m[3]):'—'}</td></tr>`).join('')}</tbody></table></div>`:'';
+  const ih=(p.ih||[]).length?`<div class="mute" style="font-size:.84rem">Sejarah kecederaan: ${p.ih.map(x=>`${seasonLabel(x[0])} ${INJ_T[x[1]]?INJ_T[x[1]][0]:'cedera'} (${x[2]} hari)`).join(' · ')}</div>`:'';
+  return `<span class="lbl">Statistik kerjaya mengikut kelab dan musim</span>${hist}${mv?`<span class="lbl">Sejarah perpindahan</span>${mv}`:''}${ih}`}
+function careerHTML(p){return `<details><summary class="lbl" style="cursor:pointer">Biodata dan sejarah kerjaya</summary><div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">${bioRows(p)}${careerBody(p)}</div></details>`}
+function mRetired(pid){const l=(S.legends||{})[pid];if(!l)return;const p={id:pid,name:l.n,nat:l.nat,pos:l.pos,alt:[],dob:l.dob,bp:l.bp,hist:l.h,mv:l.mv,ih:l.ih,intl:l.il,club:null,cs:null,age:0};
+  const ag=l.dob?`${l.rs-+l.dob.slice(0,4)-1}`:'';
+  openModal(`<header><div><span class="lbl">Pemain bersara</span><h2>${esc(l.n)}</h2><div class="mute">${POS_NAME[l.pos]} · ${NAT_NAME[l.nat]||l.nat} · ${l.car[0]} penampilan · ${l.car[1]} gol${ag?` · bersara sekitar usia ${ag}`:''}</div></div><button class="btn sm" data-act="close">Tutup</button></header>
+   <div style="display:flex;flex-direction:column;gap:10px">${bioRows(p,{retired:l.rs})}${careerBody(p)}</div>`)}
+function medicalBox(p){if(!(p.inj>0)&&!(p.injx&&p.injx.rec>0)&&!p.rest)return '';
+  if(p.inj>0){const x=p.injx||{};return `<div class="msg no"><b>${esc(injLabel(p))}</b> · ${INJ_SEV[x.sv]||''} · ${p.inj} hari lagi${x.ret?` · jangkaan kembali ${fmtDate(x.ret)}`:''} · ${injPhase(p)}</div>`}
+  if(p.rest>0)return `<div class="msg ok">Bercuti rehat, ${p.rest} hari lagi.</div>`;
+  return `<div class="msg ok">Baru pulih daripada ${esc(injLabel(p))}. Risiko kambuh ${p.injx.rush?'tinggi':'sedikit meningkat'} selama ${p.injx.rec} hari.</div>`}
+function restBtn(p){return p.club===S.user&&!p.res&&!p.inj&&!p.rest?`<button class="btn sm" data-act="rest" data-arg="${p.id}" title="Tiada latihan biasa dan kondisi dipulihkan lebih cepat selama ${REST_DAYS} hari. Pemain tidak boleh dipilih.">Rehat 1 minggu</button>`:''}
+function vMedical(){const c=S.clubs[S.user];const ps=c.players.map(id=>S.players[id]);
+  const inj=ps.filter(p=>p.inj>0).sort((a,b)=>b.inj-a.inj),rec=ps.filter(p=>!p.inj&&p.injx&&p.injx.rec>0),rst=ps.filter(isRST).sort((a,b)=>a.cond-b.cond),rest=ps.filter(p=>p.rest>0),tir=ps.filter(p=>!p.inj&&!p.rest&&p.cond>=65&&p.cond<80).sort((a,b)=>a.cond-b.cond);
+  const risk=p=>{const x=p.injx;if(!x)return '—';if(p.inj>Math.max(3,Math.round(x.n*.25)))return 'Tidak boleh dipercepat';return `<button class="btn sm" data-act="rush" data-arg="${p.id}" title="Kembali sekarang: risiko kambuh 5× selama 14 hari">Pulang awal (berisiko)</button>`};
+  return `<div class="view"><h2>Medical</h2>
+   <section class="panel"><h3>Pemain cedera (${inj.length})</h3>${inj.length?`<div class="tbl"><table><thead><tr><th>Pemain</th><th>Kecederaan</th><th>Tahap</th><th class="r">Baki</th><th>Jangkaan kembali</th><th>Rawatan</th><th></th></tr></thead><tbody>${inj.map(p=>{const x=p.injx||{};return `<tr><td class="nm">${plink(p.id)} ${posHTML(p)}</td><td>${esc(injLabel(p))}</td><td>${INJ_SEV[x.sv]||'—'}</td><td class="r num">${p.inj} hari</td><td class="num">${x.ret?fmtDate(x.ret):'—'}</td><td>${injPhase(p)}</td><td>${risk(p)}</td></tr>`}).join('')}</tbody></table></div>`:'<p class="mute">Tiada pemain cedera.</p>'}
+    ${rec.length?`<p class="mute" style="font-size:.86rem">Baru pulih (risiko kambuh lebih tinggi buat sementara): ${rec.map(p=>`${plink(p.id)} (${esc(injLabel(p))}, ${p.injx.rec} hari${p.injx.rush?', pulang awal':''})`).join(', ')}</p>`:''}</section>
+   <section class="panel"><h3>Keletihan</h3><p class="mute" style="font-size:.86rem">Pemain dengan kondisi di bawah 65% ditanda <b>RST</b> (perlu rehat). Prestasi turun dan risiko cedera naik bila kondisi rendah. Cuti rehat memulihkan kondisi lebih cepat dan melangkau latihan biasa selama ${REST_DAYS} hari; pemain tidak boleh dipilih sepanjang tempoh itu.</p>
+    ${rst.length?`<div class="tbl"><table><thead><tr><th>Pemain</th><th>Kondisi</th><th></th></tr></thead><tbody>${rst.map(p=>`<tr><td class="nm">${plink(p.id)} ${posHTML(p)} ${tagChip('RST','r','Perlu rehat')}</td><td>${condHTML(p.cond)} <span class="num">${p.cond}%</span></td><td>${restBtn(p)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="mute">Tiada pemain berstatus RST.</p>'}
+    ${tir.length?`<h3 style="margin-top:10px">Mula letih</h3><div class="tbl"><table><tbody>${tir.map(p=>`<tr><td class="nm">${plink(p.id)} ${posHTML(p)}</td><td>${condHTML(p.cond)} <span class="num">${p.cond}%</span></td><td>${restBtn(p)}</td></tr>`).join('')}</tbody></table></div>`:''}
+    ${rest.length?`<h3 style="margin-top:10px">Sedang bercuti rehat</h3><div class="tbl"><table><tbody>${rest.map(p=>`<tr><td class="nm">${plink(p.id)}</td><td>${condHTML(p.cond)} <span class="num">${p.cond}%</span></td><td class="num">${p.rest} hari lagi</td><td><button class="btn sm" data-act="unrest" data-arg="${p.id}">Batalkan</button></td></tr>`).join('')}</tbody></table></div>`:''}</section></div>`}
+function migrate3(){Object.values(S.players).forEach(p=>{if(!p.dob)p.dob=dobFor(p.age,S.season);if(!p.bp){const c=p.club&&S.clubs[p.club];p.bp=bpFor(p.nat,c&&c.state)}});if(!S.legends)S.legends={}}
 function stripUnknownComps(){if(!S.tl)return;const ok=e=>e.k!=='M'||!e.c||COMP[e.c[0]]||e.c[0]==='L';if(S.tl.every(ok))return;
   const map=[];let n=0;S.tl.forEach((e,i)=>{map[i]=n;if(ok(e))n++});map[S.tl.length]=n;const nt=i=>i==null?i:map[Math.min(Math.max(i,0),S.tl.length)];
   Object.keys(S.fixtures).forEach(k=>{const f=S.fixtures[k];if(!COMP[f.comp]&&f.comp!=='L')delete S.fixtures[k];else f.t=nt(f.t)});
@@ -1633,14 +1703,14 @@ function pickTrainAttr(p,focus){const ind=S.tr.ind[p.id];if(ind&&ind.a&&R()<.55)
 function medMul(){return(1.07-.05*facL('med'))*(1.1-staffR('phy')*.015)}
 function trainTick(days){const c=curClub();if(!c||!days)return;const tr=S.tr;const k=days/7;const im={L:.6,N:1,H:1.5}[tr.int]||1;const ups=[];
   const ps=[...c.players,...(c.res||[])].map(id=>S.players[id]).filter(p=>p&&!p.loan);
-  for(const p of ps){if(p.inj)continue;const resM=p.res?.5+.12*facL('youth'):1;const room=ability(p)<p.pot?1:.2;
+  for(const p of ps){if(p.inj||p.rest)continue;const resM=p.res?.5+.12*facL('youth'):1;const room=ability(p)<p.pot?1:.2;
     const ch=.03*im*trAgeF(p.age)*room*k*resM*(tr.focus==='rest'?.2:1);const ka=pickTrainAttr(p,tr.focus);const ind=tr.ind[p.id];
     if(ka&&R()<ch*trainQ(coachFor(p,ka))*(ind&&ind.a===ka?1.2:1)&&p.a[ka]<20){p.a[ka]++;ups.push([p.id,ka])}
     if(ind&&ind.pos&&!p.res){ind.prog=(ind.prog||0)+k*trainQ(staffR('am'))*im*(p.age<=24?1.2:.8);if(ind.prog>=16){if(!p.alt.includes(ind.pos))p.alt.push(ind.pos);ups.push([p.id,'pos:'+ind.pos]);delete tr.ind[p.id]}}
     let dc=0;if(tr.int==='H')dc-=5*k;else if(tr.int==='L')dc+=3*k;if(tr.focus==='rest')dc+=8*k;if(tr.focus==='fit')dc+=2*k;dc+=(staffR('fit')-10)*.3*k+(facL('med')-1)*.8*k;
     p.cond=clamp(Math.round(p.cond+dc),45,100);if(tr.focus==='rest')p.mor=clamp(p.mor+1,20,100)}
-  const injP={L:.006,N:.015,H:.06}[tr.int]*k;if(R()<injP){const cand=c.players.map(id=>S.players[id]).filter(p=>available(p)&&!p.loan);if(cand.length){const p=pick(cand);p.inj=Math.max(2,Math.round(ri(3,10)*medMul()));
-    inbox('train',`${p.name} cedera semasa latihan`,`Dijangka berehat ${p.inj} hari. Latihan intensiti ${TR_INT[tr.int][0].toLowerCase()} meningkatkan risiko kecederaan.`)}}
+  const injP={L:.006,N:.015,H:.06}[tr.int]*k;if(R()<injP){const cand=c.players.map(id=>S.players[id]).filter(p=>available(p)&&!p.loan);if(cand.length){const p=pick(cand);createInjury(p,'train');
+    inbox('train',`${p.name} cedera semasa latihan: ${injLabel(p)}`,`Dijangka berehat ${p.inj} hari. Latihan intensiti ${TR_INT[tr.int][0].toLowerCase()} meningkatkan risiko kecederaan.`)}}
   const d=curDate();ups.forEach(([pid,ka])=>{tr.log.unshift([d,pid,ka]);tr.mon.push([pid,ka])});tr.log=tr.log.slice(0,40)}
 function trMonthReport(){const tr=S.tr;if(!curClub()||!tr.mon.length){tr.mon=[];return}const by={};tr.mon.forEach(([pid,ka])=>{(by[pid]=by[pid]||[]).push(ka)});
   const lines=Object.entries(by).filter(([pid])=>S.players[pid]).map(([pid,ks])=>`${S.players[pid].name}: ${ks.map(k=>k.startsWith('pos:')?'boleh main '+k.slice(4):ATTR_NAME[k]+' +1').join(', ')}`);
@@ -1948,7 +2018,7 @@ function vTrain(){const c=curClub();const tr=S.tr;const avgQ=['am','fit','att','
    <section class="panel"><div class="row sp"><h3>Fokus individu</h3><div class="tabs"><button class="${!UI.trRes?'on':''}" data-act="trres" data-arg="0">Skuad utama</button><button class="${UI.trRes?'on':''}" data-act="trres" data-arg="1">+ Pelapis</button></div></div>
     <p class="mute" style="font-size:.86rem">Pilih satu atribut untuk diberi tumpuan, atau latih pemain untuk posisi baharu. Pemain muda berkembang paling cepat, dan pemain yang sudah mencapai potensi hampir tidak meningkat lagi.</p>
     <div class="tbl"><table><thead><tr><th>Nama</th><th>Pos</th><th class="r">Umur</th><th class="r">CA</th><th>Kondisi</th><th>Fokus individu</th></tr></thead><tbody>
-    ${ps.map(p=>`<tr><td class="nm">${plink(p.id)} ${starsHTML(p)} ${p.res?'<span class="chip res">PELAPIS</span>':''}</td><td>${posHTML(p)}</td><td class="r num">${p.age}</td><td class="r num">${ability(p).toFixed(1)}</td><td>${condHTML(p.cond)}</td><td><button class="btn sm" data-act="trind" data-arg="${p.id}">${trIndLabel(p.id)}</button></td></tr>`).join('')}</tbody></table></div></section>
+    ${ps.map(p=>`<tr><td class="nm">${plink(p.id)} ${starsHTML(p)} ${p.res?'<span class="chip res">PELAPIS</span>':''}</td><td>${posHTML(p)}</td><td class="r num">${ageOf(p)}</td><td class="r num">${ability(p).toFixed(1)}</td><td>${condHTML(p.cond)}</td><td><button class="btn sm" data-act="trind" data-arg="${p.id}">${trIndLabel(p.id)}</button></td></tr>`).join('')}</tbody></table></div></section>
    <section class="panel"><h3>Perkembangan terkini</h3>${tr.log.length?`<div class="tbl"><table><tbody>${tr.log.slice(0,15).map(([d,pid,k])=>`<tr><td class="num mute">${fmtDate(d)}</td><td class="nm">${plink(pid)}</td><td>${k.startsWith('pos:')?`Kini boleh main ${k.slice(4)}`:`${ATTR_NAME[k]} <span style="color:var(--win)">+1</span>`}</td></tr>`).join('')}</tbody></table></div>`:'<p class="mute">Belum ada peningkatan. Laporan latihan bulanan dihantar ke inbox.</p>'}</section></div>`}
 function mTrInd(pid){const p=S.players[pid];if(!p)return;const cur=S.tr.ind[pid]||{};
   const groups=ATTR_GROUPS.filter(([n])=>n!=='Goalkeeping'||p.pos==='GK');const pos=POSL.filter(x=>x!==p.pos&&!p.alt.includes(x)&&(x==='GK')===(p.pos==='GK'));
@@ -2052,11 +2122,11 @@ function getMeta(){try{return JSON.parse(localStorage.getItem('pk3-meta')||'{}')
 function setMeta(m){try{localStorage.setItem('pk3-meta',JSON.stringify(m))}catch(e){}}
 // Skema simpanan: naikkan SCHEMA hanya bila struktur data berubah sehingga build lama tidak selamat membukanya.
 // Simpanan tanpa `sv` datang dari build 1.x sebelum 1.4.6.4 dan masih dibuka seperti biasa.
-// SCHEMA 2 (2.0 Fasa 2): format simpanan 'F' (deflate + pek 15-bit). Struktur data S belum berubah; migrasi masa depan didaftar dalam PK2.mig[versi].
-const SCHEMA=2;
+// SCHEMA 2 (2.0 Fasa 2): format simpanan 'F' (deflate + pek 15-bit). SCHEMA 3 (Fasa 3): p.dob/bp/hist/mv/ih/injx/rest, S.legends. Migrasi didaftar dalam PK2.mig[versi].
+const SCHEMA=3;
 const MAX_IMPORT_BYTES=20*1024*1024;
 // Ruang nama 2.0. Modul baharu didaftar di bawah PK2, bukan sebagai global baharu. mig[v] menaikkan S daripada v-1 ke v (sekali sahaja).
-const PK2={mig:{2:()=>{/* v2: hanya format simpanan baharu; tiada perubahan struktur S */}}};
+const PK2={mig:{2:()=>{/* v2: hanya format simpanan baharu; tiada perubahan struktur S */},3:()=>migrate3()}};
 function runMigrations(){if(!S)return;const from=Number.isInteger(S.sv)?S.sv:1;for(let v=from+1;v<=SCHEMA;v++){if(PK2.mig[v])PK2.mig[v]()}S.sv=SCHEMA}
 // Pemampat 'F': fflate deflate (sync, ~6x lebih laju daripada LZString) dan pek 15-bit ke aksara UTF-16 (tiada surrogate, tiada NUL).
 const PK_OFF=0x100;
@@ -2140,8 +2210,8 @@ function kitSt(cid){const c=S.clubs[cid];return c?`--k1:${c.kit[0]};--k2:${c.kit
 function kit(cid,lg){return cid&&S.clubs[cid]?`<span class="kit${lg?' lg':''}" style="${kitSt(cid)}"></span>`:''}
 function cname(cid){return cid&&S.clubs[cid]?S.clubs[cid].name:'Ejen bebas'}
 function clink(cid){return cid&&S.clubs[cid]?`<button class="link" data-act="club" data-arg="${cid}">${esc(S.clubs[cid].name)}</button>`:'<span class="mute">Ejen bebas</span>'}
-function plink(pid,label){const p=S.players[pid];return p?`<button class="link" data-act="player" data-arg="${pid}">${esc(label||p.name)}</button>`:'<span class="mute">(bersara)</span>'}
-function pname(pid,fb){return S.players[pid]?S.players[pid].name:(fb||'(bersara)')}
+function plink(pid,label){const p=S.players[pid];return p?`<button class="link" data-act="player" data-arg="${pid}">${esc(label||p.name)}</button>`:S.legends&&S.legends[pid]?`<button class="link" data-act="legend" data-arg="${pid}">${esc(label||S.legends[pid].n)}</button> <span class="mute">(bersara)</span>`:'<span class="mute">(bersara)</span>'}
+function pname(pid,fb){return S.players[pid]?S.players[pid].name:(S.legends&&S.legends[pid]?S.legends[pid].n:(fb||'(bersara)'))}
 function stars(n){return '★'.repeat(n)+'☆'.repeat(5-n)}
 function formHTML(f){return `<span class="form">${f.map(x=>`<i class="${x}">${x}</i>`).join('')}</span>`}
 function condHTML(c){return `<span class="cond ${c<70?'bad':c<85?'warn':''}" title="Kondisi ${c}%"><span class="bar"><span style="width:${c}%"></span></span></span>`}
@@ -2150,13 +2220,15 @@ function sum(p,k){return p.st.L[k]+p.st.FA[k]+p.st.TB[k]}
 function avgAll(p){const ap=sum(p,'ap');return ap?(sum(p,'rt')/ap).toFixed(2):'—'}
 function tagChip(code,cls,title,extra){return `<span class="chip tg ${cls}" title="${esc(title)}">${code}${extra!=null?`<small>${extra}</small>`:''}</span> `}
 function status(p,compact){if(!p)return '';let s='';const mine=S.user&&p.club===S.user;
-  if(p.inj)s+=tagChip('INJ','r',`Cedera, ${p.inj} hari lagi`,compact?null:p.inj+'h');
+  if(p.inj)s+=tagChip('INJ','r',`${injLabel(p)}, ${p.inj} hari lagi`,compact?null:p.inj+'h');
+  if(p.rest>0)s+=tagChip('RHT','b',`Bercuti rehat, ${p.rest} hari lagi`);else if(mine&&isRST(p))s+=tagChip('RST','r','Perlu rehat: kondisi '+p.cond+'%');
+  if(p.intl&&p.intl.on)s+=tagChip('INT','g','Dipanggil mewakili '+(NAT_NAME[p.intl.cc||p.nat]||p.nat));
   if(p.ban)s+=tagChip('SPD','r',`Digantung ${p.ban} perlawanan`,compact?null:p.ban);
   if((mine||(S.short&&S.short[p.id]))&&p.club&&!p.loan&&!p.res&&p.ctr<=S.season&&!S.over)s+=tagChip('KTR','a','Kontrak tamat hujung musim '+seasonLabel(p.ctr));if(mine){const of=S.offers.filter(o=>o.pid===p.id);if(of.length)s+=tagChip('BID','g',of.map(o=>`${cname(o.from)}: ${o.kind==='loan'?'minta pinjam':'tawaran '+fmtRM(o.fee)}`).join(' · '));
     else if(S.wan&&S.wan[p.id]&&S.clubs[S.wan[p.id].cid])s+=tagChip('WAN','a',`Diminati ${cname(S.wan[p.id].cid)}`)}
   if(p.loan)s+=tagChip('LON','a',`Dipinjam dari ${cname(p.loan.from)} hingga ${fmtDate(p.loan.until)}`);
   if(mine&&S.listed[p.id])s+=tagChip('TRF','b','Disenaraikan untuk dijual');if(mine&&S.loanList[p.id])s+=tagChip('LOA','b','Disenaraikan untuk pinjaman');return s}
-function tagLegend(){return `<div class="stleg"><span>${tagChip('INJ','r','')}cedera</span><span>${tagChip('SPD','r','')}digantung</span><span>${tagChip('BID','g','')}ada tawaran</span><span>${tagChip('WAN','a','')}diminati kelab lain</span><span>${tagChip('LON','a','')}pemain pinjaman</span><span>${tagChip('TRF','b','')}senarai jual</span><span>${tagChip('LOA','b','')}senarai pinjam</span><span>${tagChip('KTR','a','')}kontrak tamat hujung musim</span></div>`}
+function tagLegend(){return `<div class="stleg"><span>${tagChip('INJ','r','')}cedera</span><span>${tagChip('SPD','r','')}digantung</span><span>${tagChip('RST','r','')}perlu rehat</span><span>${tagChip('RHT','b','')}cuti rehat</span><span>${tagChip('BID','g','')}ada tawaran</span><span>${tagChip('WAN','a','')}diminati kelab lain</span><span>${tagChip('LON','a','')}pemain pinjaman</span><span>${tagChip('TRF','b','')}senarai jual</span><span>${tagChip('LOA','b','')}senarai pinjam</span><span>${tagChip('KTR','a','')}kontrak tamat hujung musim</span></div>`}
 function aiInterest(){if(!S.user||!S.clubs[S.user])return;if(!S.wan)S.wan={};const W=S.wan;
   Object.keys(W).forEach(pid=>{const w=W[pid];const p=S.players[pid];if(!p||p.club!==S.user||w.until<S.t||!S.clubs[w.cid])delete W[pid]});
   const ut=S.clubs[S.user].tier;const mine=S.clubs[S.user].players.map(id=>S.players[id]).filter(p=>p&&!p.loan&&!p.res);
@@ -2197,7 +2269,7 @@ function shortBox(p){if(!p||p.club===S.user)return '';const e=S.short&&S.short[p
 function shortHTML(){shortClean();const L=Object.keys(S.short).map(id=>[S.players[id],S.short[id]]).filter(x=>x[0]).sort((a,b)=>ability(b[0])-ability(a[0]));
   if(!L.length)return `<p class="mute">Senarai pendek kosong. Buka profil mana-mana pemain kelab lain atau ejen bebas, kemudian pilih "Tambah ke senarai pendek". Kau boleh simpan hingga hujung musim atau tanpa had masa, dan akan dimaklumkan jika pemain itu berpindah kelab.</p>`;
   return `<div class="tbl"><table><thead><tr><th>Nama</th><th>Pos</th><th class="r">Umur</th><th class="r">CA</th><th>Kelab</th><th class="r">Nilai</th><th class="r">Harga</th><th class="r">Gaji/bln</th><th class="r">Kontrak</th><th>Tempoh</th><th></th></tr></thead><tbody>
-   ${L.map(([p,e])=>`<tr><td class="nm">${plink(p.id)} ${starsHTML(p)} ${natTag(p)} ${status(p)}</td><td>${posHTML(p)}</td><td class="r num">${p.age}</td><td class="r num"><b>${ability(p).toFixed(1)}</b></td>
+   ${L.map(([p,e])=>`<tr><td class="nm">${plink(p.id)} ${starsHTML(p)} ${natTag(p)} ${status(p)}</td><td>${posHTML(p)}</td><td class="r num">${ageOf(p)}</td><td class="r num"><b>${ability(p).toFixed(1)}</b></td>
     <td>${p.club?`${kit(p.club)} ${clink(p.club)}`:'<span class="chip sale">Ejen bebas</span>'}</td><td class="r num">${fmtRM(valueOf(p))}</td><td class="r num">${p.club?fmtRM(asking(p)):'—'}</td><td class="r num">${fmtRM(p.club?p.wage:wageDemand(p,S.user))}</td><td class="r num">${p.club?seasonLabel(p.ctr):'—'}</td>
     <td class="mute" style="font-size:.82rem">${e.mode==='s'?'Hujung musim':'Tanpa had'}</td><td><button class="btn sm bad" data-act="shortdel" data-arg="${p.id}">Buang</button></td></tr>`).join('')}</tbody></table></div>`}
 
@@ -2210,7 +2282,7 @@ function clubInfoHTML(c){const isU=c.id===S.user;const ps=c.players.map(id=>S.pl
   const cap=clubCaptain(c.id);const fac=c.fac||(c.tier?defaultFac(c):null);
   const key=ps.slice().sort((a,b)=>ability(b)-ability(a)).slice(0,3);
   const wk=ps.filter(p=>p.age<=21).map(p=>[p,starInfo(p)]).filter(([p,s])=>s.pot>=4&&s.pot>s.hi).sort((a,b)=>b[1].pot-a[1].pot||b[0].pot-a[0].pot).slice(0,3);
-  const pl=p=>`<div class="ciprow"><span class="pos ${PGROUP[p.pos]}">${p.pos}</span><span class="nmx">${plink(p.id)} ${starsHTML(p,'c')}</span><span class="mute num">${p.age} thn</span></div>`;
+  const pl=p=>`<div class="ciprow"><span class="pos ${PGROUP[p.pos]}">${p.pos}</span><span class="nmx">${plink(p.id)} ${starsHTML(p,'c')}</span><span class="mute num">${ageOf(p)} thn</span></div>`;
   return `<div class="cinfo"><section class="panel"><h3>Maklumat kelab</h3><div class="kv2">
      ${kv('Pengurus',esc(isU?S.manager:(c.mgr||'—')))}${kv('Kapten',cap?plink(cap):'—')}${kv('Stadium',`${esc(c.stadium||'—')} · ${(c.cap||0).toLocaleString('ms-MY')} tempat duduk`)}
      ${c.tier?kv('Liga',`${LG_NAME[c.tier]} · ${pos}`):kv('Liga','Kelab amatur')}${kv('Lokasi',`${esc(c.dist||'')}${c.state?', '+esc(c.state):''}`)}</div></section>
@@ -2453,14 +2525,14 @@ function renderTop(){const c=S.clubs[S.user];const e=curEntry();const wi=windowI
    <div class="money"><span class="lbl">Baki</span><b style="color:${c.bal<0?'var(--loss)':'var(--fg)'}">${fmtRM(c.bal)}</b></div>
    ${S.ended?'<button class="btn primary" data-act="newgame">Kerjaya baharu</button>':`<button class="btn primary" data-act="${S.over?'newseason':'go'}">${S.over?'Musim baharu':'Teruskan'}</button>`}</header>`}
 function renderNav(){const u=unread();const J=S.job;
-  const G=[[null,[['home','Utama'],['inbox','Inbox',u]]],['Kelab',[['squad','Skuad'],['tactic','Taktik'],['train','Latihan'],['staff','Staf']]],
+  const G=[[null,[['home','Utama'],['inbox','Inbox',u]]],['Kelab',[['squad','Skuad'],['tactic','Taktik'],['train','Latihan'],['medical','Medical',(S.user&&S.clubs[S.user]?S.clubs[S.user].players.filter(id=>S.players[id].inj>0).length:0)],['staff','Staf']]],
     ['Pengurusan',[['transfer','Perpindahan',S.offers.length],['short','Senarai pendek',Object.keys(S.short||{}).length||0],['finance','Kewangan'],['board','Ahli Lembaga Pengarah',(J?J.offers.length:0)+(J&&J.warn?1:0)],['profile','Profil pengurus']]],
     ['Pertandingan',[['scout','Scout'],['season','Musim ini'],['fixtures','Jadual'],['league','Liga'],['fa','Piala FA'],['tb','Piala TBPM']]],
     ['Lain-lain',[['awards','Anugerah'],['stats','Statistik'],['clubs','Kelab'],['card','Kad kelab'],['saves','Save / Load'],['help','Cara main'],['feedback','Maklum balas']]]];
   const ord={home:'o0',inbox:'o0',help:'o1',feedback:'o1'};
   const btn=([k,l,b])=>k==='card'?`<button class="o2" data-act="cardopen">${l}</button>`:k==='short'?`<button class="${UI.view==='transfer'&&UI.tf.tab==='pendek'?'on':''} o2" data-act="navshort">${l}${b?`<span class="badge" style="background:var(--mute)">${b}</span>`:''}</button>`:`<button class="${UI.view===k?'on':''} ${ord[k]||'o2'}" data-act="nav" data-arg="${k}">${l}${b?`<span class="badge">${b}</span>`:''}</button>`;
   return `<nav class="rail">${G.map(([h,its])=>(h?`<span class="navh">${h}</span>`:'')+its.map(btn).join('')).join('')}<div class="spacer"></div><button class="supbtn o3" data-act="support">☕ Sokong pembangun</button><a class="mono vlink" href="nota.html" title="Nota versi dan isu diketahui">${VERSION} · Apa baharu</a></nav>`}
-function renderView(){return({home:vHome,inbox:vInbox,squad:vSquad,transfer:vTransfer,finance:vFinance,fixtures:vFixtures,league:vLeague,fa:vFA,tb:vTB,awards:vAwards,stats:vStats,clubs:vClubs,club:vClub,saves:vSaves,feedback:vFeedback,help:vHelp,train:vTrain,staff:vStaff,board:vBoard,jobs:vJobs,tactic:vTactic,profile:vProfile,season:vSeason,scout:vScout})[UI.view]()}
+function renderView(){return({home:vHome,inbox:vInbox,squad:vSquad,transfer:vTransfer,finance:vFinance,fixtures:vFixtures,league:vLeague,fa:vFA,tb:vTB,awards:vAwards,stats:vStats,clubs:vClubs,club:vClub,saves:vSaves,feedback:vFeedback,help:vHelp,train:vTrain,staff:vStaff,board:vBoard,jobs:vJobs,tactic:vTactic,profile:vProfile,season:vSeason,scout:vScout,medical:vMedical})[UI.view]()}
 
 function leagueTableHTML(l,compact){const t=leagueTable(l);
   return `<div class="tbl"><table><thead><tr><th class="r">#</th><th>Kelab</th><th class="r">M</th>${compact?'':'<th class="r">M</th><th class="r">S</th><th class="r">K</th><th class="r">JG</th><th class="r">BG</th>'}<th class="r">PG</th><th class="r">Mata</th><th>Form</th></tr></thead><tbody>
@@ -2507,7 +2579,7 @@ function vHome(){let out=onboardCard()+(S.ended?'':homeClubPanel());const e=curE
 // ---------- inbox
 function inboxRow(m){return `<button class="${m.read?'':'unread'} cat-${m.cat} ${UI.inboxSel===m.id?'sel':''}" data-act="imsg" data-arg="${m.id}"><span class="it">${esc(m.t)}</span><span class="idt">${fmtDate(m.d)}</span><span class="ic">${CAT[m.cat]||''}${(m.ctrl&&m.ctrl.pids.some(id=>S.players[id]&&S.players[id].club===S.user&&S.players[id].ctr<=S.season))||(m.oid&&S.offers.find(o=>o.id===m.oid))||(m.fine&&!m.fine.st&&S.players[m.fine.pid]&&S.players[m.fine.pid].club===S.user)?' · perlu tindakan':''}</span></button>`}
 function offerActions(o){const p=S.players[o.pid];if(!p)return '';return `<div class="box"><span class="lbl">${o.kind==='loan'?'Permintaan pinjaman':'Tawaran pembelian'}</span>
-  <div class="mono" style="font-size:.88rem">${esc(p.name)} · ${p.pos} · ${p.age} thn · CA ${ability(p).toFixed(1)} · Nilai ${fmtRM(valueOf(p))}</div>
+  <div class="mono" style="font-size:.88rem">${esc(p.name)} · ${p.pos} · ${ageOf(p)} thn · CA ${ability(p).toFixed(1)} · Nilai ${fmtRM(valueOf(p))}</div>
   ${o.kind==='loan'?`<p>${esc(cname(o.from))} mahu meminjam selama ${o.months} bulan, menanggung ${Math.round(o.share*100)}% gaji.</p>`:`<p>Tawaran semasa: <b class="mono">${fmtRM(o.fee)}</b></p>`}
   <div class="row"><button class="btn sm good" data-act="acc" data-arg="${o.id}">Terima</button><button class="btn sm bad" data-act="rej" data-arg="${o.id}">Tolak</button>
   ${o.kind==='buy'?`<label class="mute" for="ctr_${o.id}">Harga balas</label><input type="number" id="ctr_${o.id}" step="1000" value="${r1k(o.fee*1.15)}"><button class="btn sm" data-act="cntr" data-arg="${o.id}">Hantar harga balas</button>`:''}</div></div>`}
@@ -2515,7 +2587,7 @@ function ctrBox(m){const c=curClub();const d=c&&c.staff&&c.staff.dof;const L=m.c
   if(!L.length)return '<p class="mute">Pemain dalam senarai ini sudah tiada di kelab.</p>';
   const AL={renew:'Sambung',rel:'Lepaskan',opt:'Pilihan'};
   const rows=L.map(p=>{const done=p.ctr>S.season;const a=d&&!done?dofAdvice(p):null;
-    return `<div class="ctrrow"><div class="cn">${plink(p.id)}<span class="mute">${p.pos} · ${p.age} th · CA ${ability(p).toFixed(1)}</span></div>
+    return `<div class="ctrrow"><div class="cn">${plink(p.id)}<span class="mute">${p.pos} · ${ageOf(p)} th · CA ${ability(p).toFixed(1)}</span></div>
      <div class="cw num">${fmtRM(p.wage)}${done?'':` → ${fmtRM(renewDemand(p))}`}</div>
      <div class="ca">${done?'<span class="chip sale">Sudah disambung</span>':a?`<span class="adv ${a.k}"><b>${AL[a.k]}</b>. ${a.t.replace(/^[^.]*\.\s*/,'')}</span>`:''}</div>
      <div class="cb">${done?'':d?`<button class="btn sm good" data-act="dofrenew" data-arg="${p.id}">Serah kepada DoF</button>`:`<button class="btn sm" data-act="player" data-arg="${p.id}">Runding</button>`}</div></div>`}).join('');
@@ -2541,7 +2613,7 @@ function hierHTML(f){const c=curClub();const tm=teamMatches();const ps=c.players
   return `<p class="mute" style="font-size:.86rem;max-width:82ch">Status skuad menentukan berapa kerap pemain mengharapkan untuk bermain. Setiap bulan, pemain yang kurang bermain berbanding jangkaan hilang moral, dan yang cukup bermain lebih gembira. Moral mempengaruhi prestasi dalam perlawanan dan permintaan gaji. Menaikkan status menggembirakan pemain; menurunkannya mengecewakan.</p>
    <div class="tbl"><table><thead><tr><th>Status skuad</th><th class="r">No</th><th>Nama</th><th>Pos</th><th class="r">Umur</th><th class="r">CA</th><th class="r">Main</th><th class="r">Sasaran</th><th>Moral</th></tr></thead><tbody>
    ${ps.map(p=>{const r=sqRole(p);const ap=sum(p,'ap');const exp=SQR[r][1];const low=tm>=4&&ap/tm<exp-.08;const auto=!S.sr||!S.sr[p.id];
-     return `<tr class="${available(p)?'':'dim'}"><td><select class="place" data-chg="sqrole" data-arg="${p.id}" aria-label="Status skuad ${esc(p.name)}"><option value="" ${auto?'selected':''}>Auto · ${SQR[sqAuto(p)][0]}</option>${SQO.map(k=>`<option value="${k}" ${!auto&&S.sr[p.id]===k?'selected':''}>${SQR[k][0]}</option>`).join('')}</select></td><td class="r num mute">${p.no}</td><td class="nm">${plink(p.id)} ${starsHTML(p)} ${status(p)}</td><td>${posHTML(p)}</td><td class="r num">${p.age}</td><td class="r num"><b>${ability(p).toFixed(1)}</b></td><td class="r num ${low?'neg':''}">${ap}/${tm}</td><td class="r num mute">${Math.round(exp*100)}%</td><td>${moodHTML(p.mor)}</td></tr>`}).join('')}</tbody></table></div>`}
+     return `<tr class="${available(p)?'':'dim'}"><td><select class="place" data-chg="sqrole" data-arg="${p.id}" aria-label="Status skuad ${esc(p.name)}"><option value="" ${auto?'selected':''}>Auto · ${SQR[sqAuto(p)][0]}</option>${SQO.map(k=>`<option value="${k}" ${!auto&&S.sr[p.id]===k?'selected':''}>${SQR[k][0]}</option>`).join('')}</select></td><td class="r num mute">${p.no}</td><td class="nm">${plink(p.id)} ${starsHTML(p)} ${status(p)}</td><td>${posHTML(p)}</td><td class="r num">${ageOf(p)}</td><td class="r num"><b>${ability(p).toFixed(1)}</b></td><td class="r num ${low?'neg':''}">${ap}/${tm}</td><td class="r num mute">${Math.round(exp*100)}%</td><td>${moodHTML(p.mor)}</td></tr>`}).join('')}</tbody></table></div>`}
 function nextUserFx(){return Object.values(S.fixtures).filter(f=>!f.played&&(f.h===S.user||f.a===S.user)&&f.t>=S.t).sort((a,b)=>a.t-b.t)[0]||null}
 function unitR(lu){const sl=FORMS[lu.form];const g={g:[],d:[],m:[],a:[]};lu.xi.forEach((id,i)=>{const p=id&&S.players[id];if(!p)return;const pos=sl[i][0];g[PGROUP[pos]].push(roleRating(p,pos))});const av=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;return{g:av(g.g),d:av(g.d),m:av(g.m),a:av(g.a)}}
 function avgA(ids,k){const ps=ids.map(id=>S.players[id]).filter(Boolean);return ps.length?ps.reduce((x,p)=>x+(k==='ht'?p.ht:p.a[k]),0)/ps.length:0}
@@ -2586,7 +2658,7 @@ function vSquad(){const c=S.clubs[S.user];const info=lineupInfo();const lu=S.lu;
   const opts=pid=>{const cur=placeOf(pid);return `<option value="" ${cur===''?'selected':''}>—</option>`+FORMS[lu.form].map((s,i)=>`<option value="x${i}" ${cur==='x'+i?'selected':''}>${slotLabel(lu.form,i)}</option>`).join('')+`<option value="b" ${cur==='b'?'selected':''}>SUB</option>`};
   const rows=ps.map(p=>{const pl=placeOf(p.id);const exp=p.ctr<=S.season&&!p.loan;
     return `<tr class="${available(p)?'':'dim'} ${pl.startsWith('x')?'xi':''}"><td class="tcell"><span class="grip" data-drag="t" data-pid="${p.id}" title="Seret ke padang atau simpanan" aria-hidden="true">⠿</span><select class="place ${pl.startsWith('x')?'on':pl==='b'?'sub':''}" data-chg="place" data-arg="${p.id}" aria-label="Tugas ${esc(p.name)}">${opts(p.id)}</select></td>
-     <td class="r num mute">${p.no}</td><td class="nm">${plink(p.id)} ${starsHTML(p)} ${spRoles(p.id).map(r=>`<span class="chip rl">${r}</span>`).join(' ')} ${natTag(p)} ${status(p)}</td><td>${posHTML(p)}</td><td class="r num">${p.age}</td>
+     <td class="r num mute">${p.no}</td><td class="nm">${plink(p.id)} ${starsHTML(p)} ${spRoles(p.id).map(r=>`<span class="chip rl">${r}</span>`).join(' ')} ${natTag(p)} ${status(p)}</td><td>${posHTML(p)}</td><td class="r num">${ageOf(p)}</td>
      ${attrs?`<td class="r num">${p.ht}</td><td class="r num">${p.wt}</td>`+ATTR.map(k=>`<td class="att ${p.a[k]>=15?'hi':p.a[k]<=6?'lo':''}">${p.a[k]}</td>`).join(''):
      `<td class="r num"><b>${ability(p).toFixed(1)}</b></td><td>${condHTML(p.cond)}</td><td class="r">${moodHTML(p.mor,1)}</td><td class="r num">${fmtRM(valueOf(p))}</td><td class="r num">${fmtRM(p.loan?p.wage*p.loan.share:p.wage)}</td><td class="r num">${p.loan?'<span class="chip loan">'+fmtDate(p.loan.until)+'</span>':exp?'<span class="chip ctr">'+seasonLabel(p.ctr)+'</span>':seasonLabel(p.ctr)}</td><td class="r num">${sum(p,'ap')}</td><td class="r num">${sum(p,'g')}</td><td class="r num">${avgAll(p)}</td>`}</tr>`}).join('');
   const res=(c.res||[]).map(id=>S.players[id]).sort((a,b)=>ability(b)-ability(a));
@@ -2607,7 +2679,7 @@ function vSquad(){const c=S.clubs[S.user];const info=lineupInfo();const lu=S.lu;
     ${attrs?'<th class="r" title="Tinggi (cm)">cm</th><th class="r" title="Berat (kg)">kg</th>'+ATTR.map(k=>`<th class="c" title="${ATTR_NAME[k]}">${ATTR_SHORT[k]}</th>`).join(''):'<th class="r" title="Current ability pada posisi asal (1-20)">CA</th><th>Kondisi</th><th class="r">Moral</th><th class="r">Nilai</th><th class="r">Gaji/bln</th><th class="r">Kontrak</th><th class="r">Main</th><th class="r">Gol</th><th class="r">Purata</th>'}</tr></thead><tbody>${rows||'<tr><td colspan="20" class="mute">Tiada pemain sepadan dengan penapis.</td></tr>'}</tbody></table></div>`}</section>
    <section class="panel"><div class="row sp"><h3>Skuad pelapis</h3><span class="mute" style="font-size:.86rem">10 pemain muda tiba setiap musim. Yang tidak dinaikkan akan dilepaskan pada hujung musim.</span></div>
     <div class="tbl"><table><thead><tr><th class="r">No</th><th>Nama</th><th>Pos</th><th class="r">Umur</th><th class="r">CA</th><th class="r">Gaji/bln</th><th></th></tr></thead><tbody>
-    ${res.map(p=>`<tr><td class="r num mute">${p.no}</td><td class="nm">${plink(p.id)} ${starsHTML(p)} ${status(p)}</td><td>${posHTML(p)}</td><td class="r num">${p.age}</td><td class="r num"><b>${ability(p).toFixed(1)}</b></td><td class="r num">${fmtRM(p.wage)}</td><td><button class="btn sm good" data-act="promote" data-arg="${p.id}">Naikkan</button></td></tr>`).join('')||'<tr><td colspan="8" class="mute">Tiada pelapis.</td></tr>'}</tbody></table></div></section>
+    ${res.map(p=>`<tr><td class="r num mute">${p.no}</td><td class="nm">${plink(p.id)} ${starsHTML(p)} ${status(p)}</td><td>${posHTML(p)}</td><td class="r num">${ageOf(p)}</td><td class="r num"><b>${ability(p).toFixed(1)}</b></td><td class="r num">${fmtRM(p.wage)}</td><td><button class="btn sm good" data-act="promote" data-arg="${p.id}">Naikkan</button></td></tr>`).join('')||'<tr><td colspan="8" class="mute">Tiada pelapis.</td></tr>'}</tbody></table></div></section>
    ${out.length?`<section class="panel"><h3>Dipinjamkan ke kelab lain</h3><div class="tbl"><table><tbody>${out.map(p=>`<tr><td class="nm">${plink(p.id)}</td><td>${posHTML(p)}</td><td>${kit(p.club)} ${esc(cname(p.club))}</td><td class="num">hingga ${fmtDate(p.loan.until,'long')}</td><td class="r num">${p.st.L.ap} main, ${p.st.L.g} gol</td></tr>`).join('')}</tbody></table></div></section>`:''}</div>`}
 function spLine(k,label,id,score,hint){const p=id&&S.players[id];const off=p&&!available(p);
   return `<button class="spset" data-act="spopen" data-arg="${k}"><span class="lbl">${label}</span><span class="spn">${p?`${p.no}. ${esc(p.name)} <span class="pos ${PGROUP[p.pos]}">${p.pos}</span>${off?' <span class="chip inj">TIDAK BOLEH MAIN</span>':''}`:`<span class="mute">Automatik</span>`}</span><span class="num mute">${p?score(p).toFixed(1):''}</span><span class="mute spx">${hint}</span></button>`}
@@ -2625,7 +2697,7 @@ function mSP(k){const sp=userSP();const isCap=k.startsWith('cap');const sc=isCap
    :k==='pen'?'Nombor berdasarkan Finishing, Composure dan Technique.':k==='fk'?'Nombor berdasarkan Technique, Finishing, Crossing dan Composure.':'Nombor berdasarkan Crossing, Technique dan Passing.';
   openModal(`<header><div><span class="lbl">Kapten & set piece</span><h2>${title}</h2></div><button class="btn sm" data-act="close">Tutup</button></header>
    <div class="picklist"><button data-act="spset" data-arg="${k}|" class="${cur?'':'cur'}"><span><b>Automatik</b> <span class="mute" style="font-size:.8rem">· pemain terbaik di padang pada hari perlawanan</span></span><span></span><span></span><span></span></button>
-   ${ps.map(p=>{const r=spRoles(p.id);return `<button data-act="spset" data-arg="${k}|${p.id}" class="${cur===p.id?'cur':''}"><span>${esc(p.name)} ${posHTML(p)} ${r.map(x=>`<span class="chip rl">${x}</span>`).join(' ')}${xi.has(p.id)?'':' <span class="mute" style="font-size:.75rem">· bukan XI</span>'}</span><span class="num" style="text-align:right">${sc(p).toFixed(1)}</span><span class="num mute" style="text-align:right">${p.age} th</span><span></span></button>`}).join('')}</div>
+   ${ps.map(p=>{const r=spRoles(p.id);return `<button data-act="spset" data-arg="${k}|${p.id}" class="${cur===p.id?'cur':''}"><span>${esc(p.name)} ${posHTML(p)} ${r.map(x=>`<span class="chip rl">${x}</span>`).join(' ')}${xi.has(p.id)?'':' <span class="mute" style="font-size:.75rem">· bukan XI</span>'}</span><span class="num" style="text-align:right">${sc(p).toFixed(1)}</span><span class="num mute" style="text-align:right">${ageOf(p)} th</span><span></span></button>`}).join('')}</div>
    <p class="mute" style="font-size:.82rem">${note} Pemain dalam kesebelasan utama disenaraikan dahulu.${nOff?` ${nOff} pemain cedera atau digantung tidak disenaraikan.`:''}</p>`)}
 function mSlot(i){const lu=S.lu;const pos=FORMS[lu.form][i][0];
   const ps=S.clubs[S.user].players.map(id=>S.players[id]).filter(available).sort((a,b)=>roleRating(b,pos)-roleRating(a,pos));
@@ -2663,15 +2735,15 @@ function vTransfer(){const wi=windowInfo();const c=S.clubs[S.user];const ic=impo
       ${['pos','amin','amax','ca','wage','fee','tier','orig'].some(k=>t[k])?'<button class="btn sm" data-act="tfreset">Set semula penapis</button>':''}</div>
      <p class="mute" style="font-size:.85rem">${list.length} pemain ditemui${list.length>80?', 80 teratas dipaparkan':''}. Klik nama untuk berunding, membeli atau meminjam.${aK&&scoutU()?` Nilai ${ATTR_NAME[aK]} pemain kelab lain ialah anggaran Ketua Scout (±${scoutU()}).`:''}</p>
      <div class="tbl"><table><thead><tr><th>Nama</th><th>Pos</th><th class="r">Umur</th><th class="r">CA</th>${aK?`<th class="r">${ATTR_SHORT[aK]}</th>`:''}${t.tab==='cari'?'<th>Kelab</th><th class="r">Nilai</th><th class="r">Harga</th>':''}<th class="r">Gaji/bln</th><th class="r">Kontrak</th></tr></thead><tbody>
-     ${shown.map(p=>`<tr><td class="nm">${plink(p.id)} ${starsHTML(p)} ${natTag(p)} ${p.res?'<span class="chip res">PELAPIS</span>':''} ${status(p)}</td><td>${posHTML(p)}</td><td class="r num">${p.age}</td><td class="r num"><b>${ability(p).toFixed(1)}</b></td>${aK?(()=>{const v=scoutAttr(p,aK);return `<td class="r num att ${v.mid>=15?'hi':v.mid<=6?'lo':''}">${v.lo===v.hi?v.lo:v.lo+'-'+v.hi}</td>`})():''}${t.tab==='cari'?`<td>${kit(p.club)} ${esc(cname(p.club))} <span class="mute mono" style="font-size:.7rem">${S.clubs[p.club].tier?LG_SHORT[S.clubs[p.club].tier]:'AMT'}</span></td><td class="r num">${fmtRM(valueOf(p))}</td><td class="r num">${fmtRM(asking(p))}</td>`:''}<td class="r num">${fmtRM(wOf(p))}</td><td class="r num">${p.club?seasonLabel(p.ctr):'—'}</td></tr>`).join('')||'<tr><td colspan="9" class="mute">Tiada pemain sepadan.</td></tr>'}</tbody></table></div>`}
+     ${shown.map(p=>`<tr><td class="nm">${plink(p.id)} ${starsHTML(p)} ${natTag(p)} ${p.res?'<span class="chip res">PELAPIS</span>':''} ${status(p)}</td><td>${posHTML(p)}</td><td class="r num">${ageOf(p)}</td><td class="r num"><b>${ability(p).toFixed(1)}</b></td>${aK?(()=>{const v=scoutAttr(p,aK);return `<td class="r num att ${v.mid>=15?'hi':v.mid<=6?'lo':''}">${v.lo===v.hi?v.lo:v.lo+'-'+v.hi}</td>`})():''}${t.tab==='cari'?`<td>${kit(p.club)} ${esc(cname(p.club))} <span class="mute mono" style="font-size:.7rem">${S.clubs[p.club].tier?LG_SHORT[S.clubs[p.club].tier]:'AMT'}</span></td><td class="r num">${fmtRM(valueOf(p))}</td><td class="r num">${fmtRM(asking(p))}</td>`:''}<td class="r num">${fmtRM(wOf(p))}</td><td class="r num">${p.club?seasonLabel(p.ctr):'—'}</td></tr>`).join('')||'<tr><td colspan="9" class="mute">Tiada pemain sepadan.</td></tr>'}</tbody></table></div>`}
   else if(t.tab==='pendek'){body=shortHTML()}
   else if(t.tab==='runding'){const ids=Object.keys(S.negs).filter(id=>S.players[id]);
     body=ids.length?`<div class="tbl"><table><thead><tr><th>Pemain</th><th>Kelab</th><th>Peringkat</th><th class="r">Yuran dipersetujui</th><th></th></tr></thead><tbody>${ids.map(id=>{const n=S.negs[id],p=S.players[id];return `<tr><td class="nm">${plink(id)}</td><td>${esc(cname(p.club))}</td><td>${n.stage==='player'?'Terma peribadi':'Yuran dengan kelab'}${n.counter?` · harga balas ${fmtRM(n.counter)}`:''}</td><td class="r num">${n.fee?fmtRM(n.fee):'—'}</td><td><button class="btn sm" data-act="player" data-arg="${id}">Sambung</button></td></tr>`}).join('')}</tbody></table></div>`:'<p class="mute">Tiada rundingan aktif.</p>'}
   else if(t.tab==='tawaran'){body=S.offers.length?S.offers.map(offerActions).join(''):'<p class="mute">Tiada tawaran buat masa ini. Senaraikan pemain untuk dijual atau dipinjamkan supaya kelab lain berminat.</p>'}
   else if(t.tab==='jual'){const ls=Object.keys(S.listed).filter(id=>S.players[id]&&S.players[id].club===S.user),ll=Object.keys(S.loanList).filter(id=>S.players[id]&&S.players[id].club===S.user);
     body=`<p class="mute" style="font-size:.88rem">Buka profil pemain kau untuk meletakkan harga jualan atau menawarkannya untuk pinjaman. Kelab lain akan menghubungi kau semasa jendela dibuka.</p>
-     <h3>Dijual</h3>${ls.length?`<div class="tbl"><table><tbody>${ls.map(id=>{const p=S.players[id];return `<tr><td class="nm">${plink(id)}</td><td>${posHTML(p)}</td><td class="r num">${p.age}</td><td class="r num">Nilai ${fmtRM(valueOf(p))}</td><td class="r num">Diminta ${fmtRM(S.listed[id])}</td><td><button class="btn sm" data-act="unlist" data-arg="${id}">Batal</button></td></tr>`}).join('')}</tbody></table></div>`:'<p class="mute">Tiada.</p>'}
-     <h3>Ditawarkan untuk pinjaman</h3>${ll.length?`<div class="tbl"><table><tbody>${ll.map(id=>{const p=S.players[id];return `<tr><td class="nm">${plink(id)}</td><td>${posHTML(p)}</td><td class="r num">${p.age}</td><td><button class="btn sm" data-act="unloanlist" data-arg="${id}">Batal</button></td></tr>`}).join('')}</tbody></table></div>`:'<p class="mute">Tiada.</p>'}`}
+     <h3>Dijual</h3>${ls.length?`<div class="tbl"><table><tbody>${ls.map(id=>{const p=S.players[id];return `<tr><td class="nm">${plink(id)}</td><td>${posHTML(p)}</td><td class="r num">${ageOf(p)}</td><td class="r num">Nilai ${fmtRM(valueOf(p))}</td><td class="r num">Diminta ${fmtRM(S.listed[id])}</td><td><button class="btn sm" data-act="unlist" data-arg="${id}">Batal</button></td></tr>`}).join('')}</tbody></table></div>`:'<p class="mute">Tiada.</p>'}
+     <h3>Ditawarkan untuk pinjaman</h3>${ll.length?`<div class="tbl"><table><tbody>${ll.map(id=>{const p=S.players[id];return `<tr><td class="nm">${plink(id)}</td><td>${posHTML(p)}</td><td class="r num">${ageOf(p)}</td><td><button class="btn sm" data-act="unloanlist" data-arg="${id}">Batal</button></td></tr>`}).join('')}</tbody></table></div>`:'<p class="mute">Tiada.</p>'}`}
   else{body=S.tlog.length?`<div class="tbl"><table><thead><tr><th>Tarikh</th><th>Pemain</th><th>Pos</th><th>Dari</th><th>Ke</th><th class="r">Yuran</th></tr></thead><tbody>${S.tlog.slice(0,150).map(x=>`<tr class="${x.to===S.user||x.from===S.user?'me':''}"><td class="num">${fmtDate(x.d)}</td><td class="nm">${S.players[x.pid]?plink(x.pid):esc(x.name)}</td><td><span class="pos ${PGROUP[x.pos]}">${x.pos}</span></td><td>${x.from?kit(x.from)+' '+esc(cname(x.from)):'<span class="mute">Ejen bebas</span>'}</td><td>${kit(x.to)} ${esc(cname(x.to))}</td><td class="r num">${x.loan?`Pinjaman ${x.loan} bln`:x.fee?fmtRM(x.fee):'Percuma'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="mute">Belum ada pindahan musim ini.</p>'}
   return `<div class="view"><h2>Pasaran perpindahan</h2>${banner}<div class="tabs">${tabs.map(([k,l])=>`<button class="${t.tab===k?'on':''}" data-act="tftab" data-arg="${k}">${l}</button>`).join('')}</div><section class="panel">${body}</section></div>`}
 
@@ -2783,7 +2855,7 @@ function vClub(){const c=S.clubs[UI.clubView];if(!c){UI.view='clubs';return vClu
    <div class="row"><span class="mute">${c.tier?LG_NAME[c.tier]+' · Formasi '+c.form+` · Import ${ic.A} Asia, ${ic.O} lain`:'Kelab amatur'}</span>${formHTML(clubForm(c.id))}</div>
    </section>${clubInfoHTML(c)}<section class="panel"><h3>Skuad</h3>
    <div class="tbl"><table><thead><tr><th class="r">No</th><th>Nama</th><th>Pos</th><th class="r">Umur</th><th class="r">CA</th><th class="r">Nilai</th><th class="r">Harga</th><th class="r">Main</th><th class="r">Gol</th></tr></thead><tbody>
-   ${ps.map(p=>`<tr><td class="r num mute">${p.no}</td><td class="nm">${plink(p.id)} ${starsHTML(p)} ${natTag(p)} ${status(p)}</td><td>${posHTML(p)}</td><td class="r num">${p.age}</td><td class="r num">${ability(p).toFixed(1)}</td><td class="r num">${fmtRM(valueOf(p))}</td><td class="r num">${c.id===S.user||p.loan?'—':fmtRM(asking(p))}</td><td class="r num">${sum(p,'ap')}</td><td class="r num">${sum(p,'g')}</td></tr>`).join('')}</tbody></table></div></section></div>`}
+   ${ps.map(p=>`<tr><td class="r num mute">${p.no}</td><td class="nm">${plink(p.id)} ${starsHTML(p)} ${natTag(p)} ${status(p)}</td><td>${posHTML(p)}</td><td class="r num">${ageOf(p)}</td><td class="r num">${ability(p).toFixed(1)}</td><td class="r num">${fmtRM(valueOf(p))}</td><td class="r num">${c.id===S.user||p.loan?'—':fmtRM(asking(p))}</td><td class="r num">${sum(p,'ap')}</td><td class="r num">${sum(p,'g')}</td></tr>`).join('')}</tbody></table></div></section></div>`}
 
 // ---------- modals
 function openModal(html){document.getElementById('modal').innerHTML=`<div class="modal-bg" data-act="mbg"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`}
@@ -2822,7 +2894,7 @@ function swHTML(p){const W=PW[p.pos]||{};const ks=ATTR.filter(k=>(W[k]||0)>0);if
   const lab=k=>{const x=scoutAttr(p,k);return `<span class="swi">${ATTR_NAME[k]} <b class="num">${x.lo===x.hi?x.lo:x.lo+'-'+x.hi}</b></span>`};
   return `<div class="swbox"><div class="sw sws"><span class="lbl">Atribut terkuat sebagai ${p.pos}</span><div>${st.map(lab).join('')}</div></div><div class="sw swk"><span class="lbl">Atribut paling lemah sebagai ${p.pos}</span><div>${wk.map(lab).join('')}</div></div></div>`}
 function mPlayer(pid,msg){const p=S.players[pid];if(!p)return;const mine=p.club===S.user;const U=mine?0:scoutU();const rg=k=>{const o=hashN(p.id+k)%(U+1);const lo=clamp(p.a[k]-o,1,20),hi=clamp(lo+U,1,20);return U?`${lo}-${hi}`:p.a[k]};const g=natGroup(p.nat);
-  openModal(`<header><div><h2>${p.no?`<span class="mono mute">${p.no}</span> `:''}${esc(p.name)}</h2><div class="mute">${POS_NAME[p.pos]}${p.alt.length?' · juga '+p.alt.join(', '):''} · ${p.age} tahun · ${p.ht} cm · ${p.wt} kg · ${NAT_NAME[p.nat]||p.nat}${g!=='L'?(g==='A'?' (import Asia)':' (import benua lain)'):''} · ${p.club?esc(cname(p.club))+(p.res?' (pelapis)':''):'Ejen bebas'}</div></div><button class="btn sm" data-act="close">Tutup</button></header>
+  openModal(`<header><div><h2>${p.no?`<span class="mono mute">${p.no}</span> `:''}${esc(p.name)}</h2><div class="mute">${POS_NAME[p.pos]}${p.alt.length?' · juga '+p.alt.join(', '):''} · ${ageOf(p)} tahun · ${p.ht} cm · ${p.wt} kg · ${NAT_NAME[p.nat]||p.nat}${g!=='L'?(g==='A'?' (import Asia)':' (import benua lain)'):''} · ${p.club?esc(cname(p.club))+(p.res?' (pelapis)':''):'Ejen bebas'}</div></div><button class="btn sm" data-act="close">Tutup</button></header>
    ${msg?`<div class="msg ${msg.ok?'ok':'no'}">${esc(msg.msg)}</div>`:''}
    <div class="row"><span class="lbl">CA</span><b class="num" style="font-size:1.4rem;color:var(--hot)">${U?'≈'+ability(p).toFixed(0):ability(p).toFixed(1)}</b>${starsHTML(p,'lg')}${U?`<span class="chip" title="Ketepatan bergantung pada Ketua Scout">Laporan scout ±${U}</span>`:''}<span class="lbl">Kondisi</span>${condHTML(p.cond)}<span class="num">${p.cond}%</span><span class="lbl">Moral</span>${moodHTML(p.mor)}${status(p)}</div>
    <div class="row mono" style="font-size:.86rem"><span>Nilai ${fmtRM(valueOf(p))}</span><span>·</span><span>Gaji ${fmtRM(p.wage)}/bln</span>${p.club?`<span>·</span><span>Kontrak hingga ${seasonLabel(p.ctr)}</span>`:''}</div>
@@ -2830,6 +2902,7 @@ function mPlayer(pid,msg){const p=S.players[pid];if(!p)return;const mine=p.club=
    <div class="attgrid ${U?'rng':''}">${ATTR_GROUPS.filter(([n])=>n!=='Goalkeeping'||p.pos==='GK').map(([n,ks])=>`<div class="grp"><span class="lbl">${n}</span>${ks.map(k=>`<div class="a"><span>${ATTR_NAME[k]}</span><span class="bar"><span style="width:${p.a[k]*5}%"></span></span><span class="num">${rg(k)}</span></div>`).join('')}</div>`).join('')}</div>
    <div class="row" style="font-size:.84rem"><span class="lbl">Keberkesanan mengikut posisi</span>${POSL.filter(x=>x!=='GK'||p.pos==='GK').map(x=>{const v=roleRating(p,x);return `<span class="pos ${PGROUP[x]}" style="opacity:${v>=ability(p)-1.5?1:.5}">${x} ${U?v.toFixed(0):v.toFixed(1)}</span>`}).join(' ')}</div>
    <div class="tbl"><table><thead><tr><th>Pertandingan</th><th class="r">Main</th><th class="r">Gol</th><th class="r">Bantuan</th><th class="r">Purata</th></tr></thead><tbody>${['L','FA','TB'].map(k=>`<tr><td>${k==='L'?'Liga':COMP[k]}</td><td class="r num">${p.st[k].ap}</td><td class="r num">${p.st[k].g}</td><td class="r num">${p.st[k].as}</td><td class="r num">${p.st[k].ap?(p.st[k].rt/p.st[k].ap).toFixed(2):'—'}</td></tr>`).join('')}<tr><td class="mute">Kerjaya</td><td class="r num">${p.car.ap}</td><td class="r num">${p.car.g}</td><td></td><td></td></tr></tbody></table></div>
+   ${medicalBox(p)}${mine?restBtn(p):''}${careerHTML(p)}
    ${mine?ownBox(p):negBox(p)}`)}
 function scorersLine(fx,s){const by={};(fx.ev||[]).filter(e=>e.k==='goal'&&e.s===s).forEach(e=>{(by[e.p]=by[e.p]||[]).push(e.t+(e.pen?' pen':''))});return Object.entries(by).map(([p,t])=>`${esc(pname(p))} ${t.join(', ')}`).join('; ')}
 function mReport(fid,full){const fx=S.fixtures[fid];if(!fx||!fx.played)return;if(fx.lay&&!full){mSummary(fid);return}
@@ -2917,7 +2990,7 @@ function prematchExtra(fx){let h='';if(isDerby(fx))h+=`<div class="banner derbyb
   if(fx.comp!=='FR'){const done=fx.press&&fx.press.pre;h+=`<div class="box"><div class="row sp"><span class="lbl">Sidang media pra-perlawanan</span><span class="mute" style="font-size:.8rem">Mood penyokong ${Math.round(S.fans==null?60:S.fans)} · ${fansLabel(S.fans==null?60:S.fans)}</span></div>
    ${done?`<div class="row" style="gap:6px"><span class="mute" style="font-size:.85rem">Selesai.</span>${pressChips(fx.press.pre)}</div>`:`<div class="row"><span class="mute" style="font-size:.85rem;flex:1;min-width:200px">Lima soalan daripada wartawan. Pilihan, tetapi jawapan kau mempengaruhi moral, lembaga dan penyokong.</span><button class="btn sm" data-act="press" data-arg="${fx.id}|pre">Hadiri sidang media</button></div>`}</div>`}
   return h}
-function mPrematch(fx){const out=purgeLineup();out.forEach(({p,rep})=>inbox('inj',`${p.name} dikeluarkan dari barisan`,(p.inj?`Cedera, ${p.inj} hari lagi.`:'Sedang menjalani penggantungan.')+(rep?` ${rep.name} mengambil tempatnya.`:''),{read:true}));if(out.length)save();
+function mPrematch(fx){const out=purgeLineup();out.forEach(({p,rep})=>inbox('inj',`${p.name} dikeluarkan dari barisan`,(p.inj?`Cedera, ${p.inj} hari lagi.`:p.rest?'Sedang bercuti rehat.':'Sedang menjalani penggantungan.')+(rep?` ${rep.name} mengambil tempatnya.`:''),{read:true}));if(out.length)save();
   const info=lineupInfo();const o=opp(fx);const e=curEntry();const[comp,r]=e.c;const ai=autoLineup(o,S.clubs[o].form);const f1=fx.first?S.fixtures[fx.first]:null;
   openModal(`<header><div><span class="lbl">${compName(fx)} · ${roundLabel(comp,r)} · ${fmtDate(e.d,'long')}</span><h2>${esc(S.clubs[fx.h].name)} lwn ${esc(S.clubs[fx.a].name)}</h2><div class="mute">${esc(fx.neutral?NEUTRAL_VENUE:S.clubs[fx.h].stadium)}${f1?` · Pertemuan pertama: ${esc(S.clubs[f1.h].name)} ${f1.hg}-${f1.ag} ${esc(S.clubs[f1.a].name)}`:''}</div></div><button class="btn sm" data-act="close">Tutup</button></header>
    ${prematchExtra(fx)}<div class="grid2" style="gap:14px"><div style="max-width:300px;width:100%;margin:0 auto">${lineupPitch(true)}</div>
@@ -3288,6 +3361,10 @@ function go(){if(LIVE||S.over)return;if(!S.user){doAdvance();return}frEnsure();i
 function val(id){const el=document.getElementById(id);return el?el.value:''}
 function rerenderModalPlayer(pid,r){save();render();mPlayer(pid,r)}
 const ACT={
+  rest:a=>{const err=setRest(S.players[a]);if(err)showToast(err);else{save();showToast('Pemain diberi cuti rehat 1 minggu.')}render()},
+  unrest:a=>{const p=S.players[a];if(p&&p.club===S.user){delete p.rest;save()}render()},
+  rush:a=>{const err=rushBack(S.players[a]);if(err)showToast(err);else{save();showToast('Pemain dibenarkan kembali awal. Risiko kambuh meningkat.')}render()},
+  legend:a=>mRetired(a),
   nav:a=>{UI.view=a;UI.inboxOpen=false;closeModal();render();window.scrollTo(0,0)},
   selclub:a=>{const v=document.getElementById('mgr');if(v)S.manager=v.value.trim();UI.nAge=+val('mgr_age')||35;UI.nForm=val('mgr_form')||'4-4-2';UI.selClub=a;renderStart()},
   regen:()=>{const n=val('mgr').trim();newWorld();S.manager=n;UI.selClub=null;renderStart()},

@@ -8,7 +8,7 @@ def safe(f,*a):
     try: return f(*a)
     except Exception as e: return 'ERR '+str(e)[:200]
 
-VIEWS = ['home','inbox','squad','tactic','train','staff','transfer','finance','board','profile','scout','season','fixtures','league','fa','tb','awards','stats','clubs','saves','help','feedback','jobs']
+VIEWS = ['home','inbox','squad','tactic','train','staff','transfer','finance','board','profile','scout','season','fixtures','league','fa','tb','awards','stats','clubs','saves','help','feedback','jobs','medical']
 
 INV = r"""()=>{const out=[];const owner={};
   for(const [cid,c] of Object.entries(S.clubs)){for(const id of [...c.players,...(c.res||[])]){const p=S.players[id];if(!p){out.push('missing player '+id+' in '+cid);continue}

@@ -49,6 +49,7 @@ python3 tests/test_simpanan.py 1     # masa simpanan, XSS, storan penuh (hujah =
 python3 tests/test_inbox_mobile.py   # inbox di telefon dan desktop
 python3 tests/test_simpanan_1464.py  # format simpanan, import/eksport, kuota penuh (perlu sejarah git: `git fetch --depth=200 origin main`)
 python3 tests/test_fasa2.py          # 2.0 Fasa 2: format simpanan F, save ditangguh, migrasi SCHEMA 2, sandaran pra-2.0
+python3 tests/test_fasa3.py          # 2.0 Fasa 3: DOB/umur, sejarah kerjaya, pemain bersara, kecederaan, Medical, RST, rehat, migrasi v3
 python3 tests/baseline_j3.py 6 j3.json   # garis dasar enjin perlawanan (J3)
 python3 tests/baseline_econ.py 14 econ.json  # garis dasar ekonomi (I), AI penuh
 ```
