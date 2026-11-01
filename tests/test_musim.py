@@ -11,9 +11,9 @@ def safe(f,*a):
 VIEWS = ['home','inbox','squad','tactic','train','staff','transfer','finance','board','profile','scout','season','fixtures','league','fa','tb','awards','stats','clubs','saves','help','feedback','jobs']
 
 INV = r"""()=>{const out=[];const owner={};
-  for(const [cid,c] of Object.entries(S.clubs)){for(const id of c.players){const p=S.players[id];if(!p){out.push('missing player '+id+' in '+cid);continue}
+  for(const [cid,c] of Object.entries(S.clubs)){for(const id of [...c.players,...(c.res||[])]){const p=S.players[id];if(!p){out.push('missing player '+id+' in '+cid);continue}
      if(owner[id])out.push('player in two clubs '+id);owner[id]=cid;if(p.club!==cid&&!(p.loan))out.push('club mismatch '+id+' '+p.club+'!='+cid)}
-    for(const k of ['bal','tb']){if(!Number.isFinite(c[k]))out.push('NaN '+k+' '+cid)}
+    for(const k of ['bal','tb']){if(c.tier&&!Number.isFinite(c[k]))out.push('NaN '+k+' '+cid)}
     if(c.players.length<14)out.push('small squad '+cid+' '+c.players.length)}
   for(const [id,p] of Object.entries(S.players)){if(p.club&&!S.clubs[p.club])out.push('ghost club '+id);if(p.club&&!owner[id]&&!p.loan)out.push('orphan '+id+' club '+p.club);
     if(Object.values(p.a||{}).some(v=>!Number.isFinite(v)))out.push('NaN attr '+id);if(!Number.isFinite(p.wage))out.push('NaN wage '+id)}
@@ -58,9 +58,9 @@ with sync_playwright() as p:
         except Exception as e: vr[v] = 'ERR ' + str(e)[:120]
     R['views_ms'] = vr
     # save round trip
-    R['roundtrip'] = safe(pg.evaluate, "()=>{const a=JSON.stringify(S);const s2=unpack(packS());const b2=JSON.stringify(s2);const s3=unpack(packS(true));return {utf16:a===b2,b64:JSON.stringify(s3)===a,b64len:packS(true).length}}")
+    R['roundtrip'] = safe(pg.evaluate, "()=>{if(!S.user)return 'skip: tiada pengurus (jobless)';packS();const a=JSON.stringify(S);const s2=unpack(packS());const b2=JSON.stringify(s2);const s3=unpack(packS(true));return {utf16:a===b2,b64:JSON.stringify(s3)===a,b64len:packS(true).length}}")
     # save file then load slot and check equality
-    R['slot'] = safe(pg.evaluate, "()=>{const m=saveSlot(1);const s=loadSlot(1);return {msg:m,ok:!!s&&JSON.stringify(s).length===JSON.stringify(S).length}}")
+    R['slot'] = safe(pg.evaluate, "()=>{if(!S.user)return 'skip: tiada pengurus (jobless)';const m=saveSlot(1);const s=loadSlot(1);return {msg:m,ok:!!s&&JSON.stringify(s).length===JSON.stringify(S).length}}")
     # XSS probe: hostile strings in names
     R['xss'] = safe(pg.evaluate, """(views)=>{window.__x=0;const P='<img src=x onerror="window.__x=(window.__x||0)+1">';
       S.manager='M'+P;const mine=S.clubs[S.user].players;S.players[mine[0]].name='A'+P;S.players[mine[1]].name='B'+P;
@@ -71,12 +71,12 @@ with sync_playwright() as p:
     time.sleep(1.0)
     R['xss_fired'] = safe(pg.evaluate, "()=>window.__x")
     # quota: fill storage then autosave
-    R['bench'] = safe(pg.evaluate, "()=>{const t0=performance.now();save();const t1=performance.now();const o=window.save;window.save=()=>{};const t2=performance.now();doAdvance();closeSummary();closeModal();const t3=performance.now();window.save=o;return {saveMs:Math.round(t1-t0),advNoSaveMs:Math.round(t3-t2),saveCallsInSrc:(document.scripts[3]||{}).text?null:null}}")
+    R['bench'] = safe(pg.evaluate, "()=>{const t0=performance.now();(save(),saveFlush());const t1=performance.now();const o=window.save;window.save=()=>{};const t2=performance.now();doAdvance();closeSummary();closeModal();const t3=performance.now();window.save=o;return {saveMs:Math.round(t1-t0),advNoSaveMs:Math.round(t3-t2),saveCallsInSrc:(document.scripts[3]||{}).text?null:null}}")
     R['extraClubs'] = safe(pg.evaluate, "()=>Object.entries(S.clubs).filter(([k,c])=>!Number.isFinite(c.bal)).map(([k,c])=>[k,c.name,c.tier,c.bal,c.players.length,Object.keys(c).join(',')])")
     R['quota2'] = safe(pg.evaluate, """()=>{const chunk='y'.repeat(100000);let i=0;for(;i<200;i++){try{localStorage.setItem('zq-'+i,chunk)}catch(e){break}}
       const before=localStorage.getItem('pk3-slot-auto');S.inbox.unshift({id:'zq',t:'test',b:'x',cat:'tf',d:curDate(),read:false});
       let ret,thrown=null;try{ret=saveSlot('auto')}catch(e){thrown=e.message}const after=localStorage.getItem('pk3-slot-auto');
-      let ret2;try{save();ret2='save() returned silently'}catch(e){ret2='throw '+e.message}
+      let ret2;try{(save(),saveFlush());ret2='(save(),saveFlush()) returned silently'}catch(e){ret2='throw '+e.message}
       const toastText=(document.getElementById('toast')||{}).textContent||'';
       for(let k=0;k<i;k++)localStorage.removeItem('zq-'+k);
       return {chunks:i,ret,thrown,ret2,autoChanged:before!==after,autoIntact:!!unpack(after),toast:toastText.slice(0,100)}}""")

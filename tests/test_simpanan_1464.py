@@ -65,7 +65,7 @@ with sync_playwright() as p:
 
     ver = pg.evaluate("()=>[VERSION,BUILD,SCHEMA]")
     import re
-    check('label versi 1.4.3.x / b146x / SCHEMA 1', bool(re.fullmatch(r'Versi 1\.4\.3\.\d+', ver[0])) and bool(re.fullmatch(r'b146\d', ver[1])) and ver[2] == 1, ver)
+    check('label versi 1.4.3.x / b146x / SCHEMA 2', bool(re.fullmatch(r'Versi 1\.4\.3\.\d+', ver[0])) and bool(re.fullmatch(r'b146\d', ver[1])) and ver[2] == 2, ver)
 
     # ---- 3. Simpanan lama (tanpa sv) boleh dibuka
     r = pg.evaluate("""([z,bb])=>{const a=parseSave(z),c=parseSave(bb);return {z:!!a.s,zerr:a.err||null,b:!!c.s,berr:c.err||null,zsv:a.s&&a.s.sv,zseason:a.s&&a.s.seasonNo,zt:a.s&&a.s.t}}""", [old_z, old_b])
@@ -79,9 +79,9 @@ with sync_playwright() as p:
     after = pg.evaluate("()=>({user:!!S.user,club:S.clubs[S.user].name,seasonNo:S.seasonNo,t:S.t,screen:UI.screen,msg:UI.saveMsg})")
     check('loadslot auto dari simpanan lama berjaya', after['user'] and after['club'] == old_meta['club'] and after['t'] == old_meta['t'] and after['screen'] == 'game', after)
     # main satu langkah, lepas itu simpan mesti ada sv
-    pg.evaluate("()=>{if(S.fr&&!S.fr.done){frAuto();frConfirm()}S.job.conf=Math.max(S.job.conf,80);doAdvance();closeSummary();closeModal()}")
+    pg.evaluate("()=>{if(S.fr&&!S.fr.done){frAuto();frConfirm()}S.job.conf=Math.max(S.job.conf,80);doAdvance();closeSummary();closeModal();saveFlush()}")
     stored = pg.evaluate("()=>{const r=parseSave(localStorage.getItem('pk3-slot-auto'));return {ok:!!r.s,sv:r.s&&r.s.sv,bld:r.s&&r.s.bld,meta:getMeta().auto.ver}}")
-    check('autosave baharu membawa sv=1 dan bld', stored['ok'] and stored['sv'] == 1 and stored['bld'] == ver[0] + ' ' + ver[1] and ver[1] in stored['meta'], stored)
+    check('autosave baharu membawa sv=2 dan bld', stored['ok'] and stored['sv'] == 2 and stored['bld'] == ver[0] + ' ' + ver[1] and ver[1] in stored['meta'], stored)
     check('simpanan lama boleh dimainkan terus selepas dimuat', not errs, errs)
 
     # ---- 4. Putaran balik pack/unpack
@@ -178,11 +178,11 @@ with sync_playwright() as p:
       window.__zq=[i,j];
       const before=localStorage.getItem('pk3-slot-auto');
       S.inbox.unshift({id:'zq',t:'uji',b:Array.from({length:40000},()=>Math.random().toString(36).slice(2)).join(''),cat:'tf',d:curDate(),read:false});
-      let thr='tiada';try{save()}catch(e){thr=e.message}
+      let thr='tiada';try{(save(),saveFlush())}catch(e){thr=e.message}
       const el=document.getElementById('savewarn');
       const after=localStorage.getItem('pk3-slot-auto');
       return {chunks:i,thr,warnOn:!!el&&el.className==='on',visible:!!el&&getComputedStyle(el).display!=='none',txt:el?el.textContent.slice(0,160):'',autoIntact:!!parseSave(after).s,autoUnchanged:before===after}}""")
-    check('storan penuh: save() tidak melontar ralat', q['thr'] == 'tiada', q)
+    check('storan penuh: (save(),saveFlush()) tidak melontar ralat', q['thr'] == 'tiada', q)
     check('storan penuh: bar amaran muncul', q['warnOn'] and q['visible'] and 'Autosave gagal' in q['txt'], q)
     check('storan penuh: simpanan lama kekal utuh', q['autoIntact'] and q['autoUnchanged'], q)
     shot = os.path.join(tempfile.gettempdir(), 'pk-savewarn.png')
@@ -192,9 +192,9 @@ with sync_playwright() as p:
     check('storan penuh: Teruskan masih jalan, amaran kekal', step['ok'] and step['warn'] == 'on', step)
     # tutup -> diam 2 minit
     pg.evaluate("()=>ACT.savewarnx()")
-    muted = pg.evaluate("()=>{const c=document.getElementById('savewarn').className;save();return {afterClose:c,afterSave:document.getElementById('savewarn').className}}")
+    muted = pg.evaluate("()=>{const c=document.getElementById('savewarn').className;(save(),saveFlush());return {afterClose:c,afterSave:document.getElementById('savewarn').className}}")
     check('butang Tutup menyembunyi dan diam sementara', muted['afterClose'] == '' and muted['afterSave'] == '', muted)
-    pg.evaluate("()=>{SAVEWARN.mute=0;save()}")
+    pg.evaluate("()=>{SAVEWARN.mute=0;(save(),saveFlush())}")
     on_again = pg.evaluate("()=>document.getElementById('savewarn').className")
     check('amaran muncul semula selepas tempoh diam', on_again == 'on', on_again)
     # butang Buka Save / Load
@@ -204,12 +204,12 @@ with sync_playwright() as p:
     check('Buka Save / Load menuju skrin saves', nav['view'] == 'saves', nav)
     # pulih: kosongkan storan -> save berjaya -> amaran hilang
     rec = pg.evaluate("""()=>{const [i,j]=window.__zq;for(let k=0;k<i;k++)localStorage.removeItem('zq-'+k);for(let k=0;k<j;k++)localStorage.removeItem('zs-'+k);
-      SAVEWARN.mute=0;const w=document.getElementById('savewarn');w.className='on';save();return {warn:w.className,ok:!!parseSave(localStorage.getItem('pk3-slot-auto')).s,sv:parseSave(localStorage.getItem('pk3-slot-auto')).s.sv}}""")
-    check('selepas storan dikosongkan, simpanan berjaya dan amaran hilang', rec['warn'] == '' and rec['ok'] and rec['sv'] == 1, rec)
+      SAVEWARN.mute=0;const w=document.getElementById('savewarn');w.className='on';(save(),saveFlush());return {warn:w.className,ok:!!parseSave(localStorage.getItem('pk3-slot-auto')).s,sv:parseSave(localStorage.getItem('pk3-slot-auto')).s.sv}}""")
+    check('selepas storan dikosongkan, simpanan berjaya dan amaran hilang', rec['warn'] == '' and rec['ok'] and rec['sv'] == 2, rec)
 
     # ---- 8. Tiada amaran palsu bila tiada permainan
-    nogame = pg.evaluate("()=>{const sv=S;S=null;let r;try{save();r=document.getElementById('savewarn').className}catch(e){r='throw '+e.message}S=sv;return r}")
-    check('save() tanpa permainan tidak mencetus amaran/ralat', nogame == '', nogame)
+    nogame = pg.evaluate("()=>{const sv=S;S=null;let r;try{(save(),saveFlush());r=document.getElementById('savewarn').className}catch(e){r='throw '+e.message}S=sv;return r}")
+    check('(save(),saveFlush()) tanpa permainan tidak mencetus amaran/ralat', nogame == '', nogame)
 
     check('tiada pageerror sepanjang ujian', not errs, errs)
     b.close()

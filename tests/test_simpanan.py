@@ -40,7 +40,7 @@ with sync_playwright() as p:
     R['quota'] = safe(pg.evaluate, """()=>{const chunk='y'.repeat(100000);let i=0;for(;i<200;i++){try{localStorage.setItem('zq-'+i,chunk)}catch(e){break}}let j=0;for(;j<2000;j++){try{localStorage.setItem('zs-'+j,'y'.repeat(1000))}catch(e){break}}
       const before=localStorage.getItem('pk3-slot-auto');S.inbox.unshift({id:'zq',t:'test',b:Array.from({length:30000},()=>Math.random().toString(36).slice(2)).join(''),cat:'tf',d:curDate(),read:false});
       const ret=saveSlot('auto');const after=localStorage.getItem('pk3-slot-auto');
-      let r2;try{save();r2='save() returns, no throw'}catch(e){r2='throw '+e.message}
+      let r2;try{(save(),saveFlush());r2='(save(),saveFlush()) returns, no throw'}catch(e){r2='throw '+e.message}
       const toastText=(document.getElementById('toast')||{}).textContent||'';const tc=(document.getElementById('toast')||{}).className;
       for(let k=0;k<i;k++)localStorage.removeItem('zq-'+k);for(let k=0;k<j;k++)localStorage.removeItem('zs-'+k);
       return {chunks:i,ret,r2,autoChanged:before!==after,autoIntact:!!unpack(after),toast:toastText.slice(0,100),toastOn:tc}}""")

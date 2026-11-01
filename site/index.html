@@ -20,6 +20,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script src="vendor/lz-string.min.js"></script>
+<script src="vendor/fflate.min.js"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
 /* Layout: papan taktik biru malam; padang 2D hijau semasa perlawanan. Bar atas melekit, rel navigasi kiri, panel data; padang taktik untuk formasi; perlawanan sebagai lapisan penuh. */
@@ -1350,7 +1351,13 @@ function advance(){
   if(nx){recover(days);trainTick(days);finTick(days);returnLoans(false);projTick(false)}
   jobTick(e,nx);
   if(S.t>=S.tl.length){S.t=S.tl.length-1;monthAwards(monthKey(e.d));seasonEnd()}
-  boardCheck();frEnsure();derbyWeekNews()}
+  thinFixtures();boardCheck();frEnsure();derbyWeekNews()}
+// Nipiskan perincian perlawanan AI yang sudah lama (buang statistik penuh, simpan penilaian pemain cemerlang atau penjaring) supaya simpanan kekal kecil.
+// Margin THIN_AGO entri mengatasi keperluan anugerah bulanan dan TOTW yang membaca f.rt.
+const THIN_AGO=20;
+function thinFixtures(){const lim=S.t-THIN_AGO;if(lim<=0)return;
+  for(const k in S.fixtures){const f=S.fixtures[k];if(!f.played||f.thin||f.t>=lim||f.h===S.user||f.a===S.user)continue;
+    delete f.st;if(f.rt)f.rt=f.rt.map(side=>side.filter(x=>x[1]>=7||x[3]));f.thin=1}}
 function topScorers(comp,l){return Object.values(S.players).filter(p=>p.club&&!p.res&&(!l||tierOf(p.club)===l)).map(p=>{const k=comp?[comp]:['L','FA','TB'];const o={p,g:0,as:0,ap:0,rt:0};k.forEach(c=>{o.g+=p.st[c].g;o.as+=p.st[c].as;o.ap+=p.st[c].ap;o.rt+=p.st[c].rt});return o})}
 function seasonEnd(){
   const rec={s:S.season,ch:{},up:[],down:[],tables:{}};
@@ -1586,7 +1593,7 @@ function stripUnknownComps(){if(!S.tl)return;const ok=e=>e.k!=='M'||!e.c||COMP[e
   S.t=Math.min(nt(S.t),n-1);(S.offers||[]).forEach(o=>{if(o.exp!=null)o.exp=nt(o.exp)});if(S.job&&S.job.offers)S.job.offers.forEach(o=>{if(o.exp!=null)o.exp=nt(o.exp)});
   S.tl=S.tl.filter(ok)}
 function ensureState(){if(!S)return;if(typeof STC!=='undefined')STC.k=null;
-  stripUnknownComps();
+  runMigrations();stripUnknownComps();
   Object.values(S.clubs).forEach(c=>{if(c.tier&&!c.fac)c.fac=defaultFac(c)});
   if(!S.job){const since=S.season-(S.seasonNo||1)+1;S.job={rep:15,ctr:S.season+2,conf:60,warn:0,ult:null,since,hist:[],promo:0,cool:null,req:{},offers:[],jobless:null,obj:null};
     if(S.user){S.job.hist.push({cid:S.user,name:S.clubs[S.user].name,from:since,to:null});(S.trophies||[]).forEach(t=>{if(!t.c)t.c=S.user})}}
@@ -2045,9 +2052,26 @@ function getMeta(){try{return JSON.parse(localStorage.getItem('pk3-meta')||'{}')
 function setMeta(m){try{localStorage.setItem('pk3-meta',JSON.stringify(m))}catch(e){}}
 // Skema simpanan: naikkan SCHEMA hanya bila struktur data berubah sehingga build lama tidak selamat membukanya.
 // Simpanan tanpa `sv` datang dari build 1.x sebelum 1.4.6.4 dan masih dibuka seperti biasa.
-const SCHEMA=1;
+// SCHEMA 2 (2.0 Fasa 2): format simpanan 'F' (deflate + pek 15-bit). Struktur data S belum berubah; migrasi masa depan didaftar dalam PK2.mig[versi].
+const SCHEMA=2;
 const MAX_IMPORT_BYTES=20*1024*1024;
-function packS(b64){S.sv=SCHEMA;S.bld=VERSION+' '+BUILD;const j=JSON.stringify(S);if(!window.LZString)return j;return b64?'B'+LZString.compressToBase64(j):'Z'+LZString.compressToUTF16(j)}
+// Ruang nama 2.0. Modul baharu didaftar di bawah PK2, bukan sebagai global baharu. mig[v] menaikkan S daripada v-1 ke v (sekali sahaja).
+const PK2={mig:{2:()=>{/* v2: hanya format simpanan baharu; tiada perubahan struktur S */}}};
+function runMigrations(){if(!S)return;const from=Number.isInteger(S.sv)?S.sv:1;for(let v=from+1;v<=SCHEMA;v++){if(PK2.mig[v])PK2.mig[v]()}S.sv=SCHEMA}
+// Pemampat 'F': fflate deflate (sync, ~6x lebih laju daripada LZString) dan pek 15-bit ke aksara UTF-16 (tiada surrogate, tiada NUL).
+const PK_OFF=0x100;
+function pack15(u8){const out=[];let acc=0,bits=0,s='';
+  for(let i=0;i<u8.length;i++){acc=(acc<<8)|u8[i];bits+=8;while(bits>=15){bits-=15;out.push(((acc>>bits)&0x7fff)+PK_OFF);acc&=(1<<bits)-1}
+    if(out.length>=8192){s+=String.fromCharCode.apply(null,out);out.length=0}}
+  if(bits>0)out.push(((acc<<(15-bits))&0x7fff)+PK_OFF);
+  return s+String.fromCharCode.apply(null,out)}
+function unpack15(str,n){const u8=new Uint8Array(n);let acc=0,bits=0,k=0;
+  for(let i=0;i<str.length&&k<n;i++){acc=(acc<<15)|(str.charCodeAt(i)-PK_OFF);bits+=15;while(bits>=8&&k<n){bits-=8;u8[k++]=(acc>>bits)&255;acc&=(1<<bits)-1}}
+  return u8}
+function packS(b64){S.sv=SCHEMA;S.bld=VERSION+' '+BUILD;const j=JSON.stringify(S);
+  if(b64){if(!window.LZString)return j;return 'B'+LZString.compressToBase64(j)}
+  if(window.fflate){try{const d=fflate.deflateSync(fflate.strToU8(j),{level:3});return 'F'+d.length+':'+pack15(d)+'~'}catch(e){logErr((e&&e.message)||e,'packF')}}
+  if(!window.LZString)return j;return 'Z'+LZString.compressToUTF16(j)}
 function isObj(o){return !!o&&typeof o==='object'&&!Array.isArray(o)}
 function checkSave(s){
   if(!isObj(s))return 'Isi fail ini bukan simpanan Pengurus Kampung.';
@@ -2063,11 +2087,16 @@ function checkSave(s){
 // Pulangkan {s} bila sah, atau {err} dengan sebab dalam Bahasa Melayu.
 function parseSave(t){
   if(t==null||!String(t).trim())return{err:'Fail atau kod simpanan kosong.'};
-  t=String(t).trim();
+  const raw=String(t).replace(/^\s+/,'');t=raw.trim();// Z berakhir dengan ruang kosong yang bermakna; jangan trim penuh sebelum nyahmampat
   try{
-    if(t[0]==='Z'||t[0]==='B'){
+    if(t[0]==='F'){
+      if(!window.fflate)return{err:'Pustaka pemampat belum dimuat. Muat semula halaman dan cuba lagi.'};
+      const ix=t.indexOf(':');const n=+t.slice(1,ix);
+      if(!(ix>1&&Number.isInteger(n)&&n>0&&n<=64*1024*1024))return{err:'Simpanan rosak: pengepala data tidak sah.'};
+      try{t=new TextDecoder().decode(fflate.inflateSync(unpack15(t.slice(ix+1,t.endsWith('~')?-1:undefined),n)))}catch(e){return{err:'Simpanan rosak: data termampat tidak dapat dibuka. Fail mungkin terpotong atau diubah.'}}
+    }else if(t[0]==='Z'||t[0]==='B'){
       if(!window.LZString)return{err:'Pustaka pemampat belum dimuat. Muat semula halaman dan cuba lagi.'};
-      t=t[0]==='Z'?LZString.decompressFromUTF16(t.slice(1)):LZString.decompressFromBase64(t.slice(1));
+      t=t[0]==='Z'?LZString.decompressFromUTF16(raw.slice(1)):LZString.decompressFromBase64(t.slice(1));
       if(!t)return{err:'Simpanan rosak: data termampat tidak dapat dibuka. Fail mungkin terpotong atau diubah.'}
     }else if(t[0]!=='{')return{err:'Ini bukan fail simpanan Pengurus Kampung.'};
     let s;try{s=JSON.parse(t)}catch(e){return{err:'Simpanan rosak: data tidak lengkap. Fail mungkin terpotong.'}}
@@ -2090,10 +2119,18 @@ function saveWarn(msg){if(Date.now()<SAVEWARN.mute)return;
   let el=document.getElementById('savewarn');if(!el){el=document.createElement('div');el.id='savewarn';el.setAttribute('role','alert');document.body.appendChild(el)}
   el.innerHTML=`<b>Autosave gagal.</b> Kemajuan terbaru belum disimpan. ${esc(msg)}<div class="row"><button class="btn sm primary" data-act="savewarnopen">Buka Save / Load</button><button class="btn sm" data-act="savewarnx">Tutup</button></div>`;el.className='on'}
 function saveWarnClear(){SAVEWARN.mute=0;const el=document.getElementById('savewarn');if(el)el.className=''}
-function save(){const err=saveSlot('auto');if(!S||!S.user)return;if(err)saveWarn(err);else saveWarnClear()}
-function loadSlot(slot){try{return unpack(localStorage.getItem(skey(slot)))}catch(e){return null}}
-function loadSlotR(slot){try{return parseSave(localStorage.getItem(skey(slot)))}catch(e){return{err:'Simpanan tidak dapat dibaca.'}}}
-function delSlot(slot){try{localStorage.removeItem(skey(slot))}catch(e){}const m=getMeta();delete m[slot];setMeta(m)}
+// save() ditangguh sebentar (SAVE_DELAY) supaya beberapa tindakan berturut-turut menghasilkan satu tulisan sahaja dan klik tidak tersangkut.
+// saveFlush() menulis serta-merta; dipanggil sebelum membaca slot, ketika tab disembunyikan atau ditutup, dan oleh ujian.
+const SAVE_DELAY=400;const SV={timer:0,dirty:false};
+function saveFlush(){if(SV.timer){clearTimeout(SV.timer);SV.timer=0}if(!SV.dirty)return;SV.dirty=false;
+  const err=saveSlot('auto');if(!S||!S.user)return;if(err)saveWarn(err);else saveWarnClear()}
+function save(){if(!S||!S.user)return;SV.dirty=true;if(!SV.timer)SV.timer=setTimeout(saveFlush,SAVE_DELAY)}
+try{addEventListener('pagehide',saveFlush);addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveFlush()})}catch(e){}
+function loadSlot(slot){saveFlush();try{return unpack(backupPre2(slot,localStorage.getItem(skey(slot))))}catch(e){return null}}
+function loadSlotR(slot){saveFlush();try{return parseSave(backupPre2(slot,localStorage.getItem(skey(slot))))}catch(e){return{err:'Simpanan tidak dapat dibaca.'}}}
+// Sandaran sekali sahaja sebelum simpanan format lama (sv<2) dibuka dan dinaikkan oleh 2.0.
+function backupPre2(slot,raw){try{if(raw&&raw[0]!=='F'&&!localStorage.getItem('pk3-backup-pre2')){const r=parseSave(raw);if(r.s&&(r.s.sv||1)<SCHEMA)localStorage.setItem('pk3-backup-pre2',raw)}}catch(e){}return raw}
+function delSlot(slot){saveFlush();try{localStorage.removeItem(skey(slot))}catch(e){}const m=getMeta();delete m[slot];setMeta(m)}
 function migrateLegacy(){try{const t=localStorage.getItem(LEGACY_KEY);if(t&&!localStorage.getItem(skey('auto'))){const s=unpack(t);if(s){localStorage.setItem(skey('auto'),t);const c=s.clubs[s.user];const m=getMeta();m.auto={club:c.name,kit:c.kit,mgr:s.manager,lg:c.tier,season:s.season,no:s.seasonNo,d:s.tl[Math.min(s.t,s.tl.length-1)].d,ts:Date.now(),ver:'Beta 0.3'};setMeta(m)}}if(t)localStorage.removeItem(LEGACY_KEY)}catch(e){}}
 function storageKB(){let n=0;try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('pk3-'))n+=(localStorage.getItem(k)||'').length*2}}catch(e){}return Math.round(n/1024)}
 function pruneForSave(){Object.values(S.fixtures).forEach(f=>{if(f.played&&f.h!==S.user&&f.a!==S.user&&f.t<S.t-6){delete f.st;f.rt=f.rt&&f.rt.map(side=>side.filter(x=>x[1]>=7||x[3]))}});S.inbox=S.inbox.slice(0,120);S.tlog=S.tlog.slice(0,100)}

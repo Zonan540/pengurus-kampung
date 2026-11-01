@@ -9,6 +9,7 @@ Game ini berjalan sepenuhnya dalam pelayar tanpa backend, dan dihoskan di Netlif
 | --- | --- |
 | `site/` | Semua fail yang di-deploy ke Netlify. Folder ini yang diseret ke tab Deploys. |
 | `site/index.html` | Seluruh game: CSS, pintu beta dan telemetri, serta skrip utama. |
+| `site/vendor/` | `lz-string` (simpanan lama dan eksport) dan `fflate` (format simpanan F, 2.0). |
 | `site/sw.js` | Service worker untuk main luar talian. Tukar `CACHE` setiap keluaran. |
 | `site/nota.html` | Nota versi awam dan isu diketahui. |
 | `site/beta.json` | Suis `closed` untuk pendaftaran beta, serta senarai kod disekat. |
@@ -46,6 +47,10 @@ Ujian perlukan Python dan Playwright dengan Chromium.
 python3 tests/test_musim.py 4        # main 4 musim automatik, semak invarian data, saiz dan masa simpanan
 python3 tests/test_simpanan.py 1     # masa simpanan, XSS, storan penuh (hujah = darab perlahan CPU, contohnya 4)
 python3 tests/test_inbox_mobile.py   # inbox di telefon dan desktop
+python3 tests/test_simpanan_1464.py  # format simpanan, import/eksport, kuota penuh (perlu sejarah git: `git fetch --depth=200 origin main`)
+python3 tests/test_fasa2.py          # 2.0 Fasa 2: format simpanan F, save ditangguh, migrasi SCHEMA 2, sandaran pra-2.0
+python3 tests/baseline_j3.py 6 j3.json   # garis dasar enjin perlawanan (J3)
+python3 tests/baseline_econ.py 14 econ.json  # garis dasar ekonomi (I), AI penuh
 ```
 
 Laporan audit penuh (28 Okt 2026) ada dalam Claude Docs "Audit Kod Pengurus Kampung".
