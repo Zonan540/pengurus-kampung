@@ -1932,11 +1932,13 @@ function blockers(){const L=[];if(!S.user)return L;
   (S.dec||[]).filter(d=>d.st==='yes').forEach(d=>{const p=S.players[d.pid];const m=S.inbox.find(x=>x.decid===d.id);L.push({t:`Sahkan atau batalkan pembelian ${p?p.name:'pemain'} yang telah bersetuju.`,m:m&&m.id,v:'transfer'})});
   if(S.job&&S.job.offers)S.job.offers.forEach(o=>{if(o.exp!=null&&o.kind!=='rescue'&&S.t>=o.exp-1&&S.clubs[o.cid]){const m=S.inbox.find(x=>x.jo===o.id);L.push({t:`Tawaran kerja daripada ${cname(o.cid)} hampir tamat.`,m:m&&m.id,v:'jobs'})}});
   return L}
+function fineLive(m){const f=m.fine;if(!f||f.st)return false;const p=S.players[f.pid];if(!p||p.club!==S.user)return false;return daysBetween(m.d,curDate())<=FINE_DAYS}
+const FINE_DAYS=14;
 function msgState(m){
   if(m.oid)return S.offers.find(o=>o.id===m.oid)?'dl':'done';
   if(m.decid){const d=(S.dec||[]).find(x=>x.id===m.decid);return d&&d.st==='yes'?'dl':'done'}
   if(m.jo){const o=jobOffer(m.jo);return o?(o.exp!=null?'dl':'act'):'done'}
-  if(m.fine)return m.fine.st?'done':'act';
+  if(m.fine)return fineLive(m)?'act':'done';
   if(m.ctrl&&m.ctrl.pids.some(id=>S.players[id]&&S.players[id].club===S.user&&S.players[id].ctr<=S.season))return 'act';
   return 'info'}
 const MSG_ST={act:'perlu keputusan',dl:'ada tarikh akhir',done:'selesai',info:''};
@@ -2628,7 +2630,7 @@ function mSupport(seasonEnd){openModal(`<header><div><span class="lbl">${seasonE
    <div class="row" style="justify-content:center"><button class="btn primary" data-act="close">${seasonEnd?'Teruskan':'Tutup'}</button></div>`)}
 
 // ===== UI v3 =====
-const VERSION='Versi 2.0 Beta 1';const BUILD='b2001';
+const VERSION='Versi 2.0 Beta 2';const BUILD='b2002';
 // Isi pautan Google Form maklum balas di sini sebelum diedarkan kepada penguji beta.
 const FEEDBACK_URL='https://docs.google.com/forms/d/e/1FAIpQLSeSK_f1284zoTj_ddw86tJ3he_76DmihIzg4OTLNXhEgkTokA/viewform';
 const LEGACY_KEY='pengurus-kampung-v3';
@@ -2958,8 +2960,9 @@ function fineBox(m){const f=m.fine;const p=S.players[f.pid];
   if(f.st===1)return `<div class="banner warn">Denda ${fmtRM(f.amt,1)} dikenakan ke atas ${esc(p?p.name:'pemain')}. Jumlah itu dipotong daripada gajinya dan moralnya turun sedikit.</div>`;
   if(f.st===2)return `<div class="banner off">Tiada denda. ${esc(p?p.name:'Pemain')} hanya diberi amaran.</div>`;
   if(!p||p.club!==S.user)return '<p class="mute">Pemain ini sudah tiada di kelab. Denda tidak lagi boleh dikenakan.</p>';
+  if(!fineLive(m))return `<p class="mute">Tempoh untuk mengenakan denda sudah tamat (${FINE_DAYS} hari selepas kad merah).</p>`;
   return `<div class="box"><span class="lbl">Tindakan disiplin</span><p>Denda separuh minggu gaji: <b class="mono">${fmtRM(f.amt,1)}</b>. Moral ${esc(p.name)} akan turun sedikit jika didenda.</p><div class="row"><button class="btn sm bad" data-act="fine" data-arg="${m.id}|1">Kenakan denda</button><button class="btn sm" data-act="fine" data-arg="${m.id}|0">Amaran sahaja</button></div></div>`}
-function fineAct(a){const[mid,v]=a.split('|');const msg=S.inbox.find(x=>x.id===mid);if(!msg||!msg.fine||msg.fine.st)return;const f=msg.fine;const p=S.players[f.pid];
+function fineAct(a){const[mid,v]=a.split('|');const msg=S.inbox.find(x=>x.id===mid);if(!msg||!msg.fine||msg.fine.st||!fineLive(msg)){render();return}const f=msg.fine;const p=S.players[f.pid];
   if(v==='1'){if(!p||p.club!==S.user)return;f.st=1;const c=S.clubs[S.user];c.bal+=f.amt;if(c.fin)c.fin.wage=Math.max(0,(c.fin.wage||0)-f.amt);p.mor=clamp(Math.round((p.mor||50)-4),20,100)}else f.st=2;save();render()}
 function spSummary(){const n=k=>{const id=spEff(k);return id?esc(pname(id)):'—'};return `<div class="mute" style="font-size:.84rem">Kapten <b style="color:var(--fg)">${n('cap')}</b> · Penalti ${n('pen')} · Sepakan percuma ${n('fk')} · Sudut ${n('crn')}</div>`}
 function render(){if(UI.screen==='title')return renderTitle();if(S&&!S.user&&S.job&&(S.job.jobless||S.ended))return renderJobless();if(!S||!S.user)return renderStart();navTrack();document.getElementById('app').innerHTML=renderTop()+`<div class="shell">${renderNav()}<main>${renderView()}</main></div>`}
