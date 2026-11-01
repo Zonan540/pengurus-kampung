@@ -2075,7 +2075,7 @@ function achSigning(fee,pid){if(!S.user||!fee)return;const p=S.players[pid];if(f
   const old=S.recSign||0;if(fee>old){S.recSign=fee;if(old>0&&fee>=1e5)achGive('record',`${p?p.name:'Pemain'} (${fmtRM(fee)}) memecahkan rekod lama ${fmtRM(old)}.`)}}
 function vAch(){const A=S.ach||{};const n=ACH.filter(a=>A[a.id]).length;
   return `<div class="view"><div class="row sp"><h2>Pencapaian</h2><span class="mono mute">${n}/${ACH.length} dibuka</span></div><section class="panel"><div class="achgrid">${ACH.map(a=>{const u=A[a.id];
-   return `<div class="ach ${u?'on':''}"><div class="aic" aria-hidden="true">${u?a.ic:'🔒'}</div><div><b>${esc(a.n)}</b> <span class="chip">${a.cat}</span><div class="mute" style="font-size:.84rem">${esc(a.d)}</div>${u?`<div style="font-size:.82rem;margin-top:3px">${fmtDate(u.d)} · musim ${seasonLabel(u.s)}${u.t?' · '+esc(u.t):''}</div>`:'<div class="mute" style="font-size:.8rem">Belum dibuka</div>'}</div></div>`}).join('')}</div></section></div>`}
+   return `<div class="ach ${u?'on':''}"><div class="aic" aria-hidden="true">${u?a.ic:'🔒'}</div><div><b>${esc(a.n)}</b> <span class="chip">${a.cat}</span><div class="mute" style="font-size:.84rem">${u?esc(a.d):'Penerangan dirahsiakan sehingga pencapaian ini dibuka.'}</div>${u?`<div style="font-size:.82rem;margin-top:3px">${fmtDate(u.d)} · musim ${seasonLabel(u.s)}${u.t?' · '+esc(u.t):''}</div>`:'<div class="mute" style="font-size:.8rem">Belum dibuka</div>'}</div></div>`}).join('')}</div></section></div>`}
 // --- O3: sambutan
 function celebrate(key,kind,title,body,ctx){if(!S.celeb)S.celeb={};if(S.celeb[key])return;S.celeb[key]=1;(S.celQ=S.celQ||[]).push({kind,title,body,ctx})}
 const CEL_ST={gold:['#f5c542','🏆'],up:['#34d399','⬆️'],down:['#f87171','⬇️'],cup:['#60a5fa','🥇'],asia:['#b18cff','🌏'],ach:['#2dd4bf','🎖️'],award:['#fb923c','⭐']};
@@ -2099,7 +2099,7 @@ function mgrCard(){const J=S.job;if(!J)return '';const w=J.wdl||[0,0,0],n=w[0]+w
    <p class="mute" style="font-size:.78rem;margin:2px 0">Peratus menang = Menang ÷ Jumlah perlawanan × 100, dikira daripada perlawanan sebenar (tidak termasuk persahabatan). *Gol dikira sejak 2.0.</p>
    <div class="grid2"><div><span class="lbl">Honours</span>${honours.length?`<ul class="honl">${honours.slice(-8).reverse().map(t=>`<li>${seasonLabel(t.s)} · ${esc(t.t)}</li>`).join('')}</ul>`:'<p class="mute">Belum ada.</p>'}</div>
    <div><span class="lbl">Kelab yang diurus</span><ul class="honl">${stints.slice().reverse().map(h=>`<li><b>${esc(h.name)}</b> ${seasonLabel(h.from)}–${h.to?seasonLabel(h.to):'kini'}${h.w!=null?` · M${h.w} S${h.d||0} K${h.l||0}`:''}</li>`).join('')||'<li class="mute">—</li>'}</ul></div></div>
-   <div><span class="lbl">Pencapaian utama</span><div class="row">${ach.length?ach.slice(-6).map(a=>`<span class="chip" title="${esc(a.d)}">${a.ic} ${esc(a.n)}</span>`).join(''):'<span class="mute">Belum ada.</span>'}<button class="btn sm" data-act="nav" data-arg="ach">Semua pencapaian</button></div></div></section>`}
+   <div><span class="lbl">Pencapaian utama</span><div class="row">${ach.length?ach.slice(-6).map(a=>`<span class="chip" title="${esc(a.d)}">${a.ic} ${esc(a.n)}</span>`).join(''):'<span class="mute">Belum ada.</span>'}<button class="btn sm" data-act="nav" data-arg="ach">Semua pencapaian</button></div></div><div class="row" style="margin-top:8px"><button class="btn primary sm" data-act="mgrcard">Kad untuk dikongsi</button></div></section>`}
 // --- M: ABK
 const TW_ABK={1:0,2:-.3,3:-.6};
 function abkScore(p,l){const s=p.st.L,ap=s.ap;if(!ap)return -99;const g=AWG[p.pos],avg=s.rt/ap,cs=s.cs||0;
@@ -2393,8 +2393,48 @@ async function drawCard(cv,cid){const W=1080,H=1350;cv.width=W;cv.height=H;const
   x.textAlign='right';x.fillStyle='#ffc947';fitText(x,'THE BLUE PODCAST MALAYSIA',400,30,700,DISP);x.fillText('THE BLUE PODCAST MALAYSIA',884,1262);x.fillStyle='#9fb3d8';fitText(x,'pengurus-kampung.netlify.app',400,26,600,BODY);x.fillText('Imbas untuk main',884,1298);x.fillText('pengurus-kampung.netlify.app',884,1330);
   const n=QR_ROWS.length,qs=124,cell=qs/(n+2),qx=W-qs-42,qy=1214;x.fillStyle='#fff';x.beginPath();x.roundRect(qx-4,qy-4,qs+8,qs+8,8);x.fill();x.fillStyle='#06102a';
   QR_ROWS.forEach((row,r)=>{for(let k=0;k<row.length;k++)if(row[k]==='1')x.fillRect(qx+(k+1)*cell,qy+(r+1)*cell,cell+.4,cell+.4)})}
-function cardFile(){return `kad-kelab-${S.clubs[UI.cardCid].name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}-${seasonLabel(S.season).replace('/','-')}.png`}
-async function mCard(cid){UI.cardCid=cid||S.user;const c=S.clubs[UI.cardCid];
+
+// ---- kad pengurus (canvas 1080x1350, kongsi di media sosial)
+async function drawMgrCard(cv){const W=1080,H=1350;cv.width=W;cv.height=H;const x=cv.getContext('2d');const J=S.job||{rep:0,wdl:[0,0,0],hist:[]};const c=S.user?S.clubs[S.user]:null;const k1=c?c.kit[0]:'#4f8cff',k2=c?c.kit[1]:'#ffc947';
+  const DISP="'Saira Condensed','Arial Narrow',sans-serif",BODY="'Source Sans 3','Segoe UI',sans-serif";
+  try{await Promise.all([document.fonts.load(`800 120px 'Saira Condensed'`),document.fonts.load(`600 40px 'Saira Condensed'`),document.fonts.load(`600 30px 'Source Sans 3'`)])}catch(e){}
+  const w=J.wdl||[0,0,0],n=w[0]+w[1]+w[2],pc=n?Math.round(w[0]/n*1000)/10:0;const lv=repLevel(J.rep);const honours=(S.trophies||[]).filter(t=>/^Juara/.test(t.t));const nach=ACH.filter(a=>S.ach&&S.ach[a.id]).length;
+  let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0d1d44');g.addColorStop(1,'#091433');x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.save();x.globalAlpha=.22;x.fillStyle=k1;x.beginPath();x.moveTo(0,300);x.lineTo(W,40);x.lineTo(W,170);x.lineTo(0,430);x.fill();x.globalAlpha=.12;x.fillStyle=k2;x.beginPath();x.moveTo(0,430);x.lineTo(W,170);x.lineTo(W,230);x.lineTo(0,490);x.fill();x.restore();
+  x.fillStyle='rgba(255,255,255,.035)';for(let i=0;i<W;i+=36)for(let j=0;j<1200;j+=36)x.fillRect(i,j,2,2);
+  x.fillStyle='#9fb3d8';x.font=`700 46px ${DISP}`;x.textAlign='center';x.textBaseline='alphabetic';x.fillText(`KAD PENGURUS  ·  MUSIM ${seasonLabel(S.season)}`,W/2,100);
+  const cx0=170,cy0=140,cw=740,chh=860;const outer=cardPath(cx0,cy0,cw,chh,46);
+  x.save();x.shadowColor='rgba(0,0,0,.5)';x.shadowBlur=40;x.shadowOffsetY=16;g=x.createLinearGradient(cx0,cy0,cx0+cw,cy0+chh);g.addColorStop(0,'#183a7c');g.addColorStop(1,'#0f2552');x.fillStyle=g;x.fill(outer);x.restore();
+  x.save();x.clip(outer);x.globalAlpha=.28;x.fillStyle=k2;x.beginPath();x.moveTo(cx0+cw*.45,cy0);x.lineTo(cx0+cw,cy0);x.lineTo(cx0+cw,cy0+chh*.55);x.fill();x.restore();
+  x.lineWidth=8;x.strokeStyle='#4f8cff';x.stroke(outer);x.lineWidth=2.5;x.strokeStyle='#ffc947';x.stroke(cardPath(cx0+18,cy0+18,cw-36,chh-36,34));
+  // reputasi (kiri atas) dan lencana inisial
+  x.textAlign='left';x.fillStyle='#fff';x.font=`800 190px ${DISP}`;x.fillText(String(J.rep),cx0+68,cy0+228);
+  x.fillStyle='#ffc947';x.font=`700 44px ${DISP}`;x.fillText('REPUTASI',cx0+72,cy0+285);
+  x.font=`700 34px ${DISP}`;const bw=Math.max(150,x.measureText(REP_LV[lv][1].toUpperCase()).width+40);x.fillStyle='#0b1a3c';x.beginPath();x.roundRect(cx0+72,cy0+308,bw,58,8);x.fill();x.fillStyle='#fff';x.fillText(REP_LV[lv][1].toUpperCase(),cx0+92,cy0+349);
+  const ccx=cx0+530,ccy=cy0+190,CR=140;x.save();x.shadowColor='rgba(0,0,0,.35)';x.shadowBlur=24;x.fillStyle='#fff';x.beginPath();x.arc(ccx,ccy,CR,0,7);x.fill();x.restore();
+  g=x.createLinearGradient(ccx-CR,ccy-CR,ccx+CR,ccy+CR);g.addColorStop(.5,k1);g.addColorStop(.5,k2);x.fillStyle=g;x.beginPath();x.arc(ccx,ccy,CR*.875,0,7);x.fill();x.lineWidth=4;x.strokeStyle='#ffc947';x.beginPath();x.arc(ccx,ccy,CR*.73,0,7);x.stroke();x.fillStyle='rgba(6,16,42,.55)';x.beginPath();x.arc(ccx,ccy,CR*.58,0,7);x.fill();
+  const ini=(S.manager||'?').split(/\s+/).map(t=>t[0]||'').join('').slice(0,2).toUpperCase();x.fillStyle='#fff';x.font=`800 100px ${DISP}`;x.textAlign='center';x.textBaseline='middle';x.fillText(ini,ccx,ccy+4);x.textBaseline='alphabetic';
+  const nm=String(S.manager||'').toUpperCase();fitText(x,nm,cw-120,116,800,DISP);x.fillStyle='#fff';x.fillText(nm,W/2,cy0+520);
+  x.fillStyle='#dbe5fb';const sub=c?`${c.name}${J.since?`  ·  sejak ${seasonLabel(J.since)}`:''}`:'Tanpa kelab';fitText(x,sub,cw-110,40,600,BODY);x.fillText(sub,W/2,cy0+575);
+  x.strokeStyle='rgba(159,179,216,.35)';x.lineWidth=2;x.beginPath();x.moveTo(cx0+80,cy0+620);x.lineTo(cx0+cw-80,cy0+620);x.stroke();
+  const stat=(v,l,sx,sy,colW)=>{x.textAlign='left';x.fillStyle='#fff';x.font=`800 80px ${DISP}`;x.fillText(String(v),sx,sy);const wd=x.measureText(String(v)).width;x.fillStyle='#9fb3d8';fitText(x,l,colW-wd-22,40,600,DISP);x.fillText(l,sx+wd+16,sy-10)};
+  stat(n,'MAIN',cx0+64,cy0+695,310);stat(pc+'%','MENANG',cx0+384,cy0+695,286);stat(w[0]+' / '+w[1]+' / '+w[2],'M / S / K',cx0+64,cy0+772,640);
+  x.textAlign='center';x.fillStyle='#dbe5fb';const info=`${nach}/${ACH.length} pencapaian  ·  ${honours.length} gelaran juara  ·  ${(J.hist||[]).length} kelab`;fitText(x,info,cw-110,32,600,BODY);x.fillText(info,W/2,cy0+chh-44);
+  const last=honours.slice(-4).reverse();const tiles=[[String(honours.length),'Gelaran juara'],[String(nach),'Pencapaian'],[String(Math.max(1,(J.hist||[]).length)),'Kelab diurus'],[`${J.gf||0}-${J.ga||0}`,'Gol (sejak 2.0)']];
+  tiles.forEach(([v,l],i)=>{const tx=70+i*240,ty=1040;x.fillStyle='rgba(79,140,255,.16)';x.strokeStyle='rgba(79,140,255,.45)';x.lineWidth=2;x.beginPath();x.roundRect(tx,ty,220,120,12);x.fill();x.stroke();
+    x.fillStyle='#fff';fitText(x,v,200,62,800,DISP);x.textAlign='center';x.fillText(v,tx+110,ty+68);x.fillStyle='#9fb3d8';x.font=`600 26px ${BODY}`;x.fillText(l,tx+110,ty+104)});
+  x.fillStyle='#4f8cff';x.fillRect(0,1196,W,6);x.fillStyle='#050d22';x.fillRect(0,1202,W,148);
+  x.textAlign='left';fitText(x,'PENGURUS KAMPUNG',420,64,800,DISP);x.fillStyle='#fff';x.fillText('PENGURUS',56,1296);const pw=x.measureText('PENGURUS ').width;x.fillStyle='#4f8cff';x.fillText('KAMPUNG',56+pw,1296);
+  x.textAlign='right';x.fillStyle='#ffc947';fitText(x,'THE BLUE PODCAST MALAYSIA',400,30,700,DISP);x.fillText('THE BLUE PODCAST MALAYSIA',884,1262);x.fillStyle='#9fb3d8';fitText(x,'pengurus-kampung.netlify.app',400,26,600,BODY);x.fillText('Imbas untuk main',884,1298);x.fillText('pengurus-kampung.netlify.app',884,1330);
+  const q=QR_ROWS.length,qs=124,cell=qs/(q+2),qx=W-qs-42,qy=1214;x.fillStyle='#fff';x.beginPath();x.roundRect(qx-4,qy-4,qs+8,qs+8,8);x.fill();x.fillStyle='#06102a';
+  QR_ROWS.forEach((row,r)=>{for(let k=0;k<row.length;k++)if(row[k]==='1')x.fillRect(qx+(k+1)*cell,qy+(r+1)*cell,cell+.4,cell+.4)})}
+async function mMgrCard(){UI.cardCid=S.user||UI.cardCid;UI.cardName=`kad-pengurus-${String(S.manager||'pengurus').toLowerCase().replace(/[^a-z0-9]+/g,'-')}-${seasonLabel(S.season).replace('/','-')}.png`;
+  openModal(`<header><div><span class="lbl">Kad pengurus</span><h2>${esc(S.manager)}</h2></div><button class="btn sm" data-act="close">Tutup</button></header>
+   <div class="cardwrap"><img id="cardimg" alt="Kad pengurus ${esc(S.manager)}" src=""><p class="mute" id="cardmsg" style="font-size:.84rem">Menjana kad...</p></div>
+   <div class="row"><button class="btn primary" data-act="carddl">Muat turun PNG</button>${navigator.share?'<button class="btn" data-act="cardshare">Kongsi</button>':''}</div>`);
+  const cv=document.createElement('canvas');await drawMgrCard(cv);UI.cardCv=cv;const img=document.getElementById('cardimg');if(img){img.src=cv.toDataURL('image/png');document.getElementById('cardmsg').textContent='Di telefon, kau juga boleh tekan lama pada imej untuk simpan.'}}
+function cardFile(){if(UI.cardName)return UI.cardName;return `kad-kelab-${S.clubs[UI.cardCid].name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}-${seasonLabel(S.season).replace('/','-')}.png`}
+async function mCard(cid){UI.cardName=null;UI.cardCid=cid||S.user;const c=S.clubs[UI.cardCid];
   openModal(`<header><div><span class="lbl">Kad kelab</span><h2>${esc(c.name)}</h2></div><button class="btn sm" data-act="close">Tutup</button></header>
    <div class="cardwrap"><img id="cardimg" alt="Kad kelab ${esc(c.name)}" src=""><p class="mute" id="cardmsg" style="font-size:.84rem">Menjana kad...</p></div>
    <div class="row"><button class="btn primary" data-act="carddl">Muat turun PNG</button>${navigator.share?'<button class="btn" data-act="cardshare">Kongsi</button>':''}${UI.cardCid===S.user?'<button class="btn" data-act="crestopen">Tukar lencana & jersi</button>':''}</div>`);
@@ -4000,7 +4040,7 @@ const ACT={
   sackwait:()=>{UI.sacked=null;closeModal();UI.view='jobs';render()},
   endcareer:()=>{openModal(`<header><h2>Tamatkan kerjaya?</h2><button class="btn sm" data-act="close">Batal</button></header><p>Kerjaya ${esc(S.manager)} akan berakhir. Kau boleh mulakan kerjaya baharu selepas ini.</p><div class="row"><button class="btn bad" data-act="endcareerok">Ya, tamatkan</button></div>`)},
   endcareerok:()=>{S.ended=true;S.job.dead=true;save();closeModal();render()},
-  cardopen:a=>mCard(a||S.user),carddl:()=>cardDownload(),cardshare:()=>cardShare(),crestopen:()=>mCrest(),
+  cardopen:a=>mCard(a||S.user),mgrcard:()=>mMgrCard(),carddl:()=>cardDownload(),cardshare:()=>cardShare(),crestopen:()=>mCrest(),
   crestshape:a=>{UI.crestDraft.shape=a;const v=document.getElementById('cresttxt');if(v)UI.crestDraft.txt=v.value.toUpperCase();renderCrestModal()},
   crestsave:()=>{const c=curClub();const v=document.getElementById('cresttxt');const t=(v?v.value:UI.crestDraft.txt).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,3);c.crest={shape:UI.crestDraft.shape,txt:t||crestCfg(c.id).txt};const nk=UI.crestDraft.kit;if(nk&&(nk[0]!==c.kit[0]||nk[1]!==c.kit[1])){if(!c.kitOrig)c.kitOrig=c.kit.slice();c.kit=nk.slice()}save();render();mCard(c.id)},
   crestreset:()=>{const c=curClub();delete c.crest;if(c.kitOrig){c.kit=c.kitOrig;delete c.kitOrig}save();render();mCard(c.id)},
