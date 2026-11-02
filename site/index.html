@@ -2547,7 +2547,8 @@ function mSacked(){const u=UI.sacked;if(!u)return;const opts=S.job.offers.filter
 
 // ---- penganggur: paparan
 function renderJobless(){const J=S.job;const views=['jobs','inbox','league','fa','tb','stats','clubs','saves','help','feedback','profile'];if(!views.includes(UI.view))UI.view='jobs';
-  const u=unread();const items=[['jobs','Kerjaya',J.offers.length],['inbox','Inbox',u],['league','Liga'],['fa','Piala FA'],['tb','Piala TBPM'],['stats','Statistik'],['clubs','Kelab'],['profile','Profil pengurus'],['saves','Save / Load'],['help','Cara main'],['feedback','Maklum balas']];
+  if(UI.view==='jobs')J.offers.forEach(o=>{o.seen=1});
+  const u=unread();const items=[['jobs','Kerjaya',J.offers.filter(o=>!o.seen).length],['inbox','Inbox',u],['league','Liga'],['fa','Piala FA'],['tb','Piala TBPM'],['stats','Statistik'],['clubs','Kelab'],['profile','Profil pengurus'],['saves','Save / Load'],['help','Cara main'],['feedback','Maklum balas']];
   const top=`<header class="top"><div class="club-id"><span class="kit lg" style="--k1:#22396b;--k2:#0f1f40"></span><div><div class="cname">${esc(S.manager)}</div><div class="sub">Tanpa kelab · Reputasi ${J.rep}/100 · Musim ${S.seasonNo}/${MAX_SEASONS}</div></div></div>
    <div class="when"><div class="date">${fmtDate(curDate(),'long')}</div>${S.over?'<b>Musim tamat</b> · Terima tawaran untuk musim depan':`${J.offers.length} tawaran aktif`}</div>
    ${S.ended?'<button class="btn primary" data-act="newgame">Kerjaya baharu</button>':S.over?'<button class="btn primary" data-act="nav" data-arg="jobs">Lihat tawaran</button>':'<button class="btn primary" data-act="go">Teruskan</button>'}</header>`;
@@ -2653,7 +2654,7 @@ function mSupport(seasonEnd){openModal(`<header><div><span class="lbl">${seasonE
    <div class="row" style="justify-content:center"><button class="btn primary" data-act="close">${seasonEnd?'Teruskan':'Tutup'}</button></div>`)}
 
 // ===== UI v3 =====
-const VERSION='Versi 2.0 Beta 4';const BUILD='b2004';
+const VERSION='Versi 2.0 Beta 5';const BUILD='b2005';
 // Isi pautan Google Form maklum balas di sini sebelum diedarkan kepada penguji beta.
 const FEEDBACK_URL='https://docs.google.com/forms/d/e/1FAIpQLSeSK_f1284zoTj_ddw86tJ3he_76DmihIzg4OTLNXhEgkTokA/viewform';
 const LEGACY_KEY='pengurus-kampung-v3';
@@ -3079,12 +3080,18 @@ function renderTop(){const c=S.clubs[S.user];const e=curEntry();const wi=windowI
    <span class="tw ${wi.open?'on':''}">${wi.open?'Pindahan dibuka · tutup '+fmtDate(wi.close):wi.next?'Pindahan ditutup · buka '+fmtDate(wi.next):'Pindahan ditutup'}</span>
    <div class="money"><span class="lbl">Baki</span><b style="color:${c.bal<0?'var(--loss)':'var(--fg)'}">${fmtRM(c.bal)}</b></div>
    ${S.ended?'<button class="btn primary" data-act="newgame">Kerjaya baharu</button>':`<button class="btn primary" data-act="${S.over?'newseason':'go'}">${S.over?'Musim baharu':'Teruskan'}</button>`}</header>`}
+// Lencana menu ialah pemberitahuan: hilang sebaik halaman berkaitan dibuka (Beta 5: Medical, Tawaran masuk, Lembaga)
+function injKey(p){return p.injx?p.injx.d0+'|'+p.injx.k:'x'}
+function medNew(){const c=S.user&&S.clubs[S.user];return c?c.players.map(id=>S.players[id]).filter(p=>p&&p.inj>0&&p.mseen!==injKey(p)):[]}
 function renderNav(){const u=unread();const J=S.job;
   if(UI.view==='ach'){S.achSeen=S.achSeen||{};Object.keys(S.ach||{}).forEach(k=>S.achSeen[k]=1)}
   if(UI.view==='scouting'&&S.scT)S.scT.forEach(t=>{if(t.st==='done')t.seen=1});
+  if(UI.view==='medical')medNew().forEach(p=>{p.mseen=injKey(p)});
+  if(UI.view==='transfer'&&UI.tf.tab==='tawaran')(S.offers||[]).forEach(o=>{o.seen=1});
+  if(J){if(UI.view==='board'||UI.view==='jobs')J.offers.forEach(o=>{o.seen=1});if(!J.warn)J.warnSeen=0;else if(UI.view==='board')J.warnSeen=J.warn}
 
-  const G=[[null,[['home','Utama'],['inbox','Inbox',u]]],['Kelab',[['squad','Skuad'],['tactic','Taktik'],['train','Latihan'],['medical','Medical',(S.user&&S.clubs[S.user]?S.clubs[S.user].players.filter(id=>S.players[id].inj>0).length:0)],['staff','Staf'],['morale','Moral skuad'],['scouting','Scouting',(S.scT?S.scT.filter(t=>t.st==='done'&&!t.seen).length:0)||0]]],
-    ['Pengurusan',[['transfer','Perpindahan',S.offers.length],['short','Senarai pendek',Object.keys(S.short||{}).length||0],['finance','Kewangan'],['board','Ahli Lembaga Pengarah',(J?J.offers.length:0)+(J&&J.warn?1:0)],['profile','Profil pengurus'],['ach','Pencapaian',S.ach?Object.keys(S.ach).filter(k=>!(S.achSeen&&S.achSeen[k])).length:0]]],
+  const G=[[null,[['home','Utama'],['inbox','Inbox',u]]],['Kelab',[['squad','Skuad'],['tactic','Taktik'],['train','Latihan'],['medical','Medical',medNew().length],['staff','Staf'],['morale','Moral skuad'],['scouting','Scouting',(S.scT?S.scT.filter(t=>t.st==='done'&&!t.seen).length:0)||0]]],
+    ['Pengurusan',[['transfer','Perpindahan',S.offers.filter(o=>!o.seen).length],['short','Senarai pendek',Object.keys(S.short||{}).length||0],['finance','Kewangan'],['board','Ahli Lembaga Pengarah',(J?J.offers.filter(o=>!o.seen).length:0)+(J&&J.warn&&J.warnSeen!==J.warn?1:0)],['profile','Profil pengurus'],['ach','Pencapaian',S.ach?Object.keys(S.ach).filter(k=>!(S.achSeen&&S.achSeen[k])).length:0]]],
     ['Pertandingan',[['scout','Scout lawan'],['season','Musim ini'],['fixtures','Jadual'],['league','Liga'],['fa','Piala FA'],['tb','Piala TBPM'],['asia','Asia']]],
     ['Lain-lain',[['awards','Anugerah'],['stats','Statistik'],['clubs','Kelab'],['card','Kad kelab'],['saves','Save / Load'],['help','Cara main'],['feedback','Maklum balas']]]];
   const ord={home:'o0',inbox:'o0',help:'o1',feedback:'o1'};
