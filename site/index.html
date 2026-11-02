@@ -441,6 +441,29 @@ nav.rail .supbtn{color:var(--hot);border:1px solid rgba(255,201,71,.4);margin-to
 .pf{display:flex;flex-direction:column;gap:3px}.pf input,.pf select{max-width:280px}
 .suptxt{font-size:1.02rem;line-height:1.55;text-align:center;max-width:52ch;margin:0 auto}
 .supqr{display:flex;justify-content:center}.supqr img{width:min(320px,80vw);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.45)}
+
+.mnav,.mback,.mdrawer{display:none}
+@media (max-width:860px){
+  nav.rail.dsk{display:none}
+  .mnav{display:flex;gap:6px;padding:8px max(10px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);background:var(--panel)}
+  .mnav button{background:none;border:0;padding:8px 12px;border-radius:6px;font-weight:600;color:var(--mute);display:flex;align-items:center;gap:6px;cursor:pointer;min-height:40px}
+  .mnav button.on{color:var(--accent-ink);background:var(--accent)}
+  .mnav .mmenu{margin-left:auto;border:1px solid var(--line);color:var(--fg);flex-direction:column;align-items:flex-start;gap:0;line-height:1.15}
+  .mnav .mmenu small{font-size:.66rem;font-weight:600;color:var(--mute)}
+  .mnav .badge,.mdrawer .badge{background:var(--hot);color:var(--hot-ink);font-family:var(--f-mono);font-size:.7rem;border-radius:999px;padding:0 6px}
+  .mback{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60}
+  .mdrawer{display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;width:min(86vw,340px);background:var(--panel);z-index:61;overflow-y:auto;overscroll-behavior:contain;padding:10px 12px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:8px 0 30px rgba(0,0,0,.5)}
+  .mdh{display:flex;justify-content:space-between;align-items:center;padding:4px 2px 10px;font-size:1.1rem}
+  .mcat{border-top:1px solid var(--line)}
+  .mch{width:100%;display:flex;align-items:center;gap:8px;background:none;border:0;color:var(--fg);font-weight:700;font-size:1rem;padding:14px 4px;text-align:left;cursor:pointer;min-height:48px}
+  .mch>span:first-child{flex:1}.mchev{font-size:1.3rem;color:var(--mute)}
+  .mcat.open .mch{color:var(--accent)}
+  .mitems{display:flex;flex-direction:column;gap:2px;padding:0 0 10px 6px}
+  .mitems button{background:none;border:0;text-align:left;padding:11px 12px;border-radius:6px;font-weight:600;color:var(--mute);display:flex;justify-content:space-between;align-items:center;cursor:pointer;min-height:44px;font-size:.96rem}
+  .mitems button.on{color:var(--accent-ink);background:var(--accent)}
+  .mfoot{margin-top:auto;padding-top:14px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+  .mfoot .supbtn{color:var(--hot);border:1px solid rgba(255,201,71,.4);background:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:600}
+}
 @media (max-width:860px){nav.rail .navh{display:none}nav.rail .supbtn{order:4;margin-top:0;white-space:nowrap}}
 
 
@@ -2630,7 +2653,7 @@ function mSupport(seasonEnd){openModal(`<header><div><span class="lbl">${seasonE
    <div class="row" style="justify-content:center"><button class="btn primary" data-act="close">${seasonEnd?'Teruskan':'Tutup'}</button></div>`)}
 
 // ===== UI v3 =====
-const VERSION='Versi 2.0 Beta 2';const BUILD='b2002';
+const VERSION='Versi 2.0 Beta 3';const BUILD='b2003';
 // Isi pautan Google Form maklum balas di sini sebelum diedarkan kepada penguji beta.
 const FEEDBACK_URL='https://docs.google.com/forms/d/e/1FAIpQLSeSK_f1284zoTj_ddw86tJ3he_76DmihIzg4OTLNXhEgkTokA/viewform';
 const LEGACY_KEY='pengurus-kampung-v3';
@@ -3063,7 +3086,16 @@ function renderNav(){const u=unread();const J=S.job;
     ['Lain-lain',[['awards','Anugerah'],['stats','Statistik'],['clubs','Kelab'],['card','Kad kelab'],['saves','Save / Load'],['help','Cara main'],['feedback','Maklum balas']]]];
   const ord={home:'o0',inbox:'o0',help:'o1',feedback:'o1'};
   const btn=([k,l,b])=>k==='card'?`<button class="o2" data-act="cardopen">${l}</button>`:k==='short'?`<button class="${UI.view==='transfer'&&UI.tf.tab==='pendek'?'on':''} o2" data-act="navshort">${l}${b?`<span class="badge" style="background:var(--mute)">${b}</span>`:''}</button>`:`<button class="${UI.view===k?'on':''} ${ord[k]||'o2'}" data-act="nav" data-arg="${k}">${l}${b?`<span class="badge">${b}</span>`:''}</button>`;
-  return `<nav class="rail">${G.map(([h,its])=>(h?`<span class="navh">${h}</span>`:'')+its.map(btn).join('')).join('')}<div class="spacer"></div><button class="supbtn o3" data-act="support">☕ Sokong pembangun</button><a class="mono vlink" href="nota.html" title="Nota versi dan isu diketahui">${VERSION} · Apa baharu</a></nav>`}
+  const lbl={};G.forEach(g=>g[1].forEach(x=>lbl[x[0]]=x[1]));const bd={};G.forEach(g=>g[1].forEach(x=>bd[x[0]]=x[2]||0));
+  const MG=[['Pasukan',['squad','tactic','train','medical','morale','staff']],['Perpindahan & scouting',['transfer','short','scouting','scout']],['Pertandingan',['season','fixtures','league','fa','tb','asia']],['Kelab & kewangan',['finance','board','clubs','card']],['Pengurus',['profile','ach','awards','stats']],['Bantuan & tetapan',['help','feedback','saves']]];
+  const vkey=UI.view==='club'?'clubs':UI.view;let cur=MG.findIndex(g=>g[1].includes(vkey));
+  const open=UI.mcat!=null?UI.mcat:cur;
+  const mb=k=>{const b=bd[k];return k==='card'?`<button data-act="cardopen">${lbl[k]}</button>`:k==='short'?`<button class="${UI.view==='transfer'&&UI.tf.tab==='pendek'?'on':''}" data-act="navshort">${lbl[k]}${b?`<span class="badge" style="background:var(--mute)">${b}</span>`:''}</button>`:`<button class="${UI.view===k?'on':''}" data-act="nav" data-arg="${k}">${lbl[k]}${b?`<span class="badge">${b}</span>`:''}</button>`};
+  const drawer=UI.mnav?`<div class="mback" data-act="mnavclose"></div><aside class="mdrawer" role="dialog" aria-label="Menu"><div class="mdh"><b>Menu</b><button class="btn sm" data-act="mnavclose">Tutup</button></div>
+   ${MG.map(([h,ks],i)=>{const tot=ks.filter(k=>k!=='short'&&k!=='ach').reduce((a,k)=>a+(bd[k]||0),0);const on=open===i;return `<div class="mcat ${on?'open':''}"><button class="mch" data-act="mcat" data-arg="${i}" aria-expanded="${on}"><span>${h}</span>${!on&&tot?`<span class="badge">${tot}</span>`:''}<span class="mchev" aria-hidden="true">${on?'−':'+'}</span></button>${on?`<div class="mitems">${ks.map(mb).join('')}</div>`:''}</div>`}).join('')}
+   <div class="mfoot"><button class="supbtn" data-act="support">☕ Sokong pembangun</button><a class="mono vlink" href="nota.html">${VERSION} · Apa baharu</a></div></aside>`:'';
+  const mnav=`<div class="mnav"><button class="${UI.view==='home'?'on':''}" data-act="nav" data-arg="home">Utama</button><button class="${UI.view==='inbox'?'on':''}" data-act="nav" data-arg="inbox">Inbox${u?`<span class="badge">${u}</span>`:''}</button><button class="mmenu ${cur>=0&&!UI.mnav?'cur':''}" data-act="mnavopen" aria-haspopup="dialog">☰ Menu${cur>=0?`<small>${MG[cur][0]}</small>`:''}</button></div>${drawer}`;
+  return `<nav class="rail dsk">${G.map(([h,its])=>(h?`<span class="navh">${h}</span>`:'')+its.map(btn).join('')).join('')}<div class="spacer"></div><button class="supbtn o3" data-act="support">☕ Sokong pembangun</button><a class="mono vlink" href="nota.html" title="Nota versi dan isu diketahui">${VERSION} · Apa baharu</a></nav>${mnav}`}
 function renderView(){return({home:vHome,inbox:vInbox,squad:vSquad,transfer:vTransfer,finance:vFinance,fixtures:vFixtures,league:vLeague,fa:vFA,tb:vTB,asia:vAsia,awards:vAwards,stats:vStats,clubs:vClubs,club:vClub,saves:vSaves,feedback:vFeedback,help:vHelp,train:vTrain,staff:vStaff,board:vBoard,jobs:vJobs,tactic:vTactic,profile:vProfile,season:vSeason,scout:vScout,medical:vMedical,morale:vMorale,scouting:vScouting,ach:vAch})[UI.view]()}
 
 // Tempat Asia dari liga (spec A1: 4 tempat ACL + 1 melalui Piala FA, tempat 5-6 ke AL). Ubah di sini jika Zonan mahu 2+...
@@ -3944,7 +3976,7 @@ const ACT={
   unrest:a=>{const p=S.players[a];if(p&&p.club===S.user){delete p.rest;save()}render()},
   rush:a=>{const err=rushBack(S.players[a]);if(err)showToast(err);else{save();showToast('Pemain dibenarkan kembali awal. Risiko kambuh meningkat.')}render()},
   legend:a=>mRetired(a),
-  nav:a=>{UI.view=a;UI.inboxOpen=false;closeModal();render();window.scrollTo(0,0)},
+  nav:a=>{UI.view=a;UI.inboxOpen=false;UI.mnav=false;UI.mcat=null;closeModal();render();window.scrollTo(0,0)},mnavopen:()=>{UI.mnav=true;UI.mcat=null;render()},mnavclose:()=>{UI.mnav=false;UI.mcat=null;render()},mcat:a=>{const i=+a;const el=document.querySelector('.mcat.open .mch');const now=el?+el.dataset.arg:-1;UI.mcat=now===i?-1:i;render()},
   selclub:a=>{const v=document.getElementById('mgr');if(v)S.manager=v.value.trim();UI.nAge=+val('mgr_age')||35;UI.nForm=val('mgr_form')||'4-4-2';UI.selClub=a;renderStart()},
   regen:()=>{const n=val('mgr').trim();newWorld();S.manager=n;UI.selClub=null;renderStart()},
   startgame:()=>{if(!UI.selClub)return;S.manager=val('mgr').trim()||'Pengurus';S.user=UI.selClub;const c=S.clubs[S.user];c.mgr=S.manager;S.prof={born:S.season-clamp(+val('mgr_age')||35,25,80),origin:'',form:val('mgr_form')||'4-4-2'};S.tac=null;setUserAuto(S.prof.form);spAutoFill();S.job=null;ensureState();
@@ -4043,7 +4075,7 @@ const ACT={
   sackwait:()=>{UI.sacked=null;closeModal();UI.view='jobs';render()},
   endcareer:()=>{openModal(`<header><h2>Tamatkan kerjaya?</h2><button class="btn sm" data-act="close">Batal</button></header><p>Kerjaya ${esc(S.manager)} akan berakhir. Kau boleh mulakan kerjaya baharu selepas ini.</p><div class="row"><button class="btn bad" data-act="endcareerok">Ya, tamatkan</button></div>`)},
   endcareerok:()=>{S.ended=true;S.job.dead=true;save();closeModal();render()},
-  cardopen:a=>mCard(a||S.user),mgrcard:()=>mMgrCard(),carddl:()=>cardDownload(),cardshare:()=>cardShare(),crestopen:()=>mCrest(),
+  cardopen:a=>{if(UI.mnav){UI.mnav=false;UI.mcat=null;render()}mCard(a||S.user)},mgrcard:()=>mMgrCard(),carddl:()=>cardDownload(),cardshare:()=>cardShare(),crestopen:()=>mCrest(),
   crestshape:a=>{UI.crestDraft.shape=a;const v=document.getElementById('cresttxt');if(v)UI.crestDraft.txt=v.value.toUpperCase();renderCrestModal()},
   crestsave:()=>{const c=curClub();const v=document.getElementById('cresttxt');const t=(v?v.value:UI.crestDraft.txt).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,3);c.crest={shape:UI.crestDraft.shape,txt:t||crestCfg(c.id).txt};const nk=UI.crestDraft.kit;if(nk&&(nk[0]!==c.kit[0]||nk[1]!==c.kit[1])){if(!c.kitOrig)c.kitOrig=c.kit.slice();c.kit=nk.slice()}save();render();mCard(c.id)},
   crestreset:()=>{const c=curClub();delete c.crest;if(c.kitOrig){c.kit=c.kitOrig;delete c.kitOrig}save();render();mCard(c.id)},
