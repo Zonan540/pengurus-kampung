@@ -62,7 +62,7 @@ with sync_playwright() as p:
       const s=loadSlot(2);const bk=localStorage.getItem('pk3-backup-pre2');const prev=S;S=s;ensureState();const sv=S.sv;S=prev;
       localStorage.setItem('pk3-slot-2','Z'+LZString.compressToUTF16(JSON.stringify(Object.assign({},o,{sv:1}))));loadSlot(2);
       return {bkSame:bk===raw,sv,bkStill:localStorage.getItem('pk3-backup-pre2')===raw}}""")
-    check('ensureState menaikkan sv ke SCHEMA', r['sv'] == 7, r)
+    check('ensureState menaikkan sv ke SCHEMA', r['sv'] == 8, r)
     check('sandaran pra-2.0 dibuat sekali dan tidak ditimpa', r['bkSame'] and r['bkStill'], r)
     r = pg.evaluate("""()=>{const z=packS();localStorage.removeItem('pk3-backup-pre2');localStorage.setItem('pk3-slot-3',z);loadSlot(3);return localStorage.getItem('pk3-backup-pre2')===null}""")
     check('simpanan format F (sv=SCHEMA) tidak mencetus sandaran', r, r)

@@ -125,6 +125,10 @@ td.nm{font-weight:600}
 .form{display:inline-flex;gap:3px}
 .form i{font-style:normal;font-family:var(--f-mono);font-size:.68rem;font-weight:600;width:17px;height:17px;display:inline-grid;place-items:center;border-radius:3px;color:#081226}
 .form i.M{background:var(--win)} .form i.S{background:var(--mute)} .form i.K{background:var(--loss)}
+.fbar{display:inline-block;width:84px;height:6px;background:var(--line);border-radius:3px;vertical-align:middle;margin-left:6px;overflow:hidden}.fbar i{display:block;height:100%;background:var(--win)}
+.rolec{display:inline-block;font-family:var(--f-mono);font-size:.62rem;font-weight:700;padding:0 4px;border-radius:3px;background:var(--hot);color:var(--hot-ink);margin-left:3px;vertical-align:1px}
+.rlgrid td{vertical-align:middle}.rlgrid .rld{font-size:.8rem;color:var(--mute);max-width:46ch}
+.famlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 16px;margin-top:6px}.famlist div{display:flex;align-items:center;justify-content:space-between;font-size:.86rem;gap:6px}
 .att{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:center}
 .att.hi{color:var(--hot);font-weight:600} .att.lo{color:var(--mute)}
 .bar{display:block;height:6px;border-radius:3px;background:var(--panel-2);overflow:hidden}
@@ -827,7 +831,11 @@ const FORMS={
 '3-5-2':[['GK',50,7],['CB',72,22],['CB',50,19],['CB',28,22],['RWB',88,47],['DM',50,40],['CM',66,55],['CM',34,55],['LWB',12,47],['CF',62,85],['CF',38,85]],
 '3-4-3':[['GK',50,7],['CB',72,22],['CB',50,19],['CB',28,22],['RWB',88,48],['CM',62,50],['CM',38,50],['LWB',12,48],['RWF',82,78],['CF',50,87],['LWF',18,78]],
 '5-3-2':[['GK',50,7],['RWB',88,34],['CB',70,21],['CB',50,19],['CB',30,21],['LWB',12,34],['CM',70,53],['DM',50,43],['CM',30,53],['CF',62,85],['CF',38,85]],
-'5-4-1':[['GK',50,7],['RWB',88,34],['CB',70,21],['CB',50,19],['CB',30,21],['LWB',12,34],['RM',84,59],['CM',62,53],['CM',38,53],['LM',16,59],['CF',50,86]]
+'5-4-1':[['GK',50,7],['RWB',88,34],['CB',70,21],['CB',50,19],['CB',30,21],['LWB',12,34],['RM',84,59],['CM',62,53],['CM',38,53],['LM',16,59],['CF',50,86]],
+'4-2-2-2':[['GK',50,7],['RB',86,27],['CB',62,20],['CB',38,20],['LB',14,27],['DM',62,41],['DM',38,41],['AM',74,66],['AM',26,66],['CF',62,86],['CF',38,86]],
+'4-3-1-2':[['GK',50,7],['RB',86,27],['CB',62,20],['CB',38,20],['LB',14,27],['CM',72,50],['CM',50,47],['CM',28,50],['AM',50,67],['CF',62,86],['CF',38,86]],
+'3-4-1-2':[['GK',50,7],['CB',72,22],['CB',50,19],['CB',28,22],['RWB',88,47],['CM',62,51],['CM',38,51],['LWB',12,47],['AM',50,67],['CF',62,86],['CF',38,86]],
+'4-4-1-1':[['GK',50,7],['RB',86,27],['CB',62,20],['CB',38,20],['LB',14,27],['RM',86,56],['CM',62,50],['CM',38,50],['LM',14,56],['AM',50,70],['CF',50,87]]
 };
 const AI_FORMS=['4-4-2','4-3-3','4-2-3-1','4-1-4-1','3-5-2','5-3-2'];
 const BW=(()=>{const b=[0,0,0];FORMS['4-4-2'].forEach(([p])=>{if(p!=='GK')CW[p].forEach((w,i)=>b[i]+=w)});return b})();
@@ -842,6 +850,65 @@ function fam(p,pos){if(pos===p.pos)return 1;if((p.pos==='GK')!==(pos==='GK'))ret
 function rawRating(p,pos){const W=PW[pos];let r=0;for(const k in W)r+=W[k]*p.a[k];return r}
 function roleRating(p,pos){return rawRating(p,pos)*fam(p,pos)}
 function ability(p){return rawRating(p,p.pos)}
+
+// ---------- peranan pemain dan keakraban taktik (2.1)
+// w = anjakan berat atribut pada posisi itu (jumlah sentiasa 0, jadi skala rating tak berubah); c = anjakan sumbangan [bertahan, tengah, serang];
+// like = sinergi dengan taktik (padan +2.5%, bertentangan -2.5% pada rating pemain itu).
+const ROLE={
+ bpl:{n:'Bek Pembina',s:'BPL',d:'Memulakan serangan dari belakang dengan hantaran. Lebih lemah berebut bola atas dan bola kuat.',w:{pas:.10,tec:.05,hea:-.08,str:-.07},c:[-.05,.08,0],like:{pass:'L'}},
+ stp:{n:'Bek Penghadang',s:'STP',d:'Keluar mencabar penyerang dan menang bola udara. Lebih terdedah bila tersilap kedudukan.',w:{tck:.06,hea:.06,str:.04,psn:-.10,mrk:-.06},c:[.05,-.05,0],like:{line:'H'}},
+ fbd:{n:'Bek Sayap Bertahan',s:'FBD',d:'Kekal di belakang dan menjaga lorong. Kurang menyumbang di depan.',w:{tck:.06,mrk:.06,psn:.03,crs:-.10,pac:-.05},c:[.08,-.05,-.08],like:{line:'L'}},
+ fba:{n:'Bek Sayap Menyerang',s:'FBA',d:'Naik membantu serangan dan menghantar bola lintang. Meninggalkan ruang di belakang.',w:{crs:.08,dri:.05,pac:.02,tck:-.08,mrk:-.07},c:[-.10,.05,.10],like:{width:'H'}},
+ wbd:{n:'Wing-back Bertahan',s:'WBD',d:'Menjaga sayap dan menutup ruang. Jarang melepasi garisan tengah.',w:{tck:.07,psn:.03,crs:-.07,dri:-.03},c:[.08,-.03,-.08],like:{line:'L'}},
+ wba:{n:'Wing-back Menyerang',s:'WBA',d:'Bertindak seperti pemain sayap. Banyak lintang, tetapi sayap belakang mudah terbuka.',w:{crs:.07,dri:.05,tck:-.07,psn:-.05},c:[-.08,.03,.10],like:{width:'H'}},
+ anc:{n:'Jangkar',s:'ANC',d:'Duduk di hadapan pertahanan dan memutuskan serangan. Jarang mencipta peluang.',w:{tck:.05,mrk:.07,psn:.03,pas:-.10,sta:-.05},c:[.10,-.10,0],like:{line:'L'}},
+ reg:{n:'Pengatur Dalam',s:'REG',d:'Mengatur hantaran panjang dari belakang tengah. Kurang menekel dan lemah dari segi fizikal.',w:{pas:.12,vis:.06,tck:-.10,str:-.08},c:[-.10,.10,.05],like:{pass:'L'}},
+ dmw:{n:'Pemotong Bola',s:'DMW',d:'Menekan dan merampas bola tanpa henti. Hantarannya ringkas dan jarang berani.',w:{tck:.05,sta:.08,str:.02,pas:-.10,psn:-.05},c:[.02,.05,-.03],like:{press:'H'}},
+ b2b:{n:'Box-to-Box',s:'B2B',d:'Berlari antara dua kotak penalti. Banyak stamina, tetapi kurang halus mengumpan.',w:{sta:.10,tck:.05,fin:.05,pas:-.10,vis:-.10},c:[.05,0,.08],like:{tempo:'H'}},
+ pm:{n:'Pengatur Serangan',s:'PM',d:'Pusat kreativiti pasukan. Kurang bertenaga dan kurang membantu bertahan.',w:{vis:.10,pas:.05,tec:.03,sta:-.10,tck:-.08},c:[-.10,.10,.10],like:{pass:'L'}},
+ cmw:{n:'Perampas Bola',s:'CMW',d:'Menumpukan pada rampasan bola di tengah. Kurang mencipta peluang.',w:{tck:.12,sta:.05,mrk:.05,pas:-.12,vis:-.10},c:[.12,0,-.10],like:{press:'H'}},
+ tre:{n:'Trequartista',s:'TRE',d:'Bebas bergerak di belakang penyerang, menggelecek dan menyudahkan. Tidak bertahan langsung.',w:{dri:.08,fin:.07,vis:-.05,pas:-.05,cmp:-.05},c:[-.05,-.10,.10],like:{tempo:'H'}},
+ sha:{n:'Penyerang Bayangan',s:'SHA',d:'Menyusup ke kotak penalti seperti penyerang kedua. Kurang mengumpan.',w:{fin:.12,pac:.05,vis:-.10,tec:-.07},c:[-.05,-.15,.15],like:{line:'H'}},
+ apm:{n:'Pengatur Maju',s:'APM',d:'Mengatur serangan dari ruang depan. Jarang menyudahkan sendiri.',w:{vis:.08,pas:.07,fin:-.10,dri:-.05},c:[0,.10,-.05],like:{pass:'L'}},
+ wmw:{n:'Pemain Sayap Lebar',s:'WMW',d:'Melekat pada garisan tepi dan menghantar bola lintang. Kurang masuk ke tengah.',w:{crs:.08,pac:.04,pas:-.06,tec:-.06},c:[0,-.05,.07],like:{width:'H'}},
+ wmd:{n:'Pemain Sayap Bertahan',s:'WMD',d:'Turun menjaga bek sayap. Rajin tetapi tidak menggelecek.',w:{sta:.06,tck:.08,mrk:.04,crs:-.08,dri:-.10},c:[.12,0,-.10],like:{line:'L'}},
+ wmc:{n:'Pencipta Lebar',s:'WMC',d:'Masuk ke ruang tengah untuk mengatur hantaran. Kurang menjadi pilihan lintang.',w:{pas:.08,vis:.08,tec:.04,crs:-.10,pac:-.10},c:[-.05,.12,0],like:{pass:'L'}},
+ inf:{n:'Penyerang Dalam',s:'INF',d:'Memotong ke dalam dan menyudahkan dengan kaki kuat. Tidak banyak melintang.',w:{fin:.10,cmp:.03,crs:-.10,pac:-.03},c:[0,-.05,.08],like:{width:'L'}},
+ wng:{n:'Winger Tulen',s:'WNG',d:'Kekal lebar, melepasi pemain dan menghantar bola lintang. Kurang menyudahkan.',w:{crs:.12,pac:.03,fin:-.10,cmp:-.05},c:[0,.05,-.05],like:{width:'H'}},
+ wbk:{n:'Winger Pembantu',s:'WBK',d:'Turun membantu bertahan dan sangat bertenaga. Kurang tajam di depan.',w:{sta:.10,tck:.05,dri:-.08,fin:-.07},c:[.10,.05,-.12],like:{press:'H'}},
+ poa:{n:'Penyudah',s:'POA',d:'Sentiasa di kotak penalti menunggu peluang. Hampir tidak terlibat dalam pembinaan.',w:{fin:.08,psn:.07,cmp:.03,hea:-.08,str:-.06,tec:-.04},c:[0,-.10,.06],like:{pass:'H'}},
+ tgt:{n:'Penyerang Sasaran',s:'TGT',d:'Menahan bola dengan badan dan menanduk. Perlahan dan kurang tajam menyudahkan.',w:{hea:.10,str:.10,fin:-.06,pac:-.10,psn:-.04},c:[0,.08,0],like:{pass:'H'}},
+ f9:{n:'Penyerang Palsu',s:'F9',d:'Turun ke tengah, mencipta ruang dan mengumpan. Kurang menyudahkan dan lemah bola udara.',w:{tec:.12,vis:.10,pas:.08,fin:-.12,hea:-.10,str:-.08},c:[0,.20,-.12],like:{pass:'L'}}
+};
+const ROLE_POS={CB:['bpl','stp'],RB:['fbd','fba'],LB:['fbd','fba'],RWB:['wbd','wba'],LWB:['wbd','wba'],DM:['anc','reg','dmw'],CM:['b2b','pm','cmw'],AM:['tre','sha','apm'],
+ RM:['wmw','wmd','wmc'],LM:['wmw','wmd','wmc'],RWF:['inf','wng','wbk'],LWF:['inf','wng','wbk'],CF:['poa','tgt','f9']};
+const FAM0_F=40,FAM0_R=35;
+function famF(form){if(!S||!S.fam||!S.fam.F)return 100;const v=S.fam.F[form];return v==null?FAM0_F:v}
+function famR(rk){if(!S||!S.fam||!S.fam.R)return 100;const v=S.fam.R[rk];return v==null?FAM0_R:v}
+function roleOK(pos,rk){return !!rk&&!!ROLE[rk]&&!!ROLE_POS[pos]&&ROLE_POS[pos].includes(rk)}
+function roleSyn(rk,t){const L=ROLE[rk].like;if(!t||!L)return 1;let n=0;for(const k in L){const c=t[k];if(!c||c==='M'||c==='S')continue;n+=c===L[k]?1:-1}return 1+.025*n}
+// rating pemain pada posisi dengan peranan; f = keakraban peranan (0-100). Peranan yang belum sebati memberi kesan lebih kecil dan sedikit penalti rata.
+function roleEval(p,pos,rk,t,f){const R=ROLE[rk];let dev=0;for(const k in R.w)dev+=R.w[k]*p.a[k];const rho=.5+.5*f/100;
+  return(rawRating(p,pos)+dev*rho-.6*(1-f/100))*roleSyn(rk,t)*fam(p,pos)}
+function cwOf(e){const b=CW[e.pos];if(!e.rk||!b||!roleOK(e.pos,e.rk))return b;const R=ROLE[e.rk];const rho=.5+.5*(e.rf==null?100:e.rf)/100;return b.map((v,i)=>Math.max(0,v+R.c[i]*rho))}
+function autoRole(p,pos,t,fn){const L=ROLE_POS[pos];if(!L)return null;let best=null,bv=roleRating(p,pos)+.15;for(const rk of L){const v=roleEval(p,pos,rk,t,fn(rk));if(v>bv){bv=v;best=rk}}return best}
+function famMul(m,s){if(s!==m.userSide||!S.fam)return 1;const f=m.sides[s].form;if(!FORMS[f])return 1;return 1-.04*(1-famF(f)/100)}
+// Hanya pasukan pengguna menggunakan peranan; AI kekal dengan peranan standard supaya keseimbangan liga tidak berubah.
+function assignRoles(m,s){const sd=m.sides[s];const act=activeOn(m,s);act.forEach(e=>{e.rk=null;e.rf=100});
+  if(s===m.userSide){const t=sd.tac;if(!t||t.form!==sd.form||!Array.isArray(t.rl))return;
+    act.forEach(e=>{const rk=t.rl[e.si];if(e.si!=null&&roleOK(e.pos,rk)){e.rk=rk;e.rf=famR(rk)}})}
+}
+// Penentukuran: pengganda sumbangan [bertahan, tengah, serang] untuk pemain berperanan, supaya pilihan peranan terbaik secara purata memberi kira-kira +1.5% sekata di ketiga-tiga barisan.
+const ROLE_K=[1.02,.988,.959];
+function resetFam(){ensureTac();S.fam={F:{},R:{}};S.tac.list.forEach(t=>{if(FORMS[t.form])S.fam.F[t.form]=100})}
+function famAfter(m,fx){if(m.userSide<0||!S.fam)return;const sd=m.sides[m.userSide];const k=fx.comp==='FR'?1.5:1;const F=S.fam.F,R=S.fam.R;const rd=v=>Math.round(v*10)/10;
+  const uf=FORMS[sd.form0]?sd.form0:null;const ur=new Set(sd.rk0||[]);
+  if(uf){const was=famF(uf);F[uf]=rd(Math.min(100,was+10*k));if(was<100&&F[uf]>=100)inbox('squad',`Pasukan sudah sebati dengan ${uf}`,`Selepas beberapa perlawanan, pemain kau kini sepenuhnya biasa dengan formasi ${uf}. Penalti keakraban formasi ini sudah hilang.`,{links:[['tactic','Buka Taktik']]})}
+  ur.forEach(rk=>{const was=famR(rk);R[rk]=rd(Math.min(100,was+15*k));if(was<100&&R[rk]>=100)inbox('squad',`Pasukan sudah sebati dengan peranan ${ROLE[rk].n}`,`Pemain kau kini sepenuhnya biasa dengan peranan ${ROLE[rk].n}. Faedah penuh peranan ini sudah terbuka.`,{links:[['tactic','Buka Taktik']]})});
+  Object.keys(F).forEach(f=>{if(f!==uf&&F[f]>FAM0_F)F[f]=rd(Math.max(FAM0_F,F[f]-.5))});
+  Object.keys(R).forEach(r=>{if(!ur.has(r)&&R[r]>FAM0_R)R[r]=rd(Math.max(FAM0_R,R[r]-.5))})}
+function famTag(f){return FORMS[f]&&famF(f)<100?` <small>${Math.round(famF(f))}%</small>`:''}
+function roleLike(rk){const L=ROLE[rk].like;if(!L)return '';return Object.entries(L).map(([k,v])=>k==='ment'?`Mentaliti ${MENT[v]}`:`${TAC_OPT[k][0]} ${TAC_OPT[k][1][v]}`).join(', ')}
 
 const TX={
  goalA:[(s,a)=>`GOL! ${s} menyudahkan hantaran lintang ${a} dari sayap kanan.`,(s,a,g)=>`GOL! Hantaran terobosan ${a} disambut ${s}, yang menewaskan ${g} dalam situasi satu lawan satu.`,(s,a)=>`GOL! ${s} menanduk masuk hantaran lintang ${a} dari sayap kiri.`,(s,a)=>`GOL! ${a} membuat larian di sayap kiri sebelum memberi bola kepada ${s} yang hanya perlu menolak masuk.`,(s,a)=>`GOL! Gerakan satu-dua antara ${a} dan ${s} membelah benteng pertahanan.`,(s,a,g)=>`GOL! ${a} mencungkil bola ke tiang jauh, ${s} melakukan voli yang tidak mampu dihalang ${g}.`],
@@ -1161,7 +1228,7 @@ function cornerKick(m,s){m.st.co[s]++;if(R()>.095)return;const tk=takerFor(m,s,'
 
 // ---------- match engine
 let BASE_CH=0.113;
-function mkEntry(id,pos,min,x,y){const p=S.players[id];return{id,pos,x,y,cond:p.cond,yel:0,red:false,off:false,g:0,as:0,sv:0,ga:0,inj:false,in:min,out:null,sp:pos,sx:x,sy:y}}
+function mkEntry(id,pos,min,x,y){const p=S.players[id];return{id,pos,x,y,rk:null,rf:100,si:null,cond:p.cond,yel:0,red:false,off:false,g:0,as:0,sv:0,ga:0,inj:false,in:min,out:null,sp:pos,sx:x,sy:y}}
 function aiMent(cid,opp,home){const d=clubStrength(cid)-clubStrength(opp)+(home?.4:0);return d>1?'G':d<-1.1?'B':'S'}
 function isDerby(fx){const a=fx&&S.clubs[fx.h],b=fx&&S.clubs[fx.a];return !!(a&&b&&a.state&&a.state===b.state&&fx.comp!=='FR')}
 function derbyName(fx){return 'Derbi '+S.clubs[fx.h].state}
@@ -1171,12 +1238,12 @@ function newMatch(fx,userSide){if(ASIA_COMP[fx.comp])asiaPrep(fx);
   const m={fx:fx.id,comp:fx.comp,ko:isKO(fx),neutral:!!fx.neutral,phase:'PRE',min:0,extra:0,add:ri(1,5),sc:[0,0],et:false,pens:null,done:false,log:[],
     userSide:userSide==null?-1:userSide,liveUser:false,st:{sh:[0,0],ot:[0,0],po:[0,0],fo:[0,0],co:[0,0],xg:[0,0],bc:[0,0]},banned:[],sides:[],pauseReq:false,ti:{pH:.5,chs:[]},reds:[],mom:[],subsLog:[],derby:isDerby(fx),tt:[1,1]};
   [fx.h,fx.a].forEach((cid,s)=>{const c=S.clubs[cid];const lu=s===m.userSide?S.lu:autoLineup(cid,c.form);const slots=FORMS[lu.form];
-    const on=[];lu.xi.forEach((id,i)=>{if(id)on.push(mkEntry(id,slots[i][0],0,slots[i][1],slots[i][2]))});
+    const on=[];lu.xi.forEach((id,i)=>{if(id){const e=mkEntry(id,slots[i][0],0,slots[i][1],slots[i][2]);e.si=i;on.push(e)}});
     m.sides.push({cid,form:lu.form,day:clamp(1+gauss()*.07,.85,1.15),ment:s===m.userSide?(S.lu.ment||'S'):aiMent(cid,s===0?fx.a:fx.h,s===0&&!m.neutral),
       on,bench:lu.bench.filter(id=>available(S.players[id])).slice(0,9),subs:5,aiSubAt:[58+ri(0,8),68+ri(0,8),78+ri(0,5)]});
     const sd=m.sides[s];if(s===m.userSide){const sp=userSP();sd.cap=sp.cap.filter(Boolean);sd.sp={pen:sp.pen,fk:sp.fk,crn:sp.crn}}
     else{sd.cap=c.players.map(id=>S.players[id]).filter(p=>!p.res).sort((a,b)=>leadScore(b)-leadScore(a)).slice(0,3).map(p=>p.id);sd.sp={}}
-    if(s===m.userSide){ensureTac();sd.tac=Object.assign({},curTac());sd.tacI=S.tac.act}
+    if(s===m.userSide){ensureTac();sd.tac=Object.assign({},curTac());sd.tacI=S.tac.act}assignRoles(m,s);if(s===m.userSide)sd.rk0=[...new Set(sd.on.map(e=>e.rk).filter(Boolean))];
     sd.capNow=null;updateCaptain(m,s,true);sd.form0=sd.form;sd.bench0=sd.bench.slice();sd.cap0=sd.capNow;
     c.players.forEach(pid=>{if(S.players[pid].ban>0)m.banned.push(pid)})});
   if(fx.oppMot&&m.userSide>=0)m.sides[1-m.userSide].day*=1+fx.oppMot;const hc=S.clubs[fx.h];m.venue=m.neutral?NEUTRAL_VENUE:hc.stadium;
@@ -1187,18 +1254,18 @@ function lg(m,s,k,x,pid,aid){const o={t:clockLabel(m),s,k,x,p:pid||null,mi:m.mom
 function activeOn(m,s){return m.sides[s].on.filter(e=>!e.off&&!e.red)}
 function nm(id){return S.players[id].name}
 function cnm(m,s){return S.clubs[m.sides[s].cid].name}
-function profile(m,s){const sd=m.sides[s];let D=0,M=0,A=0,G=0;
-  for(const e of sd.on){if(e.off||e.red)continue;const p=S.players[e.id];const r=roleRating(p,e.pos)*(.72+.28*e.cond/100)*(.96+.08*p.mor/100);
-    if(e.pos==='GK'){G=Math.max(G,r);continue}const w=CW[e.pos];D+=r*w[0];M+=r*w[1];A+=r*w[2]}
-  if(!G)G=4;let att=A/BW[2],def=D/BW[0],mid=M/BW[1];
+function profile(m,s){const sd=m.sides[s];let D=0,M=0,A=0,G=0;const tt=sd.tac?Object.assign({},sd.tac,{ment:sd.ment}):null;
+  for(const e of sd.on){if(e.off||e.red)continue;const p=S.players[e.id];const r=(e.rk&&roleOK(e.pos,e.rk)?roleEval(p,e.pos,e.rk,tt,e.rf==null?100:e.rf):roleRating(p,e.pos))*(.72+.28*e.cond/100)*(.96+.08*p.mor/100);
+    if(e.pos==='GK'){G=Math.max(G,r);continue}const w=cwOf(e),kk=e.rk?ROLE_K:null;D+=r*w[0]*(kk?kk[0]:1);M+=r*w[1]*(kk?kk[1]:1);A+=r*w[2]*(kk?kk[2]:1)}
+  if(!G)G=4;let att=A/BW[2],def=D/BW[0],mid=M/BW[1];{const fm=famMul(m,s);att*=fm;def*=fm;mid*=fm}
   if(sd.ment==='G'){att*=1.2;def*=.84;mid*=1.03}else if(sd.ment==='B'){att*=.85;def*=1.13;mid*=.98}
   if(s===0&&!m.neutral){att*=1.07;def*=1.05;mid*=1.05}const tk=(m.tt&&m.tt[s])||1;att*=sd.day*tk;def*=sd.day*tk;mid*=sd.day*tk;if(m.derby&&s===0&&!m.neutral){att*=1.02;def*=1.02}
   if(sd.capNow&&S.players[sd.capNow]){const b=1+leadScore(S.players[sd.capNow])*.0012;att*=b;def*=b;mid*=b}att*=trMatchMul(m,s,'att');def*=trMatchMul(m,s,'def');mid*=trMatchMul(m,s,'mid');if(m.tm&&m.tm[s]){att*=m.tm[s].att;def*=m.tm[s].def;mid*=m.tm[s].mid}return{att,def,mid,G}}
 function finComp(p,e){return(p.a.fin*.55+p.a.cmp*.25+p.a.tec*.1+p.a.hea*.1)*(.75+.25*e.cond/100)}
 function chance(m,s,P){
   const on=activeOn(m,s).filter(e=>e.pos!=='GK');if(!on.length)return;
-  const sh=wpick(on,e=>CW[e.pos][2]*(S.players[e.id].a.fin+4));const mates=on.filter(e=>e!==sh);
-  const as=mates.length&&R()<.78?wpick(mates,e=>CW[e.pos][1]*((S.players[e.id].a.pas+S.players[e.id].a.vis)/2+3)+CW[e.pos][2]*2):null;
+  const sh=wpick(on,e=>cwOf(e)[2]*(S.players[e.id].a.fin+4));const mates=on.filter(e=>e!==sh);
+  const as=mates.length&&R()<.78?wpick(mates,e=>cwOf(e)[1]*((S.players[e.id].a.pas+S.players[e.id].a.vis)/2+3)+cwOf(e)[2]*2):null;
   const gkE=activeOn(m,1-s).find(e=>e.pos==='GK');const gN=gkE?nm(gkE.id):'penjaga gol';
   const big=R()<.2;const conv=clamp((big?.28:.07)*Math.pow(finComp(S.players[sh.id],sh)/Math.max(3,P[1-s].G),.8),.02,.6);
   m.st.sh[s]++;m.st.xg[s]+=conv;if(big)m.st.bc[s]++;if(m.userSide>=0&&R()<.45)lg(m,s,'build',pick(TX.build)(cnm(m,s),nm((as||sh).id)));
@@ -1218,10 +1285,10 @@ function changeFormation(m,s,form,silent){const act=activeOn(m,s);const F=formsF
   const slots=F.map(x=>x.slice());const used=new Set();
   // GK slot first
   const gi=slots.findIndex(x=>x[0]==='GK');const gk=act.filter(e=>!used.has(e)).sort((a,b)=>roleRating(S.players[b.id],'GK')-roleRating(S.players[a.id],'GK'))[0];
-  const assign=(e,sl)=>{e.pos=sl[0];e.x=sl[1];e.y=sl[2];used.add(e)};
-  if(gk&&gi>=0){assign(gk,slots[gi]);slots[gi]=null}
-  for(let it=0;it<slots.length;it++){let be=null,bs=-1,bv=-1;slots.forEach((sl,i)=>{if(!sl)return;for(const e of act){if(used.has(e))continue;const v=roleRating(S.players[e.id],sl[0]);if(v>bv){bv=v;be=e;bs=i}}});if(be){assign(be,slots[bs]);slots[bs]=null}}
-  m.sides[s].form=form;if(!silent)lg(m,s,'info',`${cnm(m,s)} menukar formasi kepada ${form}.`);return true}
+  const assign=(e,sl,ix)=>{e.pos=sl[0];e.x=sl[1];e.y=sl[2];e.si=ix;used.add(e)};
+  if(gk&&gi>=0){assign(gk,slots[gi],gi);slots[gi]=null}
+  for(let it=0;it<slots.length;it++){let be=null,bs=-1,bv=-1;slots.forEach((sl,i)=>{if(!sl)return;for(const e of act){if(used.has(e))continue;const v=roleRating(S.players[e.id],sl[0]);if(v>bv){bv=v;be=e;bs=i}}});if(be){assign(be,slots[bs],bs);slots[bs]=null}}
+  m.sides[s].form=form;assignRoles(m,s);if(!silent)lg(m,s,'info',`${cnm(m,s)} menukar formasi kepada ${form}.`);return true}
 function aiAfterRed(m,s){const sd=m.sides[s];const act=activeOn(m,s);
   if(!act.some(e=>e.pos==='GK')&&sd.subs>0){const gk=sd.bench.find(id=>S.players[id].pos==='GK');const out=act.filter(e=>e.pos!=='GK').sort((a,b)=>CW[b.pos][2]-CW[a.pos][2])[0];if(gk&&out)doSub(m,s,out,gk,'GK')}
   const n=activeOn(m,s).length;const F=formsFor(n);const pref=n===10?(sd.ment==='G'?'4-3-2':'4-4-1'):Object.keys(F)[0];changeFormation(m,s,pref,true)}
@@ -1232,7 +1299,8 @@ function card(m,s){
   else{e.yel=1;lg(m,s,'yc',pick(TX.yc)(nm(e.id)),e.id)}
   if(red){m.reds.push({s,id:e.id});if(!(s===m.userSide&&m.liveUser))aiAfterRed(m,s)}}
 function bestBench(m,s,pos){let best=null,bv=-1;for(const id of m.sides[s].bench){const p=S.players[id];const v=roleRating(p,pos)*condF(p);if(v>bv){bv=v;best=id}}return best}
-function doSub(m,s,outE,inId,newPos){const sd=m.sides[s];outE.off=true;outE.out=m.min;const ne=mkEntry(inId,newPos||outE.pos,m.min,outE.x,outE.y);sd.on.push(ne);
+function doSub(m,s,outE,inId,newPos){const sd=m.sides[s];outE.off=true;outE.out=m.min;const ne=mkEntry(inId,newPos||outE.pos,m.min,outE.x,outE.y);ne.si=outE.si;sd.on.push(ne);
+  if(outE.rk&&roleOK(ne.pos,outE.rk)){const ip=S.players[inId];if(roleEval(ip,ne.pos,outE.rk,sd.tac,outE.rf==null?100:outE.rf)>roleRating(ip,ne.pos)){ne.rk=outE.rk;ne.rf=outE.rf}}
   sd.bench=sd.bench.filter(x=>x!==inId);sd.subs--;m.subsLog.push({t:clockLabel(m),s,i:inId,o:outE.id});lg(m,s,'sub',`Pertukaran ${cnm(m,s)}: ${nm(inId)} masuk menggantikan ${nm(outE.id)}.`,inId);return ne}
 function injury(m,s){const on=activeOn(m,s);if(!on.length)return;const e=wpick(on,x=>injWeight(S.players[x.id],x));
   e.inj=true;lg(m,s,'inj',`${nm(e.id)} terbaring kesakitan dan tidak dapat meneruskan permainan.`,e.id);
@@ -1309,7 +1377,7 @@ function finishMatch(m){
     fx.lay=m.sides.map((sd,s)=>({form:sd.form0||sd.form,cap:sd.cap0||null,mgr:sd.cid===S.user?S.manager:S.clubs[sd.cid].mgr,bench:sd.bench0||[],
       on:sd.on.map(e=>[e.id,e.sp||e.pos,e.sx!=null?e.sx:e.x,e.sy!=null?e.sy:e.y,e.in,e.out==null?-1:e.out,e.red?1:0,e.yel?1:0,e.inj?1:0])}))}
   m.banned.forEach(pid=>{const p=S.players[pid];if(p&&p.ban>0)p.ban--});
-  if(fx.h===S.user||fx.a===S.user){fx.derby=m.derby?1:0;if(m.talks)fx.talks=m.talks;if(fx.comp!=='FR'){confAfterMatch(fx);matchFanEffects(fx)}userResultNews(fx)}}
+  if(fx.h===S.user||fx.a===S.user){famAfter(m,fx);fx.derby=m.derby?1:0;if(m.talks)fx.talks=m.talks;if(fx.comp!=='FR'){confAfterMatch(fx);matchFanEffects(fx)}userResultNews(fx)}}
 function simFixture(fx){if(ASIA_COMP[fx.comp]&&fx.h!==S.user&&fx.a!==S.user){asiaQuick(fx);return}const m=newMatch(fx,-1);let g=0;while(!m.done&&g++<400)stepMinute(m);finishMatch(m)}
 
 // ---------- inbox
@@ -2297,7 +2365,7 @@ function resignUser(){const old=leaveClub('letak jawatan');if(!old)return;S.job.
 function takeJob(cid){S.fans=55;setTimeout(()=>{try{wageReview(null)}catch(e){}},0);const J=S.job;if(S.user&&S.user!==cid){const prev=S.user;leaveClub('berpindah');J.rep=clamp(J.rep+2,0,100);const h=J.hist[J.hist.length-1];if(h&&h.cid===prev)h.end='berpindah'}
   const c=S.clubs[cid];const oldMgr=c.mgr;c.mgr=S.manager;S.user=cid;J.jobless=null;J.since=S.over?S.season+1:S.season;J.ctr=J.since+1;J.conf=60;J.warn=0;J.ult=null;
   J.hist.push({cid,name:c.name,from:J.since,to:null});J.offers=[];if(S.vac[cid])delete S.vac[cid];
-  S.offers=[];S.negs={};S.listed={};S.loanList={};S.lu=null;S.sp=null;S.tr=trDefault();ensureTac();setUserAuto(curTac().form);S.lu.ment=curTac().ment;spAutoFill();ensureStaff(cid);if(!S.over)setObjectives();
+  S.offers=[];S.negs={};S.listed={};S.loanList={};S.lu=null;S.sp=null;S.tr=trDefault();ensureTac();resetFam();setUserAuto(curTac().form);S.lu.ment=curTac().ment;spAutoFill();ensureStaff(cid);if(!S.over)setObjectives();
   inbox('job',`Selamat datang ke ${c.name}`,`Kau dilantik sebagai pengurus ${c.name} (${LG_NAME[c.tier]}) menggantikan ${oldMgr}. Kontrak hingga hujung musim ${seasonLabel(J.ctr)}. Jangkaan lembaga: ${expectation(cid).toLowerCase()}.`)}
 function acceptJob(id){const o=jobOffer(id);if(!o)return 'Tawaran tidak lagi sah.';if(o.exp!=null&&S.t>=o.exp)return 'Tawaran sudah tamat.';
   if(o.kind==='renew'){S.job.ctr+=2;S.job.offers=S.job.offers.filter(x=>x.id!==id);S.job.conf=clamp(S.job.conf+3,0,100);inbox('job','Kontrak disambung',`Kontrak baharu hingga hujung musim ${seasonLabel(S.job.ctr)}.`,{read:true});return null}
@@ -2645,6 +2713,29 @@ function tacMods(m,s){const sd=m.sides[s];const t=sd.tac;const o={att:1,def:1,mi
   return o}
 function mgrAge(){ensureTac();return S.season-S.prof.born}
 
+
+// ---- peranan pemain (halaman Skuad) dan keakraban (halaman Taktik)
+function setRole(i,rk){const t=curTac();if(!Array.isArray(t.rl))t.rl=[];const sl=FORMS[S.lu.form][i];t.rl[i]=sl&&roleOK(sl[0],rk)?rk:''}
+// Pilihan terbaik dinilai pada keakraban penuh (nilai jangka panjang); rating semasa dalam jadual sudah termasuk penalti jika belum sebati.
+function autoRoles(){const t=curTac(),lu=S.lu;t.rl=FORMS[lu.form].map(([pos],i)=>{const p=lu.xi[i]&&S.players[lu.xi[i]];if(!p||!ROLE_POS[pos])return '';return autoRole(p,pos,t,()=>100)||''});
+  const n=t.rl.filter(Boolean).length;showToast(n?`${n} peranan dipilih. Penalti kecil sehingga pasukan sebati.`:'Tiada peranan yang jelas lebih baik daripada standard untuk barisan ini.')}
+function rolePanel(){const lu=S.lu,t=curTac();const rl=t.form===lu.form&&Array.isArray(t.rl)?t.rl:[];const slots=FORMS[lu.form];
+  const rows=slots.map(([pos],i)=>{if(!ROLE_POS[pos])return '';const pid=lu.xi[i];const p=pid&&S.players[pid];if(!p)return '';
+    const rk=roleOK(pos,rl[i])?rl[i]:'';const base=roleRating(p,pos);const d=rk?roleEval(p,pos,rk,t,famR(rk))-base:0;const dp=rk?roleEval(p,pos,rk,t,100)-base:0;const fd=x=>(x>=0?'+':'')+x.toFixed(1);
+    const sel=`<select class="place" data-chg="role" data-arg="${i}" aria-label="Peranan ${slotLabel(lu.form,i)}"><option value="">Standard</option>${ROLE_POS[pos].map(k=>`<option value="${k}" ${rk===k?'selected':''}>${ROLE[k].n} · ${Math.round(famR(k))}%</option>`).join('')}</select>`;
+    return `<tr><td class="nm">${slotLabel(lu.form,i)}</td><td class="nm">${plink(pid)}</td><td>${sel}</td><td class="r num" style="color:${d>.05?'var(--win)':d<-.05?'var(--loss)':'inherit'}">${rk?fd(d)+(famR(rk)<100?` <span class="mute" title="Rating bila sudah sebati">→ ${fd(dp)}</span>`:''):'—'}</td><td class="rld">${rk?`${esc(ROLE[rk].d)} <span class="mute">Sesuai dengan: ${esc(roleLike(rk))}.</span>`:''}</td></tr>`}).join('');
+  return `<section class="panel"><div class="row sp"><h3>Peranan pemain</h3><span class="mono mute">Keakraban formasi ${esc(lu.form)}: ${Math.round(famF(lu.form))}%<span class="fbar"><i style="width:${famF(lu.form)}%"></i></span></span></div>
+   <p class="mute" style="font-size:.86rem;max-width:84ch">Setiap pemain boleh diberi peranan khas. Peranan mengubah atribut yang dikira dan di mana pemain menyumbang, jadi pilih yang sesuai dengan atributnya. Angka rating ialah perubahan berbanding peranan standard: nilai kini (termasuk penalti jika belum sebati), dan nilai bila sudah sebati selepas anak panah. Peranan disimpan bersama taktik ${'ABC'[S.tac.act]} dan dikosongkan bila formasi taktik itu ditukar.</p>
+   <div class="row"><button class="btn sm" data-act="autoroles">Pilih peranan terbaik</button><button class="btn sm" data-act="clearroles">Semua standard</button></div>
+   <div class="tbl rlgrid"><table><thead><tr><th>Posisi</th><th>Pemain</th><th>Peranan · keakraban</th><th class="r" title="Perubahan rating kini, dan bila peranan sudah sebati">Rating</th><th>Catatan</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="mute">Isi barisan utama dahulu.</td></tr>'}</tbody></table></div></section>`}
+function famPanel(){const bar=v=>`<span class="fbar"><i style="width:${v}%"></i></span>`;
+  const fl=Object.keys(FORMS).map(f=>[f,famF(f)]).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+  const used=Object.keys(S.fam&&S.fam.R||{}).filter(k=>ROLE[k]).sort((a,b)=>famR(b)-famR(a));
+  return `<section class="panel"><h3>Keakraban taktik</h3>
+   <p class="mute" style="font-size:.86rem;max-width:84ch">Formasi baharu bermula pada ${FAM0_F}% dan naik 10% setiap perlawanan yang dimulakan dengannya (15% dalam perlawanan persahabatan). Pada ${FAM0_F}%, pasukan lemah kira-kira 2.4% di semua barisan, dan penalti hilang pada 100%. Peranan baharu bermula pada ${FAM0_R}% dengan faedah yang lebih kecil dan sedikit penalti, naik 15% setiap perlawanan. Yang lama tak dimainkan susut perlahan sehingga tahap permulaan. Bila berpindah kelab, keakraban bermula semula.</p>
+   <span class="lbl">Formasi</span><div class="famlist">${fl.map(([f,v])=>`<div><span class="mono">${f}</span><span>${Math.round(v)}%${bar(v)}</span></div>`).join('')}</div>
+   <span class="lbl" style="display:block;margin-top:10px">Peranan yang pernah dimainkan</span>${used.length?`<div class="famlist">${used.map(k=>`<div><span>${ROLE[k].n}</span><span>${Math.round(famR(k))}%${bar(famR(k))}</span></div>`).join('')}</div>`:'<p class="mute" style="font-size:.86rem;margin:4px 0 0">Belum ada. Beri peranan di halaman Skuad.</p>'}</section>`}
+
 // ---- halaman Taktik
 function segBtns(i,key,opts,cur){return `<div class="tabs seg">${Object.entries(opts).map(([k,l])=>`<button class="${cur===k?'on':''}" data-act="tacset" data-arg="${i}|${key}|${k}">${l}</button>`).join('')}</div>`}
 function vTactic(){ensureTac();const T=S.tac;
@@ -2652,9 +2743,9 @@ function vTactic(){ensureTac();const T=S.tac;
    <p class="mute" style="max-width:78ch">Sediakan tiga set taktik. Pilih satu sebagai taktik aktif sebelum perlawanan, dan tukar antara A, B dan C semasa perlawanan dengan satu ketikan. Setiap pilihan ada kelebihan dan kelemahan, dan kesannya bergantung pada atribut pemain kau.</p>
    <div class="tacgrid">${T.list.map((t,i)=>`<section class="panel tacc ${T.act===i?'on':''}"><div class="row sp"><span class="lbl">${'ABC'[i]}</span>${T.act===i?'<span class="chip sale">Aktif</span>':`<button class="btn sm primary" data-act="tacuse" data-arg="${i}">Guna taktik ini</button>`}</div>
      <input type="text" class="tacname" maxlength="28" value="${esc(t.name)}" data-chg="tacname" data-arg="${i}" aria-label="Nama taktik ${'ABC'[i]}">
-     <div><span class="lbl">Formasi</span><div class="fbtns" style="margin-top:4px">${Object.keys(FORMS).map(f=>`<button class="btn sm ${t.form===f?'good':''}" data-act="tacset" data-arg="${i}|form|${f}">${f}</button>`).join('')}</div></div>
+     <div><span class="lbl">Formasi</span> <span class="mono mute" style="font-size:.78rem">keakraban ${Math.round(famF(t.form))}%</span><div class="fbtns" style="margin-top:4px">${Object.keys(FORMS).map(f=>`<button class="btn sm ${t.form===f?'good':''}" data-act="tacset" data-arg="${i}|form|${f}">${f}</button>`).join('')}</div></div>
      <div><span class="lbl">Mentaliti</span>${segBtns(i,'ment',MENT,t.ment)}</div>
-     ${Object.entries(TAC_OPT).map(([k,[l,opts,desc]])=>`<div><span class="lbl">${l}</span>${segBtns(i,k,opts,t[k])}<div class="mute tacd">${desc[t[k]]}</div></div>`).join('')}</section>`).join('')}</div></div>`}
+     ${Object.entries(TAC_OPT).map(([k,[l,opts,desc]])=>`<div><span class="lbl">${l}</span>${segBtns(i,k,opts,t[k])}<div class="mute tacd">${desc[t[k]]}</div></div>`).join('')}</section>`).join('')}</div>${famPanel()}</div>`}
 
 // ---- halaman Profil pengurus
 function vProfile(){ensureTac();const P=S.prof;const J=S.job;const w=J&&J.wdl||[0,0,0];const n=w[0]+w[1]+w[2];
@@ -2678,7 +2769,7 @@ function mSupport(seasonEnd){openModal(`<header><div><span class="lbl">${seasonE
    <div class="row" style="justify-content:center"><button class="btn primary" data-act="close">${seasonEnd?'Teruskan':'Tutup'}</button></div>`)}
 
 // ===== UI v3 =====
-const VERSION='Versi 2.0 Beta 6';const BUILD='b2006';
+const VERSION='Versi 2.1 Beta 1';const BUILD='b2101';
 // Isi pautan Google Form maklum balas di sini sebelum diedarkan kepada penguji beta.
 const FEEDBACK_URL='https://docs.google.com/forms/d/e/1FAIpQLSeSK_f1284zoTj_ddw86tJ3he_76DmihIzg4OTLNXhEgkTokA/viewform';
 const LEGACY_KEY='pengurus-kampung-v3';
@@ -2701,10 +2792,12 @@ function setMeta(m){try{localStorage.setItem('pk3-meta',JSON.stringify(m))}catch
 // Skema simpanan: naikkan SCHEMA hanya bila struktur data berubah sehingga build lama tidak selamat membukanya.
 // Simpanan tanpa `sv` datang dari build 1.x sebelum 1.4.6.4 dan masih dibuka seperti biasa.
 // SCHEMA 2 (2.0 Fasa 2): format simpanan 'F' (deflate + pek 15-bit). SCHEMA 3 (Fasa 3): p.dob/bp/hist/mv/ih/injx/rest, S.legends. Migrasi didaftar dalam PK2.mig[versi].
-const SCHEMA=7;
+const SCHEMA=8;
 const MAX_IMPORT_BYTES=20*1024*1024;
 // Ruang nama 2.0. Modul baharu didaftar di bawah PK2, bukan sebagai global baharu. mig[v] menaikkan S daripada v-1 ke v (sekali sahaja).
-const PK2={mig:{2:()=>{/* v2: hanya format simpanan baharu; tiada perubahan struktur S */},3:()=>migrate3(),4:()=>{/* v4: had mutlak stadium 30,000 */Object.values(S.clubs).forEach(c=>{if(c.cap>CAP_ABS)c.cap=CAP_ABS})},5:()=>{/* v5: Asia (S.ah, S.as, S.asiaQ), pasukan kebangsaan (S.nat) */S.ah=S.ah||[];S.as=S.as||[];S.nat=S.nat||{w:0,d:0,l:0,gf:0,ga:0,hist:[]};S.asiaQ=S.asiaQ||null},6:()=>{/* v6: keputusan pemain (S.dec), had pinjaman (S.lc), scouting (S.scouts, S.scT) */S.dec=S.dec||[];S.scT=S.scT||[]},7:()=>{/* v7: pencapaian (S.ach), ABK (S.abk), sambutan (S.celeb, S.celQ) */S.ach=S.ach||{};S.abk=S.abk||[];S.celeb=S.celeb||{};S.celQ=S.celQ||[]}}};
+const PK2={mig:{2:()=>{/* v2: hanya format simpanan baharu; tiada perubahan struktur S */},3:()=>migrate3(),4:()=>{/* v4: had mutlak stadium 30,000 */Object.values(S.clubs).forEach(c=>{if(c.cap>CAP_ABS)c.cap=CAP_ABS})},5:()=>{/* v5: Asia (S.ah, S.as, S.asiaQ), pasukan kebangsaan (S.nat) */S.ah=S.ah||[];S.as=S.as||[];S.nat=S.nat||{w:0,d:0,l:0,gf:0,ga:0,hist:[]};S.asiaQ=S.asiaQ||null},6:()=>{/* v6: keputusan pemain (S.dec), had pinjaman (S.lc), scouting (S.scouts, S.scT) */S.dec=S.dec||[];S.scT=S.scT||[]},7:()=>{/* v7: pencapaian (S.ach), ABK (S.abk), sambutan (S.celeb, S.celQ) */S.ach=S.ach||{};S.abk=S.abk||[];S.celeb=S.celeb||{};S.celQ=S.celQ||[]},8:()=>{/* v8: keakraban formasi dan peranan (S.fam), peranan setiap taktik (S.tac.list[].rl). Formasi yang sedang digunakan dianggap sudah sebati supaya simpanan lama tidak dihukum. */
+ S.fam=S.fam||{F:{},R:{}};const fs=new Set();if(S.lu&&S.lu.form)fs.add(S.lu.form);if(S.prof&&S.prof.form)fs.add(S.prof.form);
+ if(S.tac&&S.tac.list)S.tac.list.forEach(t=>{fs.add(t.form);if(!Array.isArray(t.rl))t.rl=[]});fs.forEach(f=>{if(FORMS[f]&&S.fam.F[f]==null)S.fam.F[f]=100})}}};
 function runMigrations(){if(!S)return;const from=Number.isInteger(S.sv)?S.sv:1;for(let v=from+1;v<=SCHEMA;v++){if(PK2.mig[v])PK2.mig[v]()}S.sv=SCHEMA}
 // Pemampat 'F': fflate deflate (sync, ~6x lebih laju daripada LZString) dan pek 15-bit ke aksara UTF-16 (tiada surrogate, tiada NUL).
 const PK_OFF=0x100;
@@ -3228,7 +3321,7 @@ function pitchSVG(){return `<svg class="lines" viewBox="0 0 68 100" preserveAspe
 function lineupPitch(sm){const lu=S.lu;const slots=FORMS[lu.form];const cap=xiCaptain();
   return `<div class="pitch${sm?' sm':''}">${pitchSVG()}${slots.map(([pos,x,y],i)=>{const pid=lu.xi[i];const p=pid&&S.players[pid];
     if(!p)return `<div class="mk empty" ${sm?'':`data-drop="x${i}"`} style="left:${x}%;top:${100-y}%"><button class="dot" data-act="slot" data-arg="${i}" aria-label="Pilih pemain untuk ${slotLabel(lu.form,i)}"><span>${pos}</span></button><div class="mn">Kosong</div></div>`;
-    const f=fam(p,pos);return `<div class="mk ${f>=1?'':f>=.9?'f2':'f3'}" ${sm?'':`data-drop="x${i}"`} style="left:${x}%;top:${100-y}%"><button class="dot" style="${kitSt(S.user)}" data-act="slot" data-arg="${i}" ${sm?'':`data-drag="x" data-pid="${pid}"`} aria-label="${slotLabel(lu.form,i)}: ${esc(p.name)}${pid===cap?' (kapten)':''}"><span>${pos}</span></button><div class="mn">${pid===cap?'<span class="capb">C</span> ':''}${p.no}. ${esc(p.name)}</div><div class="mr">${starsHTML(p,'c')} ${status(p,1)}${roleRating(p,pos).toFixed(1)}${p.cond<85?` · ${p.cond}%`:''}</div></div>`}).join('')}</div>`}
+    const f=fam(p,pos);const rk0=lu.form===curTac().form&&curTac().rl&&roleOK(pos,curTac().rl[i])?curTac().rl[i]:'';return `<div class="mk ${f>=1?'':f>=.9?'f2':'f3'}" ${sm?'':`data-drop="x${i}"`} style="left:${x}%;top:${100-y}%"><button class="dot" style="${kitSt(S.user)}" data-act="slot" data-arg="${i}" ${sm?'':`data-drag="x" data-pid="${pid}"`} aria-label="${slotLabel(lu.form,i)}: ${esc(p.name)}${pid===cap?' (kapten)':''}"><span>${pos}</span></button><div class="mn">${pid===cap?'<span class="capb">C</span> ':''}${p.no}. ${esc(p.name)}</div><div class="mr">${starsHTML(p,'c')} ${status(p,1)}${roleRating(p,pos).toFixed(1)}${p.cond<85?` · ${p.cond}%`:''}${rk0?`<span class="rolec" title="${esc(ROLE[rk0].n)}">${ROLE[rk0].s}</span>`:''}</div></div>`}).join('')}</div>`}
 function hierHTML(f){const c=curClub();const tm=teamMatches();const ps=c.players.map(id=>S.players[id]).filter(p=>p&&!p.res&&(!f||pfMatch(p,f,p.loan?p.wage*p.loan.share:p.wage))).sort((a,b)=>SQO.indexOf(sqRole(a))-SQO.indexOf(sqRole(b))||ability(b)-ability(a));
   return `<p class="mute" style="font-size:.86rem;max-width:82ch">Status skuad menentukan berapa kerap pemain mengharapkan untuk bermain. Setiap bulan, pemain yang kurang bermain berbanding jangkaan hilang moral, dan yang cukup bermain lebih gembira. Moral mempengaruhi prestasi dalam perlawanan dan permintaan gaji. Menaikkan status menggembirakan pemain; menurunkannya mengecewakan.</p>
    <div class="tbl"><table><thead><tr><th>Status skuad</th><th class="r">No</th><th>Nama</th><th>Pos</th><th class="r">Umur</th><th class="r">CA</th><th class="r">Main</th><th class="r">Sasaran</th><th>Moral</th></tr></thead><tbody>
@@ -3293,7 +3386,7 @@ function vSquad(){const c=S.clubs[S.user];const info=lineupInfo();const lu=S.lu;
      ${info.msgs.length?`<p style="color:var(--loss);font-size:.88rem">${esc(info.msgs.join(' · '))}</p>`:''}
      <p class="mute" style="font-size:.86rem">Seret pemain di padang untuk menukar posisi, atau seret pemain dari senarai skuad dan simpanan (⠿) ke padang. Seret ke senarai skuad untuk mengeluarkan dari barisan. Klik bulatan untuk memilih dari senarai. Bulatan kuning atau merah bermaksud pemain di luar posisi asal.</p>
      <div class="benchdrop" data-drop="b"><span class="lbl">Simpanan · seret pemain ke sini</span><div class="onlist" style="margin-top:6px">${lu.bench.map(id=>{const p=S.players[id];return p?`<div class="bnrow"><span class="grip" data-drag="b" data-pid="${id}" title="Seret ke padang" aria-hidden="true">⠿</span><span class="pos ${PGROUP[p.pos]}">${p.pos}</span><span>${plink(id)} ${starsHTML(p,'c')} ${status(p,1)}</span><span class="num" style="text-align:right">${ability(p).toFixed(1)}</span></div>`:''}).join('')||'<span class="mute">Tiada pemain simpanan.</span>'}</div></div></section></div>
-   ${spPanel()}
+   ${rolePanel()}${spPanel()}
    <section class="panel" data-drop="out"><div class="row sp"><h3>Skuad utama</h3><div class="tabs"><button class="${!attrs&&!hier?'on':''}" data-act="sqmode" data-arg="ringkas">Ringkas</button><button class="${attrs?'on':''}" data-act="sqmode" data-arg="atribut">Atribut</button><button class="${hier?'on':''}" data-act="sqmode" data-arg="hierarki">Hierarki & moral</button></div></div>
    <div class="filters sqfil">${pfHTML(sqf,'sqf')}${fOn?'<button class="btn sm" data-act="sqfreset">Set semula penapis</button>':''}<span class="mute" style="font-size:.84rem;align-self:center">${fOn?`${ps.length} daripada ${allN} pemain`:`${allN} pemain`}</span></div>${hier?hierHTML(sqf):`${starLegend()}${tagLegend()}<div class="tbl"><table><thead><tr><th>Tugas</th><th class="r">No</th><th>Nama</th><th>Pos</th><th class="r">Umur</th>
     ${attrs?'<th class="r" title="Tinggi (cm)">cm</th><th class="r" title="Berat (kg)">kg</th>'+ATTR.map(k=>`<th class="c" title="${ATTR_NAME[k]}">${ATTR_SHORT[k]}</th>`).join(''):'<th class="r" title="Current ability pada posisi asal (1-20)">CA</th><th>Kondisi</th><th class="r">Moral</th><th class="r">Nilai</th><th class="r">Gaji/bln</th><th class="r">Kontrak</th><th class="r">Main</th><th class="r">Gol</th><th class="r">Purata</th>'}</tr></thead><tbody>${rows||'<tr><td colspan="20" class="mute">Tiada pemain sepadan dengan penapis.</td></tr>'}</tbody></table></div>`}</section>
@@ -3641,7 +3734,7 @@ function mPrematch(fx){asiaPrep(fx);const out=purgeLineup();out.forEach(({p,rep}
    ${prematchExtra(fx)}<div class="grid2" style="gap:14px"><div style="max-width:300px;width:100%;margin:0 auto">${lineupPitch(true)}</div>
     <div style="display:flex;flex-direction:column;gap:12px"><div class="box"><span class="lbl">Laporan tinjauan: ${esc(S.clubs[o].name)}</span><div>Formasi jangkaan <b class="mono">${S.clubs[o].form}</b> · Form ${formHTML(clubForm(o))}</div>
       <div class="mute" style="font-size:.88rem">Pemain utama: ${ai.xi.filter(Boolean).map(id=>S.players[id]).sort((a,b)=>ability(b)-ability(a)).slice(0,3).map(p=>`${esc(p.name)} (${p.pos}, ${ability(p).toFixed(1)})`).join(', ')}</div></div>${amAdvice(fx)}
-     <div class="box"><span class="lbl">Pasukan kau</span><div class="tabs" style="margin:2px 0">${S.tac.list.map((t,i)=>`<button class="${S.tac.act===i?'on':''}" data-act="ptac" data-arg="${i}" title="${esc(t.name)}">${'ABC'[i]} · ${esc(t.name.replace(/^Taktik [ABC]( · )?/,'')||t.form)}</button>`).join('')}</div><div class="mono">${S.lu.form} · ${MENT[S.lu.ment]}</div>${spSummary()}${info.ok?'<div style="color:var(--win)">Barisan sedia.</div>':`<div style="color:var(--loss)">${esc(info.msgs.join(' · '))}</div>`}
+     <div class="box"><span class="lbl">Pasukan kau</span><div class="tabs" style="margin:2px 0">${S.tac.list.map((t,i)=>`<button class="${S.tac.act===i?'on':''}" data-act="ptac" data-arg="${i}" title="${esc(t.name)}">${'ABC'[i]} · ${esc(t.name.replace(/^Taktik [ABC]( · )?/,'')||t.form)}</button>`).join('')}</div><div class="mono">${S.lu.form} · ${MENT[S.lu.ment]}</div><div class="mute" style="font-size:.82rem">Keakraban formasi ${Math.round(famF(S.lu.form))}%${famF(S.lu.form)<100?' · penalti kecil sehingga sebati':''}</div>${spSummary()}${info.ok?'<div style="color:var(--win)">Barisan sedia.</div>':`<div style="color:var(--loss)">${esc(info.msgs.join(' · '))}</div>`}
       ${out.length?`<div class="mute" style="font-size:.85rem">${out.map(({p,rep})=>`${esc(p.name)} tidak boleh main${rep?`, diganti ${esc(rep.name)}`:''}.`).join(' ')}</div>`:''}</div></div></div>
    <div class="row"><button class="btn" data-act="squadfrommodal">Ubah skuad</button><button class="btn" data-act="nav" data-arg="scout">Laporan scout</button><button class="btn" data-act="autofix">Pilih automatik (${esc(S.lu.form)})</button><span style="flex:1"></span><button class="btn primary" data-act="kickoff" data-arg="${fx.id}" ${info.ok?'':'disabled'}>Mula perlawanan</button></div>`)}
 
@@ -3968,7 +4061,7 @@ function updateMatch(full){if(!LIVE)return;const m=LIVE.m,fx=S.fixtures[m.fx],us
   else{const act=activeOn(m,us);const F=formsFor(act.length);
     side+=`<div style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Taktik</span><div class="tabs">${S.tac.list.map((t,i)=>`<button class="${sd.tacI===i?'on':''}" data-act="ltac" data-arg="${i}" title="${esc(t.name)}">${'ABC'[i]}</button>`).join('')}</div><span class="mute" style="font-size:.78rem">${sd.tac?esc(sd.tac.name):''}</span></div>
      <div style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Mentaliti</span><div class="tabs">${Object.entries(MENT).map(([k,v])=>`<button class="${sd.ment===k?'on':''}" data-act="lment" data-arg="${k}">${v}</button>`).join('')}</div></div>
-     <div style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Formasi (${act.length} pemain)</span><div class="fbtns">${Object.keys(F).map(f=>`<button class="btn sm ${sd.form===f?'good':''}" data-act="lform" data-arg="${f}">${f}</button>`).join('')}</div></div>
+     <div style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Formasi (${act.length} pemain)</span><div class="fbtns">${Object.keys(F).map(f=>`<button class="btn sm ${sd.form===f?'good':''}" data-act="lform" data-arg="${f}">${f}${famTag(f)}</button>`).join('')}</div></div>
      ${subPanelHTML(m)}`}
   const box=document.getElementById('mxside');
   if(full||m.done||(LIVE.sideSig!==side&&!(LIVE.hold>Date.now()))){const sp=document.getElementById('subpanel');const y=box.scrollTop;box.innerHTML=side;box.scrollTop=y;LIVE.sideSig=side}
@@ -4013,7 +4106,8 @@ const ACT={
   nav:a=>{UI.view=a;UI.inboxOpen=false;UI.mnav=false;UI.mcat=null;closeModal();render();window.scrollTo(0,0)},mnavopen:()=>{UI.mnav=true;UI.mcat=null;render()},mnavclose:()=>{UI.mnav=false;UI.mcat=null;render()},mcat:a=>{const i=+a;const el=document.querySelector('.mcat.open .mch');const now=el?+el.dataset.arg:-1;UI.mcat=now===i?-1:i;render()},
   selclub:a=>{const v=document.getElementById('mgr');if(v)S.manager=v.value.trim();UI.nAge=+val('mgr_age')||35;UI.nForm=val('mgr_form')||'4-4-2';UI.selClub=a;renderStart()},
   regen:()=>{const n=val('mgr').trim();newWorld();S.manager=n;UI.selClub=null;renderStart()},
-  startgame:()=>{if(!UI.selClub)return;S.manager=val('mgr').trim()||'Pengurus';S.user=UI.selClub;const c=S.clubs[S.user];c.mgr=S.manager;S.prof={born:S.season-clamp(+val('mgr_age')||35,25,80),origin:'',form:val('mgr_form')||'4-4-2'};S.tac=null;setUserAuto(S.prof.form);spAutoFill();S.job=null;ensureState();
+  autoroles:()=>{autoRoles();save();render()},clearroles:()=>{curTac().rl=[];save();render()},
+  startgame:()=>{if(!UI.selClub)return;S.manager=val('mgr').trim()||'Pengurus';S.user=UI.selClub;const c=S.clubs[S.user];c.mgr=S.manager;S.prof={born:S.season-clamp(+val('mgr_age')||35,25,80),origin:'',form:val('mgr_form')||'4-4-2'};S.tac=null;setUserAuto(S.prof.form);spAutoFill();S.job=null;ensureState();resetFam();
     inbox('board',`Selamat datang ke ${c.name}`,`Lembaga pengarah menyasarkan: ${expectation(S.user).toLowerCase()}. Bajet pindahan ${fmtRM(c.tb)}, had gaji ${fmtRM(c.wb)} sebulan. Jendela pindahan ditutup selepas pusingan ketiga liga, ${fmtDate(windowInfo().close,'long')}. Kau ada ${MAX_SEASONS} musim untuk membawa kelab ini dari kampung ke puncak.`);
     inbox('board','Selamat datang, penguji beta',`Terima kasih kerana menguji Pengurus Kampung ${VERSION}. Mulakan di halaman Cara main untuk panduan ringkas dan senarai misi ujian. Laporkan bug atau cadangan melalui halaman Maklum balas.`,{links:[['help','Buka Cara main'],['feedback','Buka Maklum balas']]});
     wageReview(null);seasonDrawNews();ctrYearNews();inbox('youth','10 pemain pelapis menunggu',`Akademi ${c.name} mempunyai 10 pemain muda berusia 18 hingga 21 tahun. Semak bahagian pelapis di halaman Skuad.`);
@@ -4088,12 +4182,12 @@ const ACT={
   endlive:()=>{if(LIVE&&LIVE.talk)return;endLive()},talk:a=>{if(!LIVE||!LIVE.talk||LIVE.talk.res)return;talkRun(a);updateMatch(true)},talkgo:()=>talkGo(),snd:()=>{const on=!sndOn();try{localStorage.setItem('pk3-sound',on?'1':'0')}catch(e){}if(on){if(LIVE&&!LIVE.m.done)sndStart()}else sndStop();if(LIVE)updateMatch(true)},press:a=>{const[f,st]=a.split('|');pressOpen(f,st)},pans:a=>pressAnswer(+a),pressdone:()=>pressClose(),
   support:()=>mSupport(false),
   tacuse:a=>{applyTactic(+a);save();render()},
-  tacset:a=>{const[i,k,v]=a.split('|');const t=S.tac.list[+i];t[k]=v;if(+i===S.tac.act&&S.lu){if(k==='form')remapXI(v);if(k==='ment')S.lu.ment=v}save();render()},
+  tacset:a=>{const[i,k,v]=a.split('|');const t=S.tac.list[+i];t[k]=v;if(k==='form')t.rl=[];if(+i===S.tac.act&&S.lu){if(k==='form')remapXI(v);if(k==='ment')S.lu.ment=v}save();render()},
   ptac:a=>{applyTactic(+a);save();render();const fx=userFixture(S.t);if(fx)mPrematch(fx)},
   ltac:a=>{if(!LIVE)return;const m=LIVE.m,s=m.userSide,sd=m.sides[s];const i=+a;sd.tac=Object.assign({},S.tac.list[i]);sd.tacI=i;sd.ment=sd.tac.ment;const F=formsFor(activeOn(m,s).length);if(F[sd.tac.form])changeFormation(m,s,sd.tac.form,true);lg(m,s,'info',`${cnm(m,s)} menukar kepada ${sd.tac.name} (${sd.form}, ${MENT[sd.ment]}).`);vzTargets();updateMatch(true)},
   pfform:a=>{UI.pfForm=a;document.querySelectorAll('[data-act=pfform]').forEach(b=>b.classList.toggle('good',b.dataset.arg===a))},
   pfsave:()=>{ensureTac();const nm=val('pf_name').trim()||S.manager;const age=clamp(Math.round(+val('pf_age')||mgrAge()),25,80);S.prof.born=S.season-age;S.prof.origin=val('pf_origin');if(UI.pfForm)S.prof.form=UI.pfForm;
-    const ap=document.getElementById('pf_apply');if(ap&&ap.checked&&S.user){curTac().form=S.prof.form;applyTactic(S.tac.act)}S.manager=nm;if(S.user)S.clubs[S.user].mgr=nm;UI.pfForm=null;save();render();const el=document.getElementById('pfmsg');if(el)el.textContent='Profil dikemas kini.'},
+    const ap=document.getElementById('pf_apply');if(ap&&ap.checked&&S.user){if(curTac().form!==S.prof.form)curTac().rl=[];curTac().form=S.prof.form;applyTactic(S.tac.act)}S.manager=nm;if(S.user)S.clubs[S.user].mgr=nm;UI.pfForm=null;save();render();const el=document.getElementById('pfmsg');if(el)el.textContent='Profil dikemas kini.'},
   trfocus:a=>{S.tr.focus=a;save();render()},trint:a=>{S.tr.int=a;save();render()},trres:a=>{UI.trRes=a==='1';render()},trind:a=>mTrInd(a),
   trset:a=>{const[pid,v]=a.split('|');if(!v)delete S.tr.ind[pid];else if(v.startsWith('a:'))S.tr.ind[pid]={a:v.slice(2)};else S.tr.ind[pid]={pos:v.slice(4),prog:0};save();closeModal();render()},
   staffopen:a=>mStaff(a),staffhire:a=>{const[r,id]=a.split('|');const err=hireStaff(r,id);save();if(err){alertMsg(err);return}closeModal();render()},
@@ -4125,7 +4219,7 @@ function importText(t){const r=parseSave(t);
 const CHG={kitc:(a,el)=>{const v=String(el.value||'').toLowerCase();if(!/^#[0-9a-f]{6}$/.test(v)||!UI.crestDraft)return;UI.crestDraft.kit[+a]=v;const t=document.getElementById('cresttxt');if(t)UI.crestDraft.txt=t.value.toUpperCase();renderCrestModal()},sqf:(a,el)=>{UI.sqf=UI.sqf||{};UI.sqf[a]=el.value;render()},jersey:(a,el)=>{setJersey(a,+el.value);save();render();mPlayer(a)},sqrole:(a,el)=>{setSqRole(a,el.value);save();render();if(el.id==='sqr')mPlayer(a)},shortadd:(a,el)=>{shortAdd(a,el.value);save();render();mPlayer(a)},tacname:(a,el)=>{const t=S.tac.list[+a];t.name=el.value.trim().slice(0,28)||t.name;save();render()},cresttxt:(a,el)=>{UI.crestDraft.txt=el.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,3);const pv=document.getElementById('crestprev');if(pv)pv.innerHTML=crestSVG(S.user,120,UI.crestDraft)},mission:(a,el)=>{let d=getMis();const i=+a;d=el.checked?[...new Set([...d,i])]:d.filter(x=>x!==i);try{localStorage.setItem('pk3-missions',JSON.stringify(d))}catch(e){}render()},
   impfile:(a,el)=>{const f=el.files&&el.files[0];if(!f)return;const bad=checkFile(f);if(bad){el.value='';UI.saveMsg={ok:false,msg:bad};render();return}
     const r=new FileReader();r.onload=()=>{el.value='';importText(r.result)};r.onerror=()=>{UI.saveMsg={ok:false,msg:'Fail tidak dapat dibaca.'};render()};r.readAsText(f)},
-  place:(a,el)=>{const err=setPlace(a,el.value);save();render();if(err)alertMsg(err)},form:(a,el)=>{remapXI(el.value);curTac().form=el.value;save();render()},
+  place:(a,el)=>{const err=setPlace(a,el.value);save();render();if(err)alertMsg(err)},form:(a,el)=>{remapXI(el.value);curTac().form=el.value;curTac().rl=[];save();render()},role:(a,el)=>{setRole(+a,el.value);save();render()},
   lground:(a,el)=>{UI.lgRound=el.value;render()},tf:(a,el)=>{UI.tf[a]=el.value;render()},awround:(a,el)=>{UI.awRound=el.value;render()},abks:(a,el)=>{UI.abkS=+el.value;render()},
 };
 function alertMsg(t,ok){openModal(`<header><h2>${ok?'Berjaya':'Perhatian'}</h2><button class="btn sm" data-act="close">Tutup</button></header><p>${esc(t)}</p>`)}

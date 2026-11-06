@@ -100,9 +100,9 @@ with sync_playwright() as p:
 
     # --- simpan-muat & migrasi v6
     r = pg.evaluate("""()=>{const z=packS();const s2=unpack(z);return {eq:JSON.stringify(s2.scT)===JSON.stringify(S.scT)&&JSON.stringify(s2.dec)===JSON.stringify(S.dec)&&JSON.stringify(s2.lc)===JSON.stringify(S.lc),sv:s2.sv}}""")
-    check('simpan-muat mengekalkan scouting, keputusan dan had pinjaman', r['eq'] and r['sv'] == 7, r)
+    check('simpan-muat mengekalkan scouting, keputusan dan had pinjaman', r['eq'] and r['sv'] == 8, r)
     r = pg.evaluate("""()=>{const o=JSON.parse(JSON.stringify(S));o.sv=5;delete o.dec;delete o.scT;delete o.scouts;delete o.lc;const prev=S;S=o;ensureState();const res={sv:S.sv,dec:Array.isArray(S.dec),sc:Array.isArray(S.scT)&&S.scouts.length>=3};S=prev;return res}""")
-    check('migrasi v6 daripada sv=5', r['sv'] == 7 and r['dec'] and r['sc'], r)
+    check('migrasi v6 daripada sv=5', r['sv'] == 8 and r['dec'] and r['sc'], r)
 
     # --- permainan penuh satu musim tanpa ralat
     pg.evaluate("""()=>{window.__step=()=>{if(S.over){ACT.newseason();closeModal();closeSummary();return}if(!S.user){takeJob(S.lg[3][0]);closeModal()}

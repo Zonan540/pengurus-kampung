@@ -105,7 +105,7 @@ with sync_playwright() as p:
 
     # --- migrasi v7
     r = pg.evaluate("""()=>{const o=JSON.parse(JSON.stringify(S));o.sv=6;delete o.ach;delete o.abk;delete o.celeb;delete o.celQ;const prev=S;S=o;ensureState();const res={sv:S.sv,ach:!!S.ach,abk:Array.isArray(S.abk),cel:!!S.celeb&&Array.isArray(S.celQ)};S=prev;return res}""")
-    check('migrasi v7 daripada sv=6', r['sv'] == 7 and r['ach'] and r['abk'] and r['cel'], r)
+    check('migrasi v7 daripada sv=6', r['sv'] == 8 and r['ach'] and r['abk'] and r['cel'], r)
     r = pg.evaluate("()=>{UI.view='ach';render();return document.getElementById('app').innerHTML.includes('Pencapaian')&&document.querySelectorAll('.ach').length}")
     check('halaman Pencapaian dipaparkan (13 pencapaian)', r == 13, r)
     check('tiada pageerror', not errs, errs[:3])
