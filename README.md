@@ -32,6 +32,9 @@ Tambah juga entri dalam `site/nota.html`.
 | 1.4.6.3 | Versi 1.4.3.3 |
 | 1.4.6.4 | Versi 1.4.3.4 |
 | 1.4.6.5 | Versi 1.4.3.5 |
+| 2.0 Beta 6 (`b2006`, `pk-2-0-b6`) | Versi 2.0 Beta 6 |
+
+Cawangan `fasa-8-beta` ialah garis 2.0 (SCHEMA 7). `main` masih garis 1.x (SCHEMA 1) dan tidak boleh membaca simpanan 2.0, jadi jangan deploy zip daripada `main` ke tapak yang sudah menjalankan 2.0.
 
 ## Deploy
 
@@ -52,6 +55,7 @@ python3 tests/test_fasa2.py          # 2.0 Fasa 2: format simpanan F, save ditan
 python3 tests/test_fasa3.py          # 2.0 Fasa 3: DOB/umur, sejarah kerjaya, pemain bersara, kecederaan, Medical, RST, rehat, migrasi v3
 python3 tests/test_fasa4.py          # 2.0 Fasa 4: kalendar piala, TBPM knockout, Sumbangsih, warna, label jadual, stadium berperingkat, ekonomi AI, migrasi v4
 python3 tests/test_fasa5.py          # 2.0 Fasa 5: kelayakan Asia, jadual fasa liga, kalah mati, Piala Super, kalendar, kelab asing, rehat antarabangsa, migrasi v5
+python3 tests/test_goatcounter.py    # GoatCounter: skrip dimuat, event pintu/sertai/penuh/musim, peranti pemilik dilangkau
 python3 tests/baseline_econ.py 12 econ.json  # garis dasar ekonomi 12 musim (median baki, kelab negatif, kapasiti)
 python3 tests/baseline_j3.py 6 j3.json   # garis dasar enjin perlawanan (J3)
 python3 tests/baseline_econ.py 14 econ.json  # garis dasar ekonomi (I), AI penuh
